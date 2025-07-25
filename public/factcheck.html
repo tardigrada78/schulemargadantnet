@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>KI-Fakten-Überprüfer</title>
+    <link rel="stylesheet" href="style_black.css" />
+  </head>
+
+  <body>
+    <a href="/feedback.html" target="_blank">Feedback zu dieser Site geben.</a>
+    <h1>KI-Fakten-Überprüfer</h1>
+    <p>
+      Geben Sie eine Aussage ein, welche Sie mit einer KI-gestützten Websuche überprüfen lassen möchten. Die Überprüfung
+      funktioniert besser bei kurzen Aussagen. Vermeiden Sie Textabschnitte mit vielen unterschiedlichen Aussagen.
+    </p>
+    <textarea id="contentText" name="contentText" rows="3" cols="70">Kaffee entwässert den Körper.</textarea><br />
+    <label for="numResults">Anzahl der Websites zur Analyse: <span id="numResultsValue">5</span></label>
+    <input type="range" id="numResults" min="1" max="20" value="5" style="width: 150px" /><br /><br />
+    <button id="textCheck">Analyse starten</button><br /><br />
+    <div id="textProgress"></div>
+    <br />
+    <div id="textOutput"></div>
+
+    <script>
+      // Aktualisiert die Anzeige des Schieberwerts
+      document.getElementById("numResults").addEventListener("input", function () {
+        document.getElementById("numResultsValue").innerText = this.value;
+      });
+
+      document.getElementById("textCheck").addEventListener("click", async () => {
+        let textArea = document.getElementById("contentText");
+        let progressDiv = document.getElementById("textProgress");
+        let outputDiv = document.getElementById("textOutput");
+        let numResults = document.getElementById("numResults").value;
+        let contentText = textArea.value.trim();
+        progressDiv.innerHTML = `<p>⚙️ Führe Websuche durch...</p>`;
+        let searchResponse = await fetch("/factcheck/search", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ contentText, numResults }),
+        });
+        let searchData = await searchResponse.json();
+        if (!searchData.results || searchData.results.length === 0) {
+          outputDiv.innerHTML = "<p style='color:red;'>Keine passenden Webseiten gefunden.</p>";
+          return;
+        }
+        let resultHTML = `<h2>Analyse-Ergebnisse:</h2>`;
+        for (let i = 0; i < searchData.results.length; i++) {
+          let site = searchData.results[i];
+          progressDiv.innerHTML = `<p>⚙️ Analysiere Website ${i + 1} von ${searchData.results.length}: ${
+            site.title
+          }</p>`;
+          let analyzeResponse = await fetch("/factcheck/analyze", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ contentText, site }),
+          });
+          let analysisResult = await analyzeResponse.json();
+          let color =
+            analysisResult.match_percent < 30 ? "red" : analysisResult.match_percent < 70 ? "yellow" : "green";
+          resultHTML += `<a href="${analysisResult.url}" target="_blank">${analysisResult.title}</a><br>→ Übereinstimmung: 
+        <strong style="color:${color};">${analysisResult.match_percent}%</strong> (${analysisResult.match_level})<br>
+        <span class="small">${analysisResult.reason}</span><br><br>`;
+          outputDiv.innerHTML = resultHTML;
+        }
+        progressDiv.innerHTML = "";
+      });
+    </script>
+  </body>
+</html>

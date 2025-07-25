@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Abstracts Summary</title>
+  <link rel="stylesheet" href="style_black.css" />
+</head>
+
+<body>
+  <a href="/feedback.html" target="_blank">Feedback zu dieser Site geben.</a>
+  <h1>Abstracts-Zusammenfassung</h1>
+  <p>
+    Geben Sie hier nur Stichworte ein, verbunden mit AND oder OR. Die Suchanfrage bei pubmmed ist sehr restriktiv,
+    sodass schnell keine Resultate erscheinen.
+  </p>
+  <textarea id="searchTerm" name="searchTerm" cols="70" rows="2">microplastic AND human AND cell</textarea>
+  <label for="searchAbstracts">Zu berücksichtigende Abstracts: <span id="searchValue">10</span></label>
+  <input type="range" id="searchAbstracts" name="searchAbstracts" min="2" max="50" step="1" value="10" /><br /><br />
+  <button id="searchBtn">Suche Abstracts</button>
+  <div id="searchDiv" style="display: none">
+    <br />
+    <label for="summarizeWords">Anzahl Wörter: <span id="wordcountValue">150</span></label>
+    <input type="range" id="summarizeWords" name="summarizeWords" min="25" max="300" step="5" value="150" /><br /><br>
+    <label for="summaryLanguage">Sprache:</label>
+    <select id="summaryLanguage" name="summaryLanguage">
+      <option value="english">Englisch</option>
+      <option value="deutsch">Deutsch</option>
+    </select><br />
+    <br />
+    <button id="summarizeBtn">Schreibe Zusammenfassung</button><br />
+  </div>
+  <div id="progressDiv"></div>
+  <div id="summaryDiv"></div>
+  <div id="abstractDiv"></div>
+
+  <script>
+    // Funktion um die Zusammenfassung zu schreiben
+    async function generateSummary(text, words, lang) {
+      let response = await fetch("/abstracts/getSummary", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ text, words, lang }),
+      });
+      let data = await response.json();
+      document.getElementById("summaryDiv").innerHTML = "<h2>KI-Zusammenfassung</h2>" + data.summary;
+    }
+
+    // Funktion um die Abstracts anzuzueigen
+    function displayAbstracts(abstracts) {
+      if (abstracts.length === 0) {
+        progrssDiv.innerHTML = "❌ Keine Abstracts gefunden.";
+        return;
+      }
+      document.getElementById("abstractDiv").innerHTML =
+        "<h2>Gefundene Abstracts</h2>" +
+        abstracts.map((a) => `<p><b>PMID:</b> ${a.pmid}<br>${a.abstractText}</p>`).join("");
+    }
+
+    // Hautpprogramm
+    let abstractsData = [];
+    document.getElementById("summarizeWords").addEventListener("input", function () {
+      document.getElementById("wordcountValue").textContent = this.value;
+    });
+    document.getElementById("searchAbstracts").addEventListener("input", function () {
+      document.getElementById("searchValue").textContent = this.value;
+    });
+
+    document.getElementById("searchBtn").addEventListener("click", async () => {
+      const term = document.getElementById("searchTerm").value;
+      const abstractsNum = document.getElementById("searchAbstracts").value;
+      if (!term) return alert("Bitte Suchbegriff eingeben!");
+      document.getElementById("progressDiv").innerHTML = "<p>⚙️ Suche und lade Abstracts...</p>";
+      const res = await fetch(`/abstracts/search?term=${encodeURIComponent(term)}&abstractsNum=${abstractsNum}`);
+      if (!res.ok) {
+        const err = await res.json();
+        document.getElementById("progressDiv").innerHTML = "❌ Fehler: " + err.error;
+        return; // wichtig, um Funktion zu beenden
+      }
+      const data = await res.json();
+      abstractsData = data.abstracts;
+      document.getElementById("progressDiv").innerHTML = "";
+      document.getElementById("searchDiv").style.display = "block";
+      displayAbstracts(abstractsData);
+    });
+
+    document.getElementById("summarizeBtn").addEventListener("click", async function () {
+      try {
+        const allAbstracts = abstractsData.map((a) => a.abstractText).join(" ");
+        words = document.getElementById("summarizeWords").value;
+        lang = document.getElementById("summaryLanguage").value;
+        document.getElementById("progressDiv").innerHTML = "<p>⚙️ Schreibe Zusammenfassung der Abstracts...</p>";
+        await generateSummary(allAbstracts, words, lang);
+      } catch (error) {
+        console.error("Fehler beim Schreiben der Zusammenfassung:", error);
+        document.getElementById("progressDiv").innerHTML = `<p>❌ Fehler beim Schreiben der Zusammenfassung.</p>`;
+      } finally {
+        document.getElementById("progressDiv").innerHTML = ``;
+      }
+    });
+  </script>
+</body>
+
+</html>

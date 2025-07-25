@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title><Overview></title>
+    <link rel="stylesheet" href="style_black.css" />
+  </head>
+  <body>
+    <h1>Overview</h1>
+    <p>Mehr <a href="news.html">News</a>.</p>
+    <div id="newsProgress"></div>
+    <h2>Aktien</h2>
+    <div id="stock-data"></div>
+    <p>Total Profit: <span id="total-profit"></span></p>
+    <h2>Science-News</h2>
+    <div id="summaryOutput"></div>
+    <div id="speechOutput"></div>
+    <div id="newsOutput"></div>
+    <script>
+      // Function to fetch and display stock data
+      async function fetchStockData() {
+        try {
+          const response = await fetch("/overview/stockdata");
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          const data = await response.json();
+          const stockDataDiv = document.getElementById("stock-data");
+          const totalProfitSpan = document.getElementById("total-profit");
+          totalProfitSpan.innerHTML = `$ ${data.totalProfit}`;
+          data.stocks.forEach((stock) => {
+            const stockInfo = document.createElement("p");
+            if (stock.error) {
+              stockInfo.textContent = `${stock.ticker}: ${stock.error}`;
+            } else {
+              stockInfo.innerHTML = `${stock.ticker} ${stock.actualDate} bis ${stock.formattedDate}:\t${stock.amount} Stück zu $ ${stock.purchasePrice}, jetzt $ ${stock.latestPrice} macht Gewinn von $<br> ${stock.profit}, ${stock.percentage}%`;
+            }
+            stockDataDiv.appendChild(stockInfo);
+          });
+        } catch (error) {
+          console.error("Error fetching stock data:", error);
+          const stockDataDiv = document.getElementById("stock-data");
+          stockDataDiv.textContent = "Error fetching stock data.";
+        }
+      }
+
+      //   const fetchButtons = document.querySelectorAll("#buttonScienceNews, #buttonAINews");
+      const summaryOutput = document.getElementById("summaryOutput");
+      const newsOutput = document.getElementById("newsOutput");
+      const progressOutput = document.getElementById("newsProgress");
+      const speechOutput = document.getElementById("speechOutput");
+
+      // Function for HTML presentation of news
+      function presentNews(data) {
+        progressOutput.innerHTML = "";
+        newsOutput.innerHTML = `<p>${data.articles.length} Artikel gefunden.</p>`;
+        let summaryText = "";
+        if (data.articles && data.articles.length > 0) {
+          data.articles.forEach((article) => {
+            newsOutput.innerHTML += `
+                <h4>${article.title}</h4>
+                <p>Published: ${new Date(article.publishedAt).toLocaleDateString("de-DE", {
+                  day: "2-digit",
+                  month: "numeric",
+                  year: "2-digit",
+                })}
+                by <a href="${article.url}" target="_blank">${article.source.name}</a>
+                <div class="small"><p>${article.description}</p></div>`;
+            summaryText += `${article.title}\n${article.description}\n\n`;
+          });
+          return summaryText;
+        } else {
+          progressOutput.innerHTML = "<p>No articles found.</p>";
+        }
+      }
+
+      // Function for AI summary
+      async function generateSummary(data) {
+        progressOutput.innerHTML = "<p>⚙️ Die Zusammenfassung wird geschrieben...</p>";
+        const response = await fetch(`/news/getSummary`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ data }),
+        });
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const result = await response.json();
+        progressOutput.innerHTML = "";
+        return result.summary;
+      }
+
+      // Function for speech generation
+      async function generatePodcast(data) {
+        let response = await fetch("/news/getPodcast", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ data }),
+        });
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`Fehler beim Generieren der Sprachdatei: ${errorText}`);
+        }
+        let dataPodcast = await response.json();
+        return dataPodcast.speech;
+      }
+
+      // Function to fetch and process news
+      async function fetchAndProcessNews(url) {
+        progressOutput.innerHTML = "<p>⚙️ Suche News...</p>";
+        try {
+          const response = await fetch(url);
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          const data = await response.json();
+          const summaryText = presentNews(data);
+          const summary = await generateSummary(summaryText);
+          summaryOutput.innerHTML = "<h3>KI-Zusammenfassung</h3>" + summary;
+
+          // Generates audio
+          progressOutput.innerHTML = "⚙️ Podcast wird erstellt...";
+          generatePodcast(summary)
+            .then((speechURL) => {
+              speechOutput.innerHTML = `<br><audio id="audioPlayer" controls src="${speechURL}"></audio>`;
+              progressOutput.innerHTML = "";
+            })
+            .catch((error) => {
+              console.error("Fehler beim Generieren der Sprachdatei:", error);
+              alert("Es gab ein Problem beim Generieren der Sprachdatei.");
+            });
+        } catch (error) {
+          console.error("Error fetching news:", error);
+          newsOutput.innerHTML = `<p>Error: ${error.message}</p>`;
+        }
+      }
+
+      // Runs main program on page load
+      fetchStockData();
+      fetchAndProcessNews("/news/getScienceNews");
+    </script>
+  </body>
+</html>

@@ -1,0 +1,20 @@
+<!-- public/feedback.html -->
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="style_black.css" />
+  <title>Feedback</title>
+</head>
+<body>
+  <h1>Feedback</h1>
+  <form action="/feedback/send-feedback" method="POST">
+    <input type="hidden" name="pageUrl" id="pageUrl" value="">
+    <textarea name="message" rows="6" cols="50" placeholder="Dein Feedback..."></textarea><br>
+    <button type="submit">Absenden</button>
+  </form>
+  <script>
+    document.getElementById('pageUrl').value = document.referrer || window.location.href;
+  </script>
+</body>
+</html>

@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>mündliche Prüfung</title>
+    <link rel="stylesheet" href="style_black.css" />
+</head>
+
+<body>
+    <a href="/feedback.html" target="_blank">Feedback zu dieser Site geben.</a>
+    <h1>mündliche Prüfung</h1>
+    <form id="surveyForm">
+        <p>Geben Sie die Lernziele ein.</p>
+        <textarea id="contentForms" name="contentForms" cols="70" rows="8">
+Erklären Sie die Hauptfunktionen der folgenden Zellorganellen: Zellkern, Mitochondrium, Chloroplast, Ribosom, Zellsaftvakuole.</textarea>
+        <label for="voice1">Stimme für Fragen:</label>
+        <select id="voice1" name="voice1">
+            <option value="alloy">Alloy (f)</option>
+            <option value="ash">Ash (m)</option>
+            <option value="ballad">Ballad</option>
+            <option value="coral">Coral (f)</option>
+            <option value="echo">Echo (m)</option>
+            <option value="fable">Fable (m)</option>
+            <option value="nova" selected>Nova (f)</option>
+            <option value="onyx">Onyx (m)</option>
+            <option value="sage">Sage (f)</option>
+            <option value="shimmer">Shimmer (f)</option>
+            <option value="verse">Verse (m)</option>
+        </select>
+
+        <p>Die Stimmen können <a href="https://www.openai.fm/">hier</a> probegehört werden.</p>
+    </form>
+    <br />
+    <button id="buttonQuestion">Beginne die Prüfung</button>
+    <br />
+    <div id="progressQuestion"></div>
+    <br />
+    <div id="outputQuestion"></div>
+    <br />
+    <div id="outputAudio"></div>
+    <br />
+
+    <script>
+
+        // Funktion zum Generieren der Audio.Ausgabe
+        async function generateAudio(content, voice, voiceProfile) {
+            let response = await fetch("/oralexamination/getAudio", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ content, voice, voiceProfile }),
+            });
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Fehler beim Generieren der Sprachdatei: ${errorText}`);
+            }
+            let data = await response.json();
+            return data.audio;
+        }
+
+        // Hauptprogramm
+        document.getElementById("buttonQuestion").addEventListener("click", async () => {
+            const properties = document.getElementById("contentForms").value;
+            let outputHtml = "";
+
+            // Generiert Frage
+            try {
+                document.getElementById("progressQuestion").innerHTML = "<p>⚙️ Die Prüfungsfrage wird erstellt...</p>";
+                let responseQuestion = await fetch(`/oralexamination/getQuestion`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ properties }),
+                });
+                contentQuestion = await responseQuestion.json();
+                outputHtml += `<h2>Prüfungsfrage</h2><p>${contentQuestion.question}</p>`;
+                document.getElementById("outputQuestion").innerHTML = outputHtml;
+
+                // Nur wenn Frage erfolgreich erstellt wurde, Audio generieren
+                document.getElementById("progressQuestion").innerHTML = `<p>⚙️ Sprachdatei wird erstellt...</p>`;
+                let voice1 = document.getElementById("voice1").value;
+                let voiceProfileQuestion = "Sprich mit einer seriösen ernsthaften Stimme, die aber wohlwollend ist. Du bist der Prüfer bei einem Examen.";
+
+                generateAudio(contentQuestion.question, voice1, voiceProfileQuestion)
+                    .then((speechURL) => {
+                        document.getElementById("outputAudio").innerHTML = `<audio id="audioPlayer" controls src="${speechURL}"></audio>`;
+                        let audio = document.getElementById("audioPlayer");
+                        audio.play(); document.getElementById("progressQuestion").innerHTML = "<p>✅ Prüfung bereit!</p>";
+                    })
+                    .catch((error) => {
+                        console.error("Fehler beim Generieren der Sprachdatei:", error);
+                        document.getElementById("progressQuestion").innerHTML = "❌ Fehler beim Generieren der Sprachdatei.";
+                    });
+
+            } catch (error) {
+                console.error("Fehler beim Generieren der Frage:", error);
+                document.getElementById("progressQuestion").innerHTML = "❌ Fehler beim Generieren der Frage.";
+            }
+        })
+
+    </script>
+</body>
+
+</html>

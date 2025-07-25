@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>virtuelle Umfrage</title>
+    <link rel="stylesheet" href="style_black.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+</head>
+
+<body>
+    <a href="/feedback.html" target="_blank">Feedback zu dieser Site geben.</a>
+    <h1>virtuelle Umfrage</h1>
+    <form id="surveyForm">
+        <h2>Daten der Teilnehmenden</h2>
+        <p>Geschlecht "andere" = 100% - Frauenanteil - Männeranteil</p>
+        <div class="grid-container">
+            <div class="grid-item">
+                <label for="participants_women">Frauenanteil: <span id="womenValue">40%</span></label>
+                <input type="range" id="participants_women" name="participants_women" min="0" max="1" step="0.05"
+                    value="0.4">
+            </div>
+            <div class="grid-item">
+                <label for="participants_men">Männeranteil: <span id="menValue">40%</span></label>
+                <input type="range" id="participants_men" name="participants_men" min="0" max="1" step="0.05"
+                    value="0.4">
+            </div>
+            <div class="grid-item">
+                <label for="participants_age_min">Mindestalter: <span id="ageMinValue">20</span></label>
+                <input type="range" id="participants_age_min" name="participants_age_min" min="1" max="120" value="20">
+            </div>
+            <div class="grid-item">
+                <label for="participants_age_max">Maximalalter: <span id="ageMaxValue">60</span></label>
+                <input type="range" id="participants_age_max" name="participants_age_max" min="1" max="120" value="60">
+            </div>
+            <div class="grid-item">
+                <label for="participants_number">Anzahl Teilnehmende: <span id="numValue">2</span></label>
+                <input type="range" id="participants_number" name="participants_number" min="1" max="20" value="2">
+            </div>
+        </div>
+
+        <h2>Umfragefragen</h2>
+        <p>Geben Sie Ihre Fragen in diesem Format ein:<br>- Jede Frage beginnt in einer neuen Zeile.<br>- Falls
+            geschlossen: Antworten mit Komma getrennt direkt darunter.<br>- Falls offen: Leere Zeile darunter.</p>
+        <textarea id="surveyInput" name="surveyInput" cols="70" rows="8">Wie oft essen Sie Fleisch?
+täglich, mehrmals in der Woche, selten
+
+Welches Gemüse essen Sie am liebsten?</textarea><br>
+        <button type="submit">Umfrage starten</button>
+    </form>
+    <div id="surveyProgress"></div><br>
+    <div id="surveyFeatures"></div><br>
+    <div id="surveyOutput"></div>
+
+    <script>
+        // Funktion um Fragen umzuformatieren 
+        function parseSurveyInput() {
+            const inputText = document.getElementById("surveyInput").value.trim();
+            const lines = inputText.split("\n").map(line => line.trim()).filter(line => line !== "");
+            const survey = [];
+            for (let i = 0; i < lines.length; i++) {
+                let question = lines[i];
+                let nextLine = lines[i + 1] || "";
+                if (nextLine.includes(",")) {
+                    // Geschlossene Frage mit Antwortoptionen
+                    let options = nextLine.split(",").map(option => option.trim());
+                    survey.push([question, false, options]);
+                    i++;
+                } else {
+                    // Offene Frage
+                    survey.push([question, true]);
+                }
+            }
+            return survey;
+        }
+
+        // Funktion für Excel-Datenblatt zu erstellen
+        async function generateExcelFile(data) {
+            if (!Array.isArray(data) || data.length === 0) {
+                console.error("❌ Fehler: Daten für die Excel-Datei sind ungültig oder leer.", data);
+                return;
+            }
+            const excelData = [
+                ["Nummer", "Personenbeschreibung", "Fragennummer", "Frage", "Antwort"],
+                ...data.map(row => [
+                    row[0] + 1,  // Nummer (beginnend mit 1)
+                    row[1],      // Personenbeschreibung
+                    row[2] + 1,  // Fragennummer (beginnend mit 1)
+                    row[3],      // Frage
+                    row[4]       // Antwort
+                ])
+            ];
+            const ws = XLSX.utils.aoa_to_sheet(excelData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Umfrage Ergebnisse");
+            ws["!cols"] = [
+                { wch: 8 },
+                { wch: 50 },
+                { wch: 8 },
+                { wch: 30 },
+                { wch: 50 }
+            ];
+            ws["!rows"] = excelData.map(() => ({ hpx: 50 }));
+            Object.keys(ws).forEach(cell => {
+                if (cell.startsWith("B") || cell.startsWith("D") || cell.startsWith("E")) {
+                    ws[cell].s = {
+                        alignment: { wrapText: true, vertical: "top" } // 🔹 Zeilenumbruch & oben bündig
+                    };
+                }
+            });
+            XLSX.writeFile(wb, "Umfrage_Ergebnisse.xlsx");
+        }
+
+
+
+        // Live-Update der Werte für Schieberegler
+        const updateValue = (id, value, percentage = false) => {
+            document.getElementById(id).textContent = percentage ? (value * 100).toFixed(0) + "%" : value;
+        };
+
+        document.getElementById("participants_number").addEventListener("input", (e) => updateValue("numValue", e.target.value));
+        document.getElementById("participants_women").addEventListener("input", (e) => updateValue("womenValue", e.target.value, true));
+        document.getElementById("participants_men").addEventListener("input", (e) => updateValue("menValue", e.target.value, true));
+        document.getElementById("participants_age_min").addEventListener("input", (e) => updateValue("ageMinValue", e.target.value));
+        document.getElementById("participants_age_max").addEventListener("input", (e) => updateValue("ageMaxValue", e.target.value));
+
+        function updateGenderValues(changedInput) {
+            const womenInput = document.getElementById("participants_women");
+            const menInput = document.getElementById("participants_men");
+            const womenValue = parseFloat(womenInput.value);
+            const menValue = parseFloat(menInput.value);
+            const total = womenValue + menValue;
+
+            if (total > 1) {
+                if (changedInput === "women") {
+                    womenInput.value = 1 - menValue;
+                } else {
+                    menInput.value = 1 - womenValue;
+                }
+            }
+            document.getElementById("womenValue").textContent = (parseFloat(womenInput.value) * 100).toFixed(0) + "%";
+            document.getElementById("menValue").textContent = (parseFloat(menInput.value) * 100).toFixed(0) + "%";
+        }
+        document.getElementById("participants_women").addEventListener("input", () => updateGenderValues("women"));
+        document.getElementById("participants_men").addEventListener("input", () => updateGenderValues("men"));
+
+        // Formular absenden und bearbeiten
+        document.getElementById("surveyForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const formData = {
+                participants_number: parseInt(document.getElementById("participants_number").value),
+                participants_women: parseFloat(document.getElementById("participants_women").value),
+                participants_men: parseFloat(document.getElementById("participants_men").value),
+                participants_age_min: parseInt(document.getElementById("participants_age_min").value),
+                participants_age_max: parseInt(document.getElementById("participants_age_max").value),
+                survey: parseSurveyInput()
+            };
+
+            // Umfrage bearbeiten
+            try {
+                let surveyResults = [];
+                // Erstelle Teilnehmer
+                for (let i = 0; i < formData.participants_number; i++) {
+                    document.getElementById('surveyProgress').innerHTML = `<p>⚙️ Erstelle Person ${i + 1}...</p>`;
+                    let response = await fetch('/umfrage/person', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(formData)
+                    });
+                    let data = await response.json();
+                    let person = data.person;
+                    for (let j = 0; j < formData.survey.length; j++) {
+                        let [question, isOpen, options] = formData.survey[j];
+                        document.getElementById('surveyProgress').innerHTML = `<p>⚙️ Person ${i + 1} beantwortet Frage ${j + 1}...</p>`;
+                        let response = await fetch('/umfrage/answer', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ person, question, isOpen, options })
+                        });
+                        let answerData = await response.json();
+                        let answer = answerData.answer;
+                        surveyResults.push([i, person, j, question, answer]);
+                    }
+                }
+                document.getElementById('surveyProgress').innerHTML = `<p>⚙️ Der Report wird geschrieben...</p>`;
+                let responseReport = await fetch('/umfrage/report', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ surveyResults })
+                });
+                let dataReport = await responseReport.json();
+
+                let html = "<h2>Kurzer Report</h2>";
+                html += `<p>${dataReport.report}</p>`;
+                html += "<h2>Personenbeschreibungen</h2>";
+                let h = ""
+                surveyResults.forEach((row) => {
+                    if (h != row[1]) {
+                        h = row[1];
+                        html += `<b>${row[0] + 1}. Person:</b><br><span class="small">${row[1]}</span><br><br>`;
+                    }
+                });
+                setTimeout(() => {
+                    document.getElementById('surveyFeatures').innerHTML = '<button id="generateExcel">📊 Excel-Datei herunterladen</button>'
+                    document.getElementById("generateExcel").addEventListener("click", () => {
+                        generateExcelFile(surveyResults);
+                    });
+                }, 100);
+                document.getElementById('surveyProgress').innerHTML = ``;
+                document.getElementById('surveyOutput').innerHTML = html;
+            } catch (error) {
+                console.error('Fehler bei der Umfrage:', error);
+                document.getElementById('surveyProgress').innerHTML = '❌ Fehler beim Erstellen der Umfrage';
+            }
+        });
+    </script>
+</body>
+
+</html>

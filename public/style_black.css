@@ -1,0 +1,207 @@
+#video {
+  display: none;
+}
+
+#content {
+  display: none; /*Inhalt erst mal verstecken, bis PW richtig eingegeben wird */
+} 
+
+html {
+  background-color: #000000;
+}
+
+body {
+  font-size: 1em;
+  font-family: Calibri, Arial, Helvetica, sans-serif;
+  background-color: #000000;
+  color: whitesmoke;
+  max-width: 800px; /* Begrenzung für große Bildschirme */
+  min-width: 400px; /* Verhindert zu schmale Darstellung */
+  margin: 0 auto; /* Zentriert den Body horizontal */
+  height: 100%;
+  width: 50%;
+  padding: 5px;
+  text-align: left;
+}
+
+textarea {
+  width: 100%; /* Nimmt die volle Breite des Containers (Body) */
+  max-width: 100%; /* Aber nicht breiter als der Body */
+  box-sizing: border-box; /* Bezieht Padding und Border in die Breite mit ein */
+  padding: 5px; /* Innenabstand für bessere Lesbarkeit */
+  margin: 5px 0; /* Oben/unten etwas Abstand */
+  resize: vertical; /* Nur in der Höhe veränderbar */
+  font-size: 1em; /* Passende Schriftgröße */
+  font-family: inherit; /* Gleiche Schrift wie der Body */
+}
+
+p {
+  /* margin-top: 5px; */
+  font-weight: normal;
+  /* padding-top: 1em; */
+}
+
+h1 {
+  font-size: 2.5em;
+  font-weight: bold;
+  letter-spacing: 1px;
+  color: #f60;
+}
+
+h2 {
+  font-size: 2em;
+  font-weight: bold;
+  letter-spacing: 1px;
+  color: #f60;
+}
+
+h3 {
+  font-size: 1.5em;
+  font-weight: bold;
+  letter-spacing: 1px;
+  color: #f60;
+  margin-bottom: 5px;
+}
+
+h4 {
+  font-size: 1em;
+  font-weight: bold;
+  letter-spacing: 1px;
+  color: whitesmoke;
+}
+
+img {
+  justify-content: center;
+  border-radius: 10%;
+}
+
+a:link {
+  color: cyan;
+  text-decoration: none;
+}
+
+a:hover {
+  color: black;
+  background-color: cyan;
+}
+
+a:visited {
+  color: rgb(80, 110, 110);
+}
+
+.small {
+  font-size: 0.75em;
+  color: rgb(187, 187, 183);
+}
+
+/* // .story-block für index.html */
+
+.story-block {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr); 
+  gap: 20px;
+  /* margin-top: 0px; */
+  margin-bottom: 20px;
+  align-items: start;
+}
+
+@media (max-width: 600px) {
+  .story-block {
+      grid-template-columns: 1fr;
+  }
+}
+
+ .story-block img {
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+  align-self: center; 
+ } 
+
+/* Für Elemente nebeneinander (Skript in KI-Lern-Tutor) */
+.oneline {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+label {
+  white-space: nowrap;
+}
+
+input[type="range"] {
+  flex-grow: 1;
+  max-width: 300px;
+}
+
+button {
+  white-space: nowrap;
+}
+
+/* Um Mermaid-Diagram seitenbreit anzuzeigen */
+#mermaid {
+  position: relative;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100vw;
+}
+
+/* Grid-Layout (für virtuelle Umfrage) */
+
+.grid-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  /* Zwei gleich breite Spalten */
+  gap: 20px;
+  /* Abstand zwischen den Spalten */
+  margin-bottom: 20px;
+}
+
+.grid-item {
+  display: flex;
+  flex-direction: column;
+}
+
+label {
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+input[type="range"] {
+  width: 100%; /* Volle Breite für den Slider */
+}
+
+/* CSS-Elemente für chinesische Geschichte */
+
+.hover-text {
+  display: none;
+  position: absolute;
+  top: -275%;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #222222;
+  color: greenyellow;
+  padding: 5px;
+  border-radius: 5px;
+  white-space: nowrap;
+}
+
+.hover-pinyin {
+  font-size: 1.5em;
+  color: #f60;
+}
+
+.hover {
+  display: inline-block;
+  position: relative;
+  margin: 0 0;
+  text-align: center;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.hover:hover .hover-text {
+  display: block;
+}
+
+
