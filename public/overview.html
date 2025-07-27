@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title><Overview></title>
+    <title>Overview</title>
     <link rel="stylesheet" href="style_black.css" />
   </head>
   <body>
@@ -119,7 +119,7 @@
           const data = await response.json();
           const summaryText = presentNews(data);
           const summary = await generateSummary(summaryText);
-          summaryOutput.innerHTML = "<h3>KI-Zusammenfassung</h3>" + summary;
+          summaryOutput.innerHTML = "<h3>Zusammenfassung der KI</h3>" + summary;
 
           // Generates audio
           progressOutput.innerHTML = "⚙️ Podcast wird erstellt...";
