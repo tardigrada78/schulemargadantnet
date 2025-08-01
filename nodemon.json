@@ -1,0 +1,17 @@
+{
+  "watch": [
+    "server.mjs",
+    "routes/**/*",
+    "public/**/*"
+  ],
+  "ext": "js,mjs,json,html,css",
+  "ignore": [
+    "node_modules/**/*",
+    ".git/**/*",
+    "*.log"
+  ],
+  "verbose": true,
+  "delay": 500,
+  "legacyWatch": true,
+  "pollingInterval": 1000
+}

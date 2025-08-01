@@ -56,12 +56,15 @@ Gib eine kurze Rückmeldung (max. 5 Sätze), die dem Schüler hilft, sich zu ver
 
 // Funktion um Skript zu schreiben
 async function doScript(properties, wordcount, language) {
+  const assistant_id = "asst_0Vd1B39PcqUA3ciqixLCcbcw"; // Ihre Assistant ID, später als Funktionsargument übergebbar 
+  console.log("ID geladen, 11. Version") // nur ein Kommentar und ein weiterer Kommentar
   const prompt = `Schreibe einen verständlichen Erklärungstext, der die folgenden Lernziele vollständig und korrekt abdeckt:
 
   Lernziele:
-  ${properties}
+  ${properties} 
   
   Anforderungen an den Text:
+  - Nimm zuerst die beigelegten Skripte und Fachbücher als Quelle und erst wenn die nicht ergiebig sind andere Quellen.
   - Nutze präzises Fachvokabular, das auch von 18-jährigen Gymnasialschülern verstanden werden kann.
   - Der Text soll fachlich korrekt, sprachlich ansprechend und motivierend geschrieben sein.
   - Gliedere den Text logisch und klar in Abschnitte, die thematisch sinnvoll gegliedert sind.
@@ -80,12 +83,79 @@ async function doScript(properties, wordcount, language) {
   - Vermeide jegliche Einleitung, Erklärung oder Kommentare vor und nach dem HTML.
   - Gib ausschließlich den reinen HTML-Code zurück — keine Formatierungen außerhalb von HTML, keine Backticks.`;
 
-  const response = await openai.chat.completions.create({
-    model: "gpt-4o",
-    messages: [{ role: "user", content: prompt }],
-    temperature: 0.6,
-  });
-  return response.choices[0].message.content;
+try {
+    // Thread erstellen
+    const thread = await openai.beta.threads.create();
+
+    // Message hinzufügen
+    await openai.beta.threads.messages.create(thread.id, {
+      role: "user",
+      content: prompt
+    });
+
+    // Run erstellen und ausführen
+    const run = await openai.beta.threads.runs.createAndPoll(thread.id, {
+      assistant_id: assistant_id
+    });
+
+    if (run.status === 'completed') {
+      // Antwort abrufen
+      const messages = await openai.beta.threads.messages.list(thread.id);
+      const message = messages.data[0];
+      
+      // Text und Annotations verarbeiten
+      let text_content = message.content[0].text.value;
+      const annotations = message.content[0].text.annotations;
+      
+      // Quellenverweise sauber formatieren
+      const source_mapping = {};
+      const sources = [];
+      
+      for (let i = 0; i < annotations.length; i++) {
+        const annotation = annotations[i];
+        if (annotation.file_citation) {
+          const citation = annotation.file_citation;
+          const file_info = await openai.files.retrieve(citation.file_id);
+          const source_num = i + 1;
+          source_mapping[annotation.text] = `[${source_num}]`;
+          sources.push(`[${source_num}] ${file_info.filename}`);
+        }
+      }
+      
+      // Text mit lesbaren Quellenverweisen ersetzen
+      for (const [old_annotation, new_ref] of Object.entries(source_mapping)) {
+        text_content = text_content.replace(old_annotation, new_ref);
+      }
+      
+      // Quellenverzeichnis als HTML hinzufügen (falls Quellen vorhanden)
+      if (sources.length > 0) {
+        const sourceList = sources.map(source => `<li>${source}</li>`).join('\n');
+        text_content += `\n\n<h4>Quellenverzeichnis</h4>\n<ul>\n${sourceList}\n</ul>`;
+      }
+      
+      return text_content;
+      
+    } else {
+      console.error('Run status:', run.status);
+      // Fallback zur alten Methode
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [{ role: "user", content: prompt }],
+        temperature: 0.6,
+      });
+      return response.choices[0].message.content;
+    }
+    
+  } catch (error) {
+    console.error('Vector Store Error:', error);
+    // Fallback zur alten Methode
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.6,
+    });
+    return response.choices[0].message.content;
+  }
 }
 
 // Funktion um Diagramm zu erstellen
@@ -114,7 +184,7 @@ async function doDiagram(scriptText, language) {
   return cleanedCode;
 }
 
-// Funktion um Skript zu schreiben
+// Funktion um Podcast-Text zu schreiben
 async function doPodcastText(scriptText, language) {
   const prompt = `Formuliere einen spannenden Podcast aus dem folgenden Inhalt: 
   
@@ -203,12 +273,12 @@ router.post("/getDiagram", async (req, res) => {
   }
 });
 
-// Route um Podcast-Text zu Ersellen
+// Route um Podcast-Text zu erstellen
 router.post("/getPodcastText", async (req, res) => {
   try {
     const { scriptText, language } = req.body;
     const data = await doPodcastText(scriptText, language);
-    res.json( data );
+    res.json(data);
   } catch (error) {
     console.error("Fehler beim Erstellen des Podcasts:", error);
     res.status(500).send("Fehler beim Erstellen des Podcasts.");

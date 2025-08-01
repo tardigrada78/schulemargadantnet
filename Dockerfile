@@ -4,17 +4,20 @@ FROM node:21-alpine
 # Arbeitsverzeichnis im Container erstellen
 WORKDIR /app
 
-# Package.json und package-lock.json kopieren (falls vorhanden)
+# Package files kopieren
 COPY package*.json ./
 
-# Dependencies installieren
+# Dependencies installieren (inklusive nodemon)
 RUN npm install
 
-# Projektdateien kopieren
+# nodemon global installieren für Live-Reload
+RUN npm install -g nodemon
+
+# Alle Dateien kopieren
 COPY . .
 
-# Port freigeben (standardmäßig 3000, anpassen falls nötig)
+# Port freigeben
 EXPOSE 3000
 
-# Startbefehl definieren
+# Standard Command (wird von docker-compose überschrieben)
 CMD ["npm", "start"]

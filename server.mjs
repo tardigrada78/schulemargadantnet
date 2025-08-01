@@ -33,6 +33,15 @@ app.use("/feedback", feedback);
 // add new routes here
 
 
+app.get('/test-tutor', async (req, res) => {
+    console.log("Test-Route wurde aufgerufen");
+    await doScript("test properties", 100, "de");
+    res.send("Test completed - check console");
+});
+
+console.log("Server gestartet um:", new Date().toISOString());
+
+
 app.listen(3000, () => {
   console.log("Server läuft auf Port 3000");
 });

@@ -6,12 +6,17 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      # Für Development: Live-Reload
-      - .:/app
+      # Live-Reload für alle Dateien (Windows-kompatibel)
+      - type: bind
+        source: .
+        target: /app
       - /app/node_modules
     environment:
       - NODE_ENV=development
     env_file:
       - .env
-    # Optional: Container neustarten falls er crasht
-    restart: unless-stopped
+    # Automatischer Neustart bei Änderungen
+    command: npm run dev
+    # Container logs anzeigen
+    stdin_open: true
+    tty: true
