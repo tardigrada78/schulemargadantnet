@@ -29,7 +29,14 @@
         Sprache (Deutsch)</option>
       <option value="English">English</option>
     </select>
-    <p>Wählen Sie eines, oder mit der CTRL-Taste mehrere Lernziele aus:</p>
+    <br><br>
+    <label for="contextSelect">Kontext / hinterlegte Unterlagen:</label>
+    <select id="contextSelect" name="contextSelect">
+      <option value="kein">nur Allgmeinwissen der KI</option>
+      <option value="asst_40i6l1Ujl5vkflEIXhxWp3N3">Campbell Biologie 10</option>
+      <option value="asst_0Vd1B39PcqUA3ciqixLCcbcw">Skripte von D. Margadant (FMS, Gym; 108 Dateien)</option>
+    </select>
+    <p>Wählen Sie ein Lernziel aus (mittels CTRL- und SHIFT-Taste mehrere):</p>
     <select id="objectivesSelect" multiple size="10"></select><br /><br />
     <button id="generateQuestion">Erstelle eine Frage</button>
     <br /><br />
@@ -76,6 +83,10 @@ Sie können die Fachbegriffe Metamorphose, Holometabolie, Hemimetabolie, Larve u
     let language = document.getElementById("languageSelect").value;
     document.getElementById("languageSelect").addEventListener("change", function () {
       language = this.value;
+    });
+    let assistant_id = document.getElementById("contextSelect").value;
+    document.getElementById("contextSelect").addEventListener("change", function () {
+      assistant_id = this.value;
     });
     mermaid.initialize({ startOnLoad: false });
 
@@ -144,12 +155,13 @@ Sie können die Fachbegriffe Metamorphose, Holometabolie, Hemimetabolie, Larve u
           document.getElementById(
             "progressDiv"
           ).innerHTML = `<p>⚙️ Erstelle Skript mit erklärendem Text zu den Lernzielen...</p>`;
+          // console.log("Kontext:", assistant_id)
           document.getElementById("podcastDiv").innerHTML = ``;
           document.getElementById("mermaid").innerHTML = ``;
           let responseScript = await fetch(`/tutor/getScript`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ properties, wordcount, language }),
+            body: JSON.stringify({ properties, wordcount, language, assistant_id }),
           });
           let resultScript = await responseScript.json();
           let scriptText = resultScript.text;
@@ -226,7 +238,7 @@ Sie können die Fachbegriffe Metamorphose, Holometabolie, Hemimetabolie, Larve u
               });
           });
         } catch (error) {
-          console.error("Fehler beim Generieren des Skripts:", error);
+          console.error("Fehler beim Generieren des Skripts:", assistant_id, error);
           document.getElementById("progressDiv").innerHTML = `<p>❌ Fehler beim Generieren des Skripts.</p>`;
         } finally {
           document.getElementById("progressDiv").innerHTML = ``;

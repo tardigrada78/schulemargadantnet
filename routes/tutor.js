@@ -55,9 +55,8 @@ Gib eine kurze Rückmeldung (max. 5 Sätze), die dem Schüler hilft, sich zu ver
 }
 
 // Funktion um Skript zu schreiben
-async function doScript(properties, wordcount, language) {
-  const assistant_id = "asst_0Vd1B39PcqUA3ciqixLCcbcw"; // Ihre Assistant ID, später als Funktionsargument übergebbar 
-  console.log("ID geladen, 11. Version") // nur ein Kommentar und ein weiterer Kommentar
+async function doScript(properties, wordcount, language, assistant_id) {
+  console.log("Kontext: ", assistant_id)
   const prompt = `Schreibe einen verständlichen Erklärungstext, der die folgenden Lernziele vollständig und korrekt abdeckt:
 
   Lernziele:
@@ -83,78 +82,82 @@ async function doScript(properties, wordcount, language) {
   - Vermeide jegliche Einleitung, Erklärung oder Kommentare vor und nach dem HTML.
   - Gib ausschließlich den reinen HTML-Code zurück — keine Formatierungen außerhalb von HTML, keine Backticks.`;
 
-try {
-    // Thread erstellen
-    const thread = await openai.beta.threads.create();
-
-    // Message hinzufügen
-    await openai.beta.threads.messages.create(thread.id, {
-      role: "user",
-      content: prompt
-    });
-
-    // Run erstellen und ausführen
-    const run = await openai.beta.threads.runs.createAndPoll(thread.id, {
-      assistant_id: assistant_id
-    });
-
-    if (run.status === 'completed') {
-      // Antwort abrufen
-      const messages = await openai.beta.threads.messages.list(thread.id);
-      const message = messages.data[0];
-      
-      // Text und Annotations verarbeiten
-      let text_content = message.content[0].text.value;
-      const annotations = message.content[0].text.annotations;
-      
-      // Quellenverweise sauber formatieren
-      const source_mapping = {};
-      const sources = [];
-      
-      for (let i = 0; i < annotations.length; i++) {
-        const annotation = annotations[i];
-        if (annotation.file_citation) {
-          const citation = annotation.file_citation;
-          const file_info = await openai.files.retrieve(citation.file_id);
-          const source_num = i + 1;
-          source_mapping[annotation.text] = `[${source_num}]`;
-          sources.push(`[${source_num}] ${file_info.filename}`);
-        }
-      }
-      
-      // Text mit lesbaren Quellenverweisen ersetzen
-      for (const [old_annotation, new_ref] of Object.entries(source_mapping)) {
-        text_content = text_content.replace(old_annotation, new_ref);
-      }
-      
-      // Quellenverzeichnis als HTML hinzufügen (falls Quellen vorhanden)
-      if (sources.length > 0) {
-        const sourceList = sources.map(source => `<li>${source}</li>`).join('\n');
-        text_content += `\n\n<h4>Quellenverzeichnis</h4>\n<ul>\n${sourceList}\n</ul>`;
-      }
-      
-      return text_content;
-      
-    } else {
-      console.error('Run status:', run.status);
-      // Fallback zur alten Methode
-      const response = await openai.chat.completions.create({
-        model: "gpt-4o",
-        messages: [{ role: "user", content: prompt }],
-        temperature: 0.6,
-      });
-      return response.choices[0].message.content;
-    }
-    
-  } catch (error) {
-    console.error('Vector Store Error:', error);
-    // Fallback zur alten Methode
+  // Variante ohne Kontext
+  if (assistant_id == "kein") {
     const response = await openai.chat.completions.create({
       model: "gpt-4o",
       messages: [{ role: "user", content: prompt }],
       temperature: 0.6,
     });
     return response.choices[0].message.content;
+  }
+  // Variante mit Kontext
+  else {
+    try {
+      const thread = await openai.beta.threads.create();
+      await openai.beta.threads.messages.create(thread.id, {
+        role: "user",
+        content: prompt
+      });
+      const run = await openai.beta.threads.runs.createAndPoll(thread.id, {
+        assistant_id: assistant_id
+      });
+      if (run.status === 'completed') {
+        const messages = await openai.beta.threads.messages.list(thread.id);
+        const message = messages.data[0];
+        let text_content = message.content[0].text.value;
+        const annotations = message.content[0].text.annotations;
+        const source_mapping = {};
+        const sources = [];
+        const unique_sources = new Map();
+        for (let i = 0; i < annotations.length; i++) {
+          const annotation = annotations[i];
+          if (annotation.file_citation) {
+            const citation = annotation.file_citation;
+            const file_info = await openai.files.retrieve(citation.file_id);
+            const source_key = file_info.filename;
+            if (!unique_sources.has(source_key)) {
+              const source_num = unique_sources.size + 1;
+              unique_sources.set(source_key, source_num);
+              sources.push(`[${source_num}] ${file_info.filename}`);
+            }
+            const source_num = unique_sources.get(source_key);
+            source_mapping[annotation.text] = `[${source_num}]`;
+          }
+        }
+        for (const [old_annotation, new_ref] of Object.entries(source_mapping)) {
+          text_content = text_content.replace(old_annotation, new_ref);
+        }
+        text_content = text_content.replace(/【\d+:\d+†[^】]*】/g, (match) => {
+          const filename_match = match.match(/†([^】]+)】/);
+          if (filename_match) {
+            const filename = filename_match[1];
+            if (!unique_sources.has(filename)) {
+              const source_num = unique_sources.size + 1;
+              unique_sources.set(filename, source_num);
+              sources.push(`[${source_num}] ${filename}`);
+              return `[${source_num}]`;
+            } else {
+              const source_num = unique_sources.get(filename);
+              return `[${source_num}]`;
+            }
+          }
+          return '';
+        });
+        text_content = text_content.replace(/\*\*(.*?)\*\*/g, '<h4>$1</h4>');
+        if (sources.length > 0) {
+          const sourceList = sources.map(source => `<li>${source}</li>`).join('\n');
+          text_content += `\n\n<h4>Quellenverzeichnis</h4>\n<ul>\n${sourceList}\n</ul>`;
+        }
+        return text_content;
+      } else {
+        console.error('Run status:', run.status);
+        return "error with vector store\n\n"
+      }
+    } catch (error) {
+      console.error('Vector Store Error:', error);
+      return "error with vector store\n\n"
+    }
   }
 }
 
@@ -252,8 +255,8 @@ router.post("/checkAnswer", async (req, res) => {
 // Route um Skript zu schreiben
 router.post("/getScript", async (req, res) => {
   try {
-    const { properties, wordcount, language } = req.body;
-    const result = await doScript(properties, wordcount, language);
+    const { properties, wordcount, language, assistant_id } = req.body;
+    const result = await doScript(properties, wordcount, language, assistant_id);
     res.json({ text: result });
   } catch (error) {
     console.error("Fehler beim Erstellen des Skripts:", error);
