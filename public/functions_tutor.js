@@ -20,7 +20,7 @@ export function processObjectives() {
 }
 
 // Funktion um Antwort zu überprüfen
-export async function checkAnswer(answerText, questionText, language) {
+export async function checkAnswer(answerText, questionText, language, assistant_id) {
   document.getElementById("progressDiv").innerHTML = `<p>⚙️ Überprüfe Antwort...</p>`;
   try {
     let response = await fetch(`/tutor/checkAnswer`, {
@@ -30,6 +30,7 @@ export async function checkAnswer(answerText, questionText, language) {
         answer: answerText,
         question: questionText,
         language: language,
+        assistant_id: assistant_id
       }),
     });
     let result = await response.json();

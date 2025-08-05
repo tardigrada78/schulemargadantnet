@@ -3,85 +3,10 @@ const router = Router();
 import OpenAI from "openai";
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-// Funktion um Frage zu erstellen
-async function doQuestion(properties, language) {
-  const prompt = `Erstelle eine anspruchsvolle Prüfungsfrage, die in etwa 5 Minuten beantwortet werden kann.
 
-Zielgruppe: 18-jährige Schüler eines Gymnasiums.
-
-Die Frage muss die folgenden Lernziele sinnvoll und inhaltlich verknüpfen:
-
-Lernziele:
-${properties}
-
-### WICHTIG:
-- **Erstelle genau EINE zusammenhängende Frage, die die angegebenen Lernziele kombiniert.**  
-- **Die Frage soll ein tiefes Verständnis erfordern und thematisch logisch aufgebaut sein.**  
-- **Vermeide isolierte Teilfragen oder Aufzählungen.** Formuliere die Frage so, dass alle Lernziele aufeinander aufbauen oder zusammenhängen.  
-- **Formuliere die Frage in der Sprache: ${language}.** Achte darauf, dass die gesamte Ausgabe ausschließlich in dieser Sprache erfolgt.  
-- **Gib nur die Frage zurück – ohne Erklärungen, Einleitungen oder Hinweise zur Antwort.**`;
-
-  const response = await openai.chat.completions.create({
-    model: "gpt-4o",
-    messages: [{ role: "user", content: prompt }],
-    temperature: 0.6,
-  });
-  return response.choices[0].message.content;
-}
-
-// Funktion um eigene Antwort zu überprüfen
-async function checkAIAnswer(answerText, questionText, language) {
-  console.log(language);
-  const prompt = `Du bist ein Lehrer. Bewerte bitte die folgende Schülerantwort auf die gestellte Frage.
-Frage: ${questionText}
-
-Schülerantwort: ${answerText}
-
-Beurteile die Antwort fair, sachlich und präzise:
-- Ist die Antwort inhaltlich korrekt?
-- Welche Aspekte fehlen oder sind unvollständig?
-- Falls falsch, erkläre warum und was richtig wäre.
-- Gib nur Rückmeldungen auf die Antwort, keine allgemeinen Lerntipps. 
-- **Formuliere die Antwort in der Sprache: ${language}.** Achte darauf, dass die gesamte Ausgabe ausschließlich in dieser Sprache erfolgt.  
-
-Gib eine kurze Rückmeldung (max. 5 Sätze), die dem Schüler hilft, sich zu verbessern. Sei wohlwollend und motivierend.`;
-
-  const response = await openai.chat.completions.create({
-    model: "gpt-4o",
-    messages: [{ role: "user", content: prompt }],
-    temperature: 0.4, // Weniger Kreativität, mehr Präzision
-  });
-  return response.choices[0].message.content;
-}
-
-// Funktion um Skript zu schreiben
-async function doScript(properties, wordcount, language, assistant_id) {
-  console.log("Kontext: ", assistant_id)
-  const prompt = `Schreibe einen verständlichen Erklärungstext, der die folgenden Lernziele vollständig und korrekt abdeckt:
-
-  Lernziele:
-  ${properties} 
-  
-  Anforderungen an den Text:
-  - Nimm zuerst die beigelegten Skripte und Fachbücher als Quelle und erst wenn die nicht ergiebig sind andere Quellen.
-  - Nutze präzises Fachvokabular, das auch von 18-jährigen Gymnasialschülern verstanden werden kann.
-  - Der Text soll fachlich korrekt, sprachlich ansprechend und motivierend geschrieben sein.
-  - Gliedere den Text logisch und klar in Abschnitte, die thematisch sinnvoll gegliedert sind.
-  - Nutze passende Zwischenüberschriften, um die Struktur deutlich zu machen.
-  - Ziel: Der Text soll inhaltlich fundiert sein, aber so formuliert, dass Schülerinnen und Schüler ihn eigenständig verstehen können.
-  - **Der Text soll möglichst genau ${wordcount} Wörter umfassen. Akzeptable Abweichung: +/- 5%.**
-  - **Falls der Text nach der ersten Erstellung zu kurz oder zu lang ist, passe ihn bitte an, um die Vorgabe von ${wordcount} Wörtern einzuhalten.**  
-  - **Formuliere den gesamten Text in der Sprache: ${language}.** Achte darauf, dass die gesamte Ausgabe ausschließlich in dieser Sprache erfolgt.  
-  
-  WICHTIG:
-  - Gib den Text ausschließlich als valides HTML zurück, das direkt in eine Webseite oder ein Word-Dokument eingefügt werden kann.
-  - Verwende dabei nur folgende HTML-Elemente:
-    - <h4> für Zwischenüberschriften
-    - <p> für Absätze
-    - <ul> und <ol> für Aufzählungen, falls sinnvoll
-  - Vermeide jegliche Einleitung, Erklärung oder Kommentare vor und nach dem HTML.
-  - Gib ausschließlich den reinen HTML-Code zurück — keine Formatierungen außerhalb von HTML, keine Backticks.`;
-
+// Funktion für LLM-Anfrage (mit und ohne Kontext)
+async function LLMtext(assistant_id, prompt) {
+  console.log("In LLMtext(): ", assistant_id)
   // Variante ohne Kontext
   if (assistant_id == "kein") {
     const response = await openai.chat.completions.create({
@@ -161,6 +86,91 @@ async function doScript(properties, wordcount, language, assistant_id) {
   }
 }
 
+
+// Funktion um Frage zu erstellen
+async function doQuestion(properties, language, assistant_id) {
+  const prompt = `Erstelle eine anspruchsvolle Prüfungsfrage, die in maximal 5 Minuten beantwortet werden kann.
+
+Zielgruppe: 18-jährige Schüler eines Gymnasiums.
+
+Die Frage muss die folgenden Lernziele sinnvoll und inhaltlich verknüpfen:
+
+Lernziele:
+${properties}
+
+### WICHTIG:
+- Nimm zuerst die beigelegten Skripte und Fachbücher als Quelle und erst wenn die nicht ergiebig sind andere Quellen.
+- **Erstelle genau EINE zusammenhängende Frage, die die angegebenen Lernziele kombiniert.**  
+- **Die Frage soll ein tiefes Verständnis erfordern und thematisch logisch aufgebaut sein.**  
+- **Vermeide isolierte Teilfragen oder Aufzählungen.** Formuliere die Frage so, dass alle Lernziele aufeinander aufbauen oder zusammenhängen.  
+- **Formuliere die Frage in der Sprache: ${language}.** Achte darauf, dass die gesamte Ausgabe ausschließlich in dieser Sprache erfolgt.  
+- **Gib nur die Frage zurück – ohne Erklärungen, Einleitungen oder Hinweise zur Antwort.**`;
+  const result = await LLMtext(assistant_id, prompt);
+  return result
+}
+
+
+// Funktion um eigene Antwort zu überprüfen
+async function checkAIAnswer(answerText, questionText, language, assistant_id) {
+  console.log(language);
+  const prompt = `Du bist ein Lehrer. Bewerte bitte die folgende Schülerantwort auf die gestellte Frage.
+Frage: ${questionText}
+
+Schülerantwort: ${answerText}
+
+Beurteile die Antwort fair, sachlich und präzise:
+- Nimm zuerst die beigelegten Skripte und Fachbücher als Quelle und erst wenn die nicht ergiebig sind andere Quellen.
+- Ist die Antwort inhaltlich korrekt?
+- Welche Aspekte fehlen oder sind unvollständig?
+- Falls falsch, erkläre warum und was richtig wäre.
+- Gib nur Rückmeldungen auf die Antwort, keine allgemeinen Lerntipps. 
+- **Formuliere die Antwort in der Sprache: ${language}.** Achte darauf, dass die gesamte Ausgabe ausschließlich in dieser Sprache erfolgt.  
+
+Gib eine kurze Rückmeldung (max. 5 Sätze), die dem Schüler hilft, sich zu verbessern. Sei wohlwollend und motivierend.`;
+
+  const result = await LLMtext(assistant_id, prompt);
+  return result
+
+  // const response = await openai.chat.completions.create({
+  //   model: "gpt-4o",
+  //   messages: [{ role: "user", content: prompt }],
+  //   temperature: 0.4, // Weniger Kreativität, mehr Präzision
+  // });
+  // return response.choices[0].message.content;
+}
+
+
+// Funktion um Skript zu schreiben
+async function doScript(properties, wordcount, language, assistant_id) {
+  const prompt = `Schreibe einen verständlichen Erklärungstext, der die folgenden Lernziele vollständig und korrekt abdeckt:
+
+  Lernziele:
+  ${properties} 
+  
+  Anforderungen an den Text:
+  - Nimm zuerst die beigelegten Skripte und Fachbücher als Quelle und erst wenn die nicht ergiebig sind andere Quellen.
+  - Nutze präzises Fachvokabular, das auch von 18-jährigen Gymnasialschülern verstanden werden kann.
+  - Der Text soll fachlich korrekt, sprachlich ansprechend und motivierend geschrieben sein.
+  - Gliedere den Text logisch und klar in Abschnitte, die thematisch sinnvoll gegliedert sind.
+  - Nutze passende Zwischenüberschriften, um die Struktur deutlich zu machen.
+  - Ziel: Der Text soll inhaltlich fundiert sein, aber so formuliert, dass Schülerinnen und Schüler ihn eigenständig verstehen können.
+  - **Der Text soll möglichst genau ${wordcount} Wörter umfassen. Akzeptable Abweichung: +/- 5%.**
+  - **Falls der Text nach der ersten Erstellung zu kurz oder zu lang ist, passe ihn bitte an, um die Vorgabe von ${wordcount} Wörtern einzuhalten.**  
+  - **Formuliere den gesamten Text in der Sprache: ${language}.** Achte darauf, dass die gesamte Ausgabe ausschließlich in dieser Sprache erfolgt.  
+  
+  WICHTIG:
+  - Gib den Text ausschließlich als valides HTML zurück, das direkt in eine Webseite oder ein Word-Dokument eingefügt werden kann.
+  - Verwende dabei nur folgende HTML-Elemente:
+    - <h4> für Zwischenüberschriften
+    - <p> für Absätze
+    - <ul> und <ol> für Aufzählungen, falls sinnvoll
+  - Vermeide jegliche Einleitung, Erklärung oder Kommentare vor und nach dem HTML.
+  - Gib ausschließlich den reinen HTML-Code zurück — keine Formatierungen außerhalb von HTML, keine Backticks.`;
+  const result = await LLMtext(assistant_id, prompt);
+  return result
+}
+
+
 // Funktion um Diagramm zu erstellen
 async function doDiagram(scriptText, language) {
   const prompt = `Erstelle ein präzises, verständliches Flowchart-Diagramm basierend auf folgendem Text:
@@ -231,8 +241,8 @@ async function doPodcastAudio(podcastText) {
 // Route für Frage erstellen
 router.post("/getQuestion", async (req, res) => {
   try {
-    const { properties, language } = req.body;
-    const result = await doQuestion(properties, language);
+    const { properties, language, assistant_id } = req.body;
+    const result = await doQuestion(properties, language, assistant_id);
     res.json({ question: result });
   } catch (error) {
     console.error("Fehler beim Erstellen der Frage:", error);
@@ -243,8 +253,8 @@ router.post("/getQuestion", async (req, res) => {
 // Route für Antwort überprüfen
 router.post("/checkAnswer", async (req, res) => {
   try {
-    const { answer, question, language } = req.body;
-    const feedback = await checkAIAnswer(answer, question, language);
+    const { answer, question, language, assistant_id } = req.body;
+    const feedback = await checkAIAnswer(answer, question, language, assistant_id);
     res.json({ feedback });
   } catch (error) {
     console.error("Fehler beim Überprüfen der Antwort:", error);

@@ -99,13 +99,14 @@ Sie können die Fachbegriffe Metamorphose, Holometabolie, Hemimetabolie, Larve u
       } else {
         try {
           // KI-Frage erstellen
+          console.log("Frage:", assistant_id)
           document.getElementById("progressDiv").innerHTML = `<p>⚙️ Erstelle Frage aus den Lernzielen...</p>`;
           document.getElementById("podcastDiv").innerHTML = ``;
           document.getElementById("mermaid").innerHTML = ``;
           let responseQuestion = await fetch(`/tutor/getQuestion`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ properties, language }),
+            body: JSON.stringify({ properties, language, assistant_id }),
           });
           let resultQuestion = await responseQuestion.json();
           let questionText = resultQuestion.question;
@@ -120,7 +121,7 @@ Sie können die Fachbegriffe Metamorphose, Holometabolie, Hemimetabolie, Larve u
           document.getElementById("getAnswer").addEventListener("click", async function () {
             try {
               const answerText = document.getElementById("answerText").value;
-              await checkAnswer(answerText, questionText, language);
+              await checkAnswer(answerText, questionText, language, assistant_id);
             } catch (error) {
               console.error("Fehler beim Überprüfen der Antwort:", error);
               document.getElementById("progressDiv").innerHTML = `<p>❌ Fehler beim Überprüfen der Antwort.</p>`;
@@ -155,7 +156,6 @@ Sie können die Fachbegriffe Metamorphose, Holometabolie, Hemimetabolie, Larve u
           document.getElementById(
             "progressDiv"
           ).innerHTML = `<p>⚙️ Erstelle Skript mit erklärendem Text zu den Lernzielen...</p>`;
-          // console.log("Kontext:", assistant_id)
           document.getElementById("podcastDiv").innerHTML = ``;
           document.getElementById("mermaid").innerHTML = ``;
           let responseScript = await fetch(`/tutor/getScript`, {
