@@ -69,15 +69,14 @@ async function getPicture(story) {
 
     Vorgaben:
     - Stil: Traditionelle chinesische Tuschmalerei (Shuǐmòhuà) modern interpretiert – fließende Pinselstriche, aber mit zeitgenössischen Elementen und Perspektiven.
-    - Charaktere: Elegante, stilisierte chinesische Personen mit expressiven Gesichtern, traditionelle Proportionen aber moderne Kleidung oder Mischung aus historisch-modernen Elementen.
     - Linienführung: Charakteristische schwarze Tuschlinien verschiedener Stärken, von feinen Details bis zu kräftigen, ausdrucksstarken Konturen.
     - Farbpalette: Zurückhaltende, aber ausdrucksvolle Farben – Tuschechwarz, warme Erdtöne, sanfte Akzente in Rot, Gold oder Blau, mit modernen Farbverläufen.
     - Komposition: Asymmetrische Balance nach klassischen chinesischen Prinzipien, aber mit modernen räumlichen Konzepten und Perspektiven.
-    - Umgebung: Mischung aus traditionellen chinesischen Elementen (Bambus, Berge, Wasser) und modernen urbanen Details (Hochhäuser im Nebel, moderne Architektur mit traditionellen Dächern).
     - Textur: Sichtbare Pinselstruktur und Papierqualität, aber digital verfeinert mit modernen Schattierungstechniken.
     - Atmosphäre: Poetische Stimmung mit Nebel, sanften Übergängen und dem charakteristischen "leeren Raum" der chinesischen Malerei, aber mit modernen Lichtsetzungen.
     - Keine sichtbaren Texte, Kalligrafie nur als dekoratives Element falls passend.
-    - Zeitgenössische Interpretation: Moderne Gegenstände oder Situationen nahtlos in den traditionellen Malstil integriert.`;
+    - Zeitgenössische Interpretation: Moderne Gegenstände oder Situationen nahtlos in den traditionellen Malstil integriert.
+    - Charaktere und Umgebung: Zeichne nur Tiere und Personen welche in der Geschichte vorkommen. Setze die in der Geschichte erwähnte Umgebung in eine modernes chinesische Variante.`;
 
   try {
     const response = await openai.images.generate({
