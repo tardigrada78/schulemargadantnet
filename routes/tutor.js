@@ -10,7 +10,7 @@ async function LLMtext(assistant_id, prompt) {
   // Variante ohne Kontext
   if (assistant_id == "kein") {
     const response = await openai.chat.completions.create({
-      model: "gpt-4o",
+      model: "gpt-4.1",
       messages: [{ role: "user", content: prompt }],
       temperature: 0.6,
     });
@@ -130,13 +130,6 @@ Gib eine kurze Rückmeldung (max. 5 Sätze), die dem Schüler hilft, sich zu ver
 
   const result = await LLMtext(assistant_id, prompt);
   return result
-
-  // const response = await openai.chat.completions.create({
-  //   model: "gpt-4o",
-  //   messages: [{ role: "user", content: prompt }],
-  //   temperature: 0.4, // Weniger Kreativität, mehr Präzision
-  // });
-  // return response.choices[0].message.content;
 }
 
 
@@ -179,6 +172,7 @@ async function doDiagram(scriptText, language) {
   
   ### WICHTIG:
   - Nutze ausschließlich das Mermaid-Format (kein Markdown, keine Kommentare, keine zusätzlichen Erklärungen).
+  - Verwende für den Text keine Klammern, nur Stichworte.
   - Beginne den Code direkt mit "flowchart TD", ohne Einleitungen oder Beschreibungen.
   - Strukturiere das Diagramm so, dass es logisch aufgebaut und verständlich ist.
   - Verwende sinnvolle Verbindungen zwischen den Knoten.
@@ -187,7 +181,7 @@ async function doDiagram(scriptText, language) {
   `;
 
   const response = await openai.chat.completions.create({
-    model: "gpt-4o",
+    model: "gpt-4.1",
     messages: [{ role: "user", content: prompt }],
     temperature: 0.6,
   });
@@ -211,7 +205,7 @@ async function doPodcastText(scriptText, language) {
 `;
 
   const response = await openai.chat.completions.create({
-    model: "gpt-4o",
+    model: "gpt-4.1-nano",
     messages: [{ role: "user", content: prompt }],
     temperature: 0.6,
   });

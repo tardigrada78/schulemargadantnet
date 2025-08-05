@@ -20,6 +20,7 @@
   <div id="resultDiv"></div>
   <br />
   <div id="mermaid" style="text-align: center;"></div>
+  <div id="mermaidCode"></div>
   <div id="invisible" style="display: none">
     <h2>Erfasste Lernziele</h2>
     <label for="languageSelect">Sprache für KI-Inhalte:</label>
@@ -30,7 +31,9 @@
       <option value="English">English</option>
     </select>
     <br><br>
-    <label for="contextSelect">Kontext / hinterlegte Unterlagen:</label>
+    <label for="contextSelect">Kontext: <div class="hover"><span>i</span><span class="hover-text">Hintergrundwissen für
+          die KI. <br>Zur Auswahl
+          stehen Schulbücher oder die Schulskripte des Grundlagenfaches Biologie.</span></div></label>
     <select id="contextSelect" name="contextSelect">
       <option value="kein">nur Allgmeinwissen der KI</option>
       <option value="asst_40i6l1Ujl5vkflEIXhxWp3N3">Campbell Biologie 10</option>
@@ -199,6 +202,8 @@ Sie können die Fachbegriffe Metamorphose, Holometabolie, Hemimetabolie, Larve u
               let diagramCode = await responseDiagram.text();
               console.log(diagramCode);
               openMermaidLive(diagramCode);
+              console.log(`<p>Kopieren Sie den untenstehenden Code und fügen Sie ihn in die <a href="https://mermaid.live/" target="_blank">Mermaid-Website</a> ein:</p><pre>${diagramCode}</pre>`);
+              document.getElementById("mermaidCode").innerHTML = `<p>Kopieren Sie den untenstehenden Code und fügen Sie ihn in die <a href="https://mermaid.live/" target="_blank">Mermaid-Website</a> ein, um das Diagramm grösser zu sehen und anzupassen:</p><pre>${diagramCode}</pre>`;
             } catch (error) {
               console.error("Fehler beim Generieren des Diagramms:", error);
               document.getElementById("progressDiv").innerHTML = `<p>❌ Fehler beim Generieren des Diagramms.</p>`;

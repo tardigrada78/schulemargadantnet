@@ -142,22 +142,17 @@ export function generateDocxElementsFromHTML(htmlString) {
   return docxElements;
 }
 
+
 // Funktion um Mermaid-Diagramm zu erstellen
 export async function openMermaidLive(mermaidCode) {
   if (!mermaidCode || typeof mermaidCode !== "string") {
     alert("❌ Fehler: Kein gültiger Diagramm-Code erhalten.");
     return;
   }
-
   mermaidCode = mermaidCode.replace(/```mermaid|```/g, "").trim();
   const graphContainer = document.getElementById("mermaid");
-
-  // Erstelle frisches Element mit class="mermaid"
   graphContainer.innerHTML = `<div class="mermaid">${mermaidCode}</div>`;
-
-  // Nur das neue innere Element initialisieren
   const innerMermaidDiv = graphContainer.querySelector(".mermaid");
-
   try {
     await mermaid.run({ nodes: [innerMermaidDiv] });
   } catch (error) {
@@ -165,6 +160,7 @@ export async function openMermaidLive(mermaidCode) {
     alert("❌ Fehler beim Rendern des Diagramms: " + error.message);
   }
 }
+
 
 // Funktion zum Generieren eines PDF-Dokuments aus HTML-Inhalt
 export async function generatePdfFile(htmlString, selected) {
