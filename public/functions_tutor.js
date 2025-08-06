@@ -75,6 +75,7 @@ export async function generateWordFile(textData, selected) {
   saveAs(blob, "Skript.docx");
 }
 
+
 // Funktion um HTML-String in docx.js Paragraphen umzuwandeln
 export function generateDocxElementsFromHTML(htmlString) {
   const parser = new DOMParser();
@@ -162,38 +163,6 @@ export async function openMermaidLive(mermaidCode) {
 }
 
 
-// Funktion zum Generieren eines PDF-Dokuments aus HTML-Inhalt
-export async function generatePdfFile(htmlString, selected) {
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(htmlString, "text/html");
-  const contentDiv = document.createElement("div");
-  const styleElement = document.createElement("style");
-  styleElement.textContent = `
-    body { background: white; color: black; }
-    h1, h2, h3, h4, h5, h6 { color: orange; }
-    p, ul, ol, li { color: black; }
-  `;
-  contentDiv.appendChild(styleElement);
-  const titleElement = document.createElement("h1");
-  titleElement.textContent = "Skript zu den Lernzielen";
-  contentDiv.appendChild(titleElement);
-  const selectedList = document.createElement("ul");
-  selected.forEach((item) => {
-    const li = document.createElement("li");
-    li.textContent = item;
-    selectedList.appendChild(li);
-  });
-  contentDiv.appendChild(selectedList);
-  contentDiv.innerHTML += doc.body.innerHTML;
-  const options = {
-    margin: 0.5,
-    filename: "Skript.pdf",
-    html2canvas: { scale: 2 },
-    jsPDF: { unit: "in", format: "a4", orientation: "portrait" },
-  };
-  await html2pdf().from(contentDiv).set(options).save();
-}
-
 // Funktion um Sprachausgabe zu generieren
 export async function generatePodcastAudio(podcastText) {
   let response = await fetch("/tutor/getPodcastAudio", {
@@ -209,4 +178,185 @@ export async function generatePodcastAudio(podcastText) {
   }
   let data = await response.json();
   return data.speech;
+}
+
+
+// Verbesserte Funktion zum Generieren eines PDF-Dokuments aus HTML-Inhalt
+export async function generatePdfFile(htmlString, selected) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(htmlString, "text/html");
+  const contentDiv = document.createElement("div");
+  
+  // Umfassende PDF-spezifische Styles
+  const styleElement = document.createElement("style");
+  styleElement.textContent = `
+    @page {
+      margin: 2cm;
+      size: A4;
+    }
+    
+    body { 
+      background: white !important; 
+      color: black !important; 
+      font-family: Arial, sans-serif;
+      font-size: 12pt;
+      line-height: 1.6;
+      margin: 0;
+      padding: 0;
+    }
+    
+    .pdf-title {
+      background-color: #ff6600 !important;
+      color: white !important;
+      padding: 20px !important;
+      margin: 0 0 20px 0 !important;
+      text-align: center !important;
+      font-size: 24pt !important;
+      font-weight: bold !important;
+      border-radius: 8px !important;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+    
+    .pdf-objectives {
+      background-color: #f5f5f5 !important;
+      border-left: 4px solid #ff6600 !important;
+      padding: 15px !important;
+      margin: 20px 0 !important;
+      border-radius: 4px !important;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+    
+    .pdf-objectives h2 {
+      color: #ff6600 !important;
+      margin-top: 0 !important;
+      font-size: 16pt !important;
+    }
+    
+    .pdf-objectives ul {
+      margin: 10px 0 !important;
+      padding-left: 20px !important;
+    }
+    
+    .pdf-objectives li {
+      color: #333 !important;
+      margin: 8px 0 !important;
+      list-style-type: disc !important;
+      list-style-position: outside !important;
+    }
+    
+    h1, h2, h3, h4, h5, h6 { 
+      color: #ff6600 !important; 
+      margin: 20px 0 10px 0 !important;
+      page-break-after: avoid !important;
+    }
+    
+    h1 { font-size: 20pt !important; }
+    h2 { font-size: 18pt !important; }
+    h3 { font-size: 16pt !important; }
+    h4 { font-size: 14pt !important; }
+    
+    p { 
+      color: black !important; 
+      margin: 10px 0 !important;
+      text-align: justify !important;
+      orphans: 3;
+      widows: 3;
+    }
+    
+    ul, ol { 
+      color: black !important; 
+      margin: 10px 0 !important;
+      padding-left: 20px !important;
+    }
+    
+    li { 
+      color: black !important; 
+      margin: 5px 0 !important;
+      list-style-type: disc !important;
+      list-style-position: outside !important;
+    }
+    
+    ol li {
+      list-style-type: decimal !important;
+    }
+    
+    strong, b {
+      color: #ff6600 !important;
+      font-weight: bold !important;
+    }
+    
+    em, i {
+      font-style: italic !important;
+    }
+    
+    /* Verhindert Seitenumbrüche in ungünstigen Bereichen */
+    .pdf-content {
+      page-break-inside: avoid !important;
+    }
+  `;
+  
+  contentDiv.appendChild(styleElement);
+  
+  // Titel mit Orange-Hintergrund
+  const titleElement = document.createElement("div");
+  titleElement.className = "pdf-title";
+  titleElement.textContent = "Skript zu den Lernzielen";
+  contentDiv.appendChild(titleElement);
+  
+  // Lernziele-Bereich mit Hintergrund
+  const objectivesContainer = document.createElement("div");
+  objectivesContainer.className = "pdf-objectives";
+  
+  const objectivesTitle = document.createElement("h2");
+  objectivesTitle.textContent = "Erfasste Lernziele";
+  objectivesContainer.appendChild(objectivesTitle);
+  
+  const selectedList = document.createElement("ul");
+  selected.forEach((item) => {
+    const li = document.createElement("li");
+    li.textContent = item;
+    selectedList.appendChild(li);
+  });
+  objectivesContainer.appendChild(selectedList);
+  contentDiv.appendChild(objectivesContainer);
+  
+  // Content-Bereich
+  const contentSection = document.createElement("div");
+  contentSection.className = "pdf-content";
+  contentSection.innerHTML = doc.body.innerHTML;
+  contentDiv.appendChild(contentSection);
+  
+  // Verbesserte PDF-Optionen
+  const options = {
+    margin: [0.8, 0.6, 0.8, 0.6], // top, left, bottom, right in inches
+    filename: "Skript.pdf",
+    html2canvas: { 
+      scale: 2,
+      useCORS: true,
+      letterRendering: true,
+      allowTaint: false,
+      backgroundColor: "#ffffff",
+      logging: false,
+      width: 794, // A4 width in pixels at 96 DPI
+      height: 1123 // A4 height in pixels at 96 DPI
+    },
+    jsPDF: { 
+      unit: "in", 
+      format: "a4", 
+      orientation: "portrait",
+      compress: true
+    },
+    pagebreak: {
+      mode: ['avoid-all', 'css', 'legacy']
+    }
+  };
+  
+  try {
+    await html2pdf().from(contentDiv).set(options).save();
+  } catch (error) {
+    console.error("Fehler beim PDF-Export:", error);
+    alert("Fehler beim Erstellen der PDF-Datei. Bitte versuchen Sie es erneut.");
+  }
 }

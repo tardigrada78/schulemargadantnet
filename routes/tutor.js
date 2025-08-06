@@ -172,7 +172,6 @@ async function doDiagram(scriptText, language) {
   
   ### WICHTIG:
   - Nutze ausschließlich das Mermaid-Format (kein Markdown, keine Kommentare, keine zusätzlichen Erklärungen).
-  - Verwende für den Text keine Klammern, nur Stichworte.
   - Beginne den Code direkt mit "flowchart TD", ohne Einleitungen oder Beschreibungen.
   - Strukturiere das Diagramm so, dass es logisch aufgebaut und verständlich ist.
   - Verwende sinnvolle Verbindungen zwischen den Knoten.
@@ -187,7 +186,11 @@ async function doDiagram(scriptText, language) {
   });
 
   const diagramCode = response.choices[0].message.content.trim();
-  const cleanedCode = diagramCode.replace(/```mermaid|```/g, "").trim();
+  let cleanedCode = diagramCode.replace(/```mermaid|```/g, "").trim();
+  cleanedCode = cleanedCode.replace(
+    /\[([^\]]*\([^\]]*\)[^\]]*)\]/g,
+    '["$1"]'
+  );
   return cleanedCode;
 }
 

@@ -71,7 +71,7 @@ router.get("/getScienceNews", async (req, res) => {
       // Technik
       "renewable energy", "space technology"
     ].join(" OR ");
-
+    console.log("API:", process.env.NEWS_API_KEY)
     const response = await newsapi.v2.everything({
       q: keywords,
       from: startData,
