@@ -21,10 +21,25 @@
     </div>
     <div id="podcastDiv"></div>
     <div id="resultDiv"></div>
-    <br />
     <div id="mermaid" style="text-align: center"></div>
     <div id="mermaidCode"></div>
     <div id="invisible" style="display: none">
+      <button id="generateQuestion">Erstelle eine Frage</button>
+      <div class="info-tooltip">
+        <span class="info-icon">i</span>
+        <span class="info-text">Wählen Sie vorher mindestens 1 Lernziel aus.</span>
+      </div>
+      <br />
+      <div class="oneline">
+        <button id="generateScript">Schreibe ein Skript</button>
+        <label for="wordcountScript">Anzahl Wörter: <span id="wordcountValue">100</span></label>
+        <input type="range" id="wordcountScript" name="wordcountScript" min="50" max="1000" step="5" value="100" />
+        <div class="info-tooltip">
+          <span class="info-icon">i</span>
+          <span class="info-text">Wählen Sie vorher mindestens 1 Lernziel aus.</span>
+        </div>
+      </div>
+
       <h2>Lernziele und Einstellungen</h2>
       <label for="languageSelect">Sprache für KI-Inhalte:</label>
       <select id="languageSelect" name="languageSelect">
@@ -52,16 +67,7 @@
       </select>
       <p>Wählen Sie ein Lernziel aus (mittels CTRL- und SHIFT-Taste mehrere):</p>
       <select id="objectivesSelect" multiple size="10"></select
-      ><br /><br />
-      <button id="generateQuestion">Erstelle eine Frage</button>
-      <br /><br />
-      <div class="oneline">
-        <label for="wordcountScript">Anzahl Wörter: <span id="wordcountValue">100</span></label>
-        <input type="range" id="wordcountScript" name="wordcountScript" min="50" max="1000" step="5" value="100" />
-        <button id="generateScript">Schreibe ein Skript</button>
-      </div>
-      <br /><br /><br /><br />
-      <hr />
+      ><br />
     </div>
     <h2>Neue Lernziele erfassen</h2>
     <p>
@@ -111,11 +117,12 @@ Sie können die Fachbegriffe Metamorphose, Holometabolie, Hemimetabolie, Larve u
         const selected = Array.from(select.selectedOptions).map((option) => option.value);
         const properties = selected.join("\n");
         if (selected.length === 0) {
+          window.scrollTo({ top: 0, behavior: "smooth" });
           document.getElementById("progressDiv").innerHTML = "❌ Bitte mindestens 1 Lernziel auswählen.";
         } else {
           try {
             // KI-Frage erstellen
-            console.log("Frage:", assistant_id);
+            window.scrollTo({ top: 0, behavior: "smooth" });
             document.getElementById("progressDiv").innerHTML = `<p>⚙️ Erstelle Frage aus den Lernzielen...</p>`;
             document.getElementById("podcastDiv").innerHTML = ``;
             document.getElementById("mermaid").innerHTML = ``;
@@ -140,6 +147,7 @@ Sie können die Fachbegriffe Metamorphose, Holometabolie, Hemimetabolie, Larve u
                 await checkAnswer(answerText, questionText, language, assistant_id);
               } catch (error) {
                 console.error("Fehler beim Überprüfen der Antwort:", error);
+                window.scrollTo({ top: 0, behavior: "smooth" });
                 document.getElementById("progressDiv").innerHTML = `<p>❌ Fehler beim Überprüfen der Antwort.</p>`;
               }
             });
@@ -164,11 +172,13 @@ Sie können die Fachbegriffe Metamorphose, Holometabolie, Hemimetabolie, Larve u
         const selected = Array.from(select.selectedOptions).map((option) => option.value);
         window.scrollTo({ top: 0, behavior: "smooth" });
         if (selected.length === 0) {
+          window.scrollTo({ top: 0, behavior: "smooth" });
           document.getElementById("progressDiv").innerHTML = "❌ Bitte mindestens 1 Lernziel auswählen.";
         } else {
           const properties = selected.join("\n");
           try {
             let wordcount = document.getElementById("wordcountScript").value;
+            window.scrollTo({ top: 0, behavior: "smooth" });
             document.getElementById(
               "progressDiv"
             ).innerHTML = `<p>⚙️ Erstelle Skript mit erklärendem Text zu den Lernzielen...</p>`;
