@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="de">
-
-<head>
+  <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>virtuelles Interview</title>
@@ -9,54 +8,57 @@
     <script src="https://cdn.jsdelivr.net/npm/docx@7.1.0"></script>
     <script src="https://cdn.jsdelivr.net/npm/file-saver"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.2/html2pdf.bundle.min.js"></script>
-</head>
+  </head>
 
-<body>
+  <body>
     <a href="/feedback.html" target="_blank">Feedback zu dieser Site geben.</a>
     <h1>virtuelles Interview</h1>
     <form id="surveyForm">
-        <p>Geben Sie Eigenschaften der zu interviewenden Person ein, wie Beruf, Ausbildung, Charakter, ...</p>
-        <textarea id="interviewProperties" name="interviewProperties" cols="70" rows="8">
-60 Jahre alt, schrulliger Professor, langjähriger Dozent, Fachgebiet Botanik, gibt ausschweifende Antworten</textarea>
-        <p>
-            Geben Sie hier Ihre Fragen ein, wobei jede Frage auf einer neuen Zeile beginnen muss (automatischer
-            Zeilenumbruch des Formularfeldes ignorieren).
-        </p>
-        <textarea id="interviewQuestions" name="interviewQuestions" cols="70" rows="8">
+      <p>Geben Sie Eigenschaften der zu interviewenden Person ein, wie Beruf, Ausbildung, Charakter, ...</p>
+      <textarea id="interviewProperties" name="interviewProperties" cols="70" rows="8">
+60 Jahre alt, schrulliger Professor, langjähriger Dozent, Fachgebiet Botanik, gibt ausschweifende Antworten</textarea
+      >
+      <p>
+        Geben Sie hier Ihre Fragen ein, wobei jede Frage auf einer neuen Zeile beginnen muss (automatischer
+        Zeilenumbruch des Formularfeldes ignorieren).
+      </p>
+      <textarea id="interviewQuestions" name="interviewQuestions" cols="70" rows="8">
 Welches Ereignis in Ihrem Leben prägte Ihre Berufswahl am stärksten?
 Haben Medikamente, die rein aus Pflanzen hergestellt werden, weniger Nebenwirkungen?
-        </textarea><br />
-        <label for="voice1">Stimme für Fragen:</label>
-        <select id="voice1" name="voice1">
-            <option value="alloy">Alloy (f)</option>
-            <option value="ash">Ash (m)</option>
-            <option value="ballad">Ballad</option>
-            <option value="coral">Coral (f)</option>
-            <option value="echo">Echo (m)</option>
-            <option value="fable">Fable (m)</option>
-            <option value="nova" selected>Nova (f)</option>
-            <option value="onyx">Onyx (m)</option>
-            <option value="sage">Sage (f)</option>
-            <option value="shimmer">Shimmer (f)</option>
-            <option value="verse">Verse (m)</option>
-        </select>
-        <label for="voice2">Stimme für Antworten:</label>
-        <select id="voice2" name="voice2">
-            <option value="alloy">Alloy (f)</option>
-            <option value="ash">Ash (m)</option>
-            <option value="ballad">Ballad</option>
-            <option value="coral">Coral (f)</option>
-            <option value="echo">Echo (m)</option>
-            <option value="fable">Fable (m)</option>
-            <option value="nova">Nova (f)</option>
-            <option value="onyx" selected>Onyx (m)</option>
-            <option value="sage">Sage (f)</option>
-            <option value="shimmer">Shimmer (f)</option>
-            <option value="verse">Verse (m)</option>
-        </select>
-        <p>Die Stimmen können <a href="https://www.openai.fm/">hier</a> probegehört werden.</p>
-        <input type="checkbox" id="selectPicture" name="selectPicture" value="Portraitbild" /><label>
-            Erstelle Portrait-Foto</label><br />
+        </textarea
+      ><br />
+      <label for="voice1">Stimme für Fragen:</label>
+      <select id="voice1" name="voice1">
+        <option value="alloy">Alloy (f)</option>
+        <option value="ash">Ash (m)</option>
+        <option value="ballad">Ballad</option>
+        <option value="coral">Coral (f)</option>
+        <option value="echo">Echo (m)</option>
+        <option value="fable">Fable (m)</option>
+        <option value="nova" selected>Nova (f)</option>
+        <option value="onyx">Onyx (m)</option>
+        <option value="sage">Sage (f)</option>
+        <option value="shimmer">Shimmer (f)</option>
+        <option value="verse">Verse (m)</option>
+      </select>
+      <label for="voice2">Stimme für Antworten:</label>
+      <select id="voice2" name="voice2">
+        <option value="alloy">Alloy (f)</option>
+        <option value="ash">Ash (m)</option>
+        <option value="ballad">Ballad</option>
+        <option value="coral">Coral (f)</option>
+        <option value="echo">Echo (m)</option>
+        <option value="fable">Fable (m)</option>
+        <option value="nova">Nova (f)</option>
+        <option value="onyx" selected>Onyx (m)</option>
+        <option value="sage">Sage (f)</option>
+        <option value="shimmer">Shimmer (f)</option>
+        <option value="verse">Verse (m)</option>
+      </select>
+      <p>Die Stimmen können <a href="https://www.openai.fm/">hier</a> probegehört werden.</p>
+      <input type="checkbox" id="selectPicture" name="selectPicture" value="Portraitbild" /><label>
+        Erstelle Portrait-Foto</label
+      ><br />
     </form>
     <br />
     <button id="generateInterview">Interview durchführen</button>
@@ -66,7 +68,7 @@ Haben Medikamente, die rein aus Pflanzen hergestellt werden, weniger Nebenwirkun
     <div id="interviewOutput"></div>
     <br />
     <div id="imageOutput">
-        <img id="generatedImage" alt="" style="max-width: 100%; height: auto" />
+      <img id="generatedImage" alt="" style="max-width: 100%; height: auto" />
     </div>
     <br />
     <div id="generatedWord"></div>
@@ -74,266 +76,265 @@ Haben Medikamente, die rein aus Pflanzen hergestellt werden, weniger Nebenwirkun
     <br />
 
     <script>
-        let imageUrl = null;
+      let imageUrl = null;
 
-        // Funktion um Bild zu erstellen
-        async function generatePicture(properties) {
-            try {
-                const response = await fetch(`/interview/generatePicture`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ description: properties }),
-                });
-                const data = await response.json();
-                if (!response.ok) {
-                    throw new Error(data.error || "Fehler beim Generieren des Bildes");
-                }
-                const dataUrl = `data:image/png;base64,${data.image}`;
-                const imgElem = document.getElementById("generatedImage");
-                imgElem.src = dataUrl;
-                imageUrl = dataUrl;
-            } catch (error) {
-                console.error("Fehler beim Generieren des Bildes:", error);
-                document.getElementById("interviewProgress").innerHTML = `❌ Fehler beim Erstellen des Bildes.`;
-            }
+      // Funktion um Bild zu erstellen
+      async function generatePicture(properties) {
+        try {
+          const response = await fetch(`/interview/generatePicture`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ description: properties }),
+          });
+          const data = await response.json();
+          if (!response.ok) {
+            throw new Error(data.error || "Fehler beim Generieren des Bildes");
+          }
+          const dataUrl = `data:image/png;base64,${data.image}`;
+          const imgElem = document.getElementById("generatedImage");
+          imgElem.src = dataUrl;
+          imageUrl = dataUrl;
+        } catch (error) {
+          console.error("Fehler beim Generieren des Bildes:", error);
+          document.getElementById("interviewProgress").innerHTML = `❌ Fehler beim Erstellen des Bildes.`;
         }
+      }
 
-        // Funktion für aktuelles Datum
-        function getFormattedDate() {
-            const date = new Date();
-            const options = { weekday: "long", day: "numeric", month: "long", year: "numeric" };
-            const formattedDate = date.toLocaleDateString("de-DE", options);
-            return formattedDate.replace(/(\w+), (\d+)/, "$1, den $2");
-        }
+      // Funktion für aktuelles Datum
+      function getFormattedDate() {
+        const date = new Date();
+        const options = { weekday: "long", day: "numeric", month: "long", year: "numeric" };
+        const formattedDate = date.toLocaleDateString("de-DE", options);
+        return formattedDate.replace(/(\w+), (\d+)/, "$1, den $2");
+      }
 
-        // Funktion zum Generieren der Word-Datei direkt im Browser
-        async function generateWord(interviewData, interviewPerson) {
-            const doc = new docx.Document({
-                sections: [
-                    {
-                        properties: {},
-                        children: [
-                            new docx.Paragraph({
-                                text: "virtuelles Interview",
-                                heading: docx.HeadingLevel.HEADING_1,
-                                spacing: { after: 300 },
-                            }),
-                            new docx.Paragraph({
-                                text: "Beschreibung der zu interviewenden Person",
-                                heading: docx.HeadingLevel.HEADING_2,
-                                spacing: { after: 300 },
-                            }),
-                            new docx.Paragraph({
-                                text: interviewPerson,
-                                spacing: { after: 400 },
-                            }),
-                            new docx.Paragraph({
-                                text: "Transkript",
-                                heading: docx.HeadingLevel.HEADING_2,
-                                spacing: { after: 300 },
-                            }),
-                            new docx.Paragraph({
-                                text:
-                                    "Das Interview fand am " +
-                                    getFormattedDate() +
-                                    " online statt. Es wurde auf Hochdeutsch geführt, wobei der Text möglichst nahe beim gesprochenen Wort belassen wurde.",
-                                spacing: { after: 300 },
-                            }),
-                            ...interviewData
-                                .map(([question, answer]) => [
-                                    new docx.Paragraph({
-                                        text: "I: " + question,
-                                        spacing: { after: 100 },
-                                    }),
-                                    new docx.Paragraph({
-                                        text: "B: " + answer,
-                                        spacing: { after: 200 },
-                                    }),
-                                ])
-                                .flat(),
-                        ],
-                    },
-                ],
-            });
+      // Funktion zum Generieren der Word-Datei direkt im Browser
+      async function generateWord(interviewData, interviewPerson) {
+        const doc = new docx.Document({
+          sections: [
+            {
+              properties: {},
+              children: [
+                new docx.Paragraph({
+                  text: "virtuelles Interview",
+                  heading: docx.HeadingLevel.HEADING_1,
+                  spacing: { after: 300 },
+                }),
+                new docx.Paragraph({
+                  text: "Beschreibung der zu interviewenden Person",
+                  heading: docx.HeadingLevel.HEADING_2,
+                  spacing: { after: 300 },
+                }),
+                new docx.Paragraph({
+                  text: interviewPerson,
+                  spacing: { after: 400 },
+                }),
+                new docx.Paragraph({
+                  text: "Transkript",
+                  heading: docx.HeadingLevel.HEADING_2,
+                  spacing: { after: 300 },
+                }),
+                new docx.Paragraph({
+                  text:
+                    "Das Interview fand am " +
+                    getFormattedDate() +
+                    " online statt. Es wurde auf Hochdeutsch geführt, wobei der Text möglichst nahe beim gesprochenen Wort belassen wurde.",
+                  spacing: { after: 300 },
+                }),
+                ...interviewData
+                  .map(([question, answer]) => [
+                    new docx.Paragraph({
+                      text: "I: " + question,
+                      spacing: { after: 100 },
+                    }),
+                    new docx.Paragraph({
+                      text: "B: " + answer,
+                      spacing: { after: 200 },
+                    }),
+                  ])
+                  .flat(),
+              ],
+            },
+          ],
+        });
 
-            const blob = await docx.Packer.toBlob(doc);
-            saveAs(blob, "Interview.docx");
-        }
+        const blob = await docx.Packer.toBlob(doc);
+        saveAs(blob, "Interview.docx");
+      }
 
-        // Funktion zum Generieren eines PDF-Dokuments aus HTML-Inhalt
-        async function generatePDF(htmlString) {
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(htmlString, "text/html");
-            const contentDiv = document.createElement("div");
-            const styleElement = document.createElement("style");
-            styleElement.textContent = `
+      // Funktion zum Generieren eines PDF-Dokuments aus HTML-Inhalt
+      async function generatePDF(htmlString) {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(htmlString, "text/html");
+        const contentDiv = document.createElement("div");
+        const styleElement = document.createElement("style");
+        styleElement.textContent = `
     body { background: white; color: black; }
     h1, h2, h3, h4, h5, h6 { color: orange; }
     p, ul, ol, li { color: black; }
   `;
-            contentDiv.appendChild(styleElement);
-            const titleElement = document.createElement("h1");
-            titleElement.textContent = "Virtuelles Interview";
-            contentDiv.appendChild(titleElement);
-            contentDiv.innerHTML += doc.body.innerHTML;
-            const options = {
-                margin: 0.5,
-                filename: "Transkript.pdf",
-                html2canvas: { scale: 2 },
-                jsPDF: { unit: "in", format: "a4", orientation: "portrait" },
-            };
-            await html2pdf().from(contentDiv).set(options).save();
+        contentDiv.appendChild(styleElement);
+        const titleElement = document.createElement("h1");
+        titleElement.textContent = "Virtuelles Interview";
+        contentDiv.appendChild(titleElement);
+        contentDiv.innerHTML += doc.body.innerHTML;
+        const options = {
+          margin: 0.5,
+          filename: "Transkript.pdf",
+          html2canvas: { scale: 2 },
+          jsPDF: { unit: "in", format: "a4", orientation: "portrait" },
+        };
+        await html2pdf().from(contentDiv).set(options).save();
+      }
+
+      // Funktion zum Generieren der Audio.Ausgabe
+      async function generateSpeech(story, voice, voiceProfile) {
+        let response = await fetch("/interview/getSpeech", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ story, voice, voiceProfile }),
+        });
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`Fehler beim Generieren der Sprachdatei: ${errorText}`);
+        }
+        let data = await response.json();
+        return data.speech;
+      }
+
+      // Hauptprogramm
+      document.getElementById("generateInterview").addEventListener("click", async () => {
+        const properties = document.getElementById("interviewProperties").value;
+        let outputHtml = "";
+        let interviewData = [];
+        let interviewPerson;
+
+        // Generiert Person
+        try {
+          document.getElementById("interviewProgress").innerHTML =
+            "<p>⚙️ Die zu interviewende Person wird generiert...</p>";
+          let responsePerson = await fetch(`/interview/startInterview`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ properties }),
+          });
+          interviewPerson = await responsePerson.json();
+          outputHtml += `<h2>Interview</h2><strong>Personenbeschreibung:</strong><p>${interviewPerson.person}</p>`;
+        } catch (error) {
+          console.error("Fehler beim Generieren der Person:", error);
+          document.getElementById("interviewProgress").innerHTML = "❌ Fehler beim Generieren der Person:";
         }
 
-        // Funktion zum Generieren der Audio.Ausgabe
-        async function generateSpeech(story, voice, voiceProfile) {
-            let response = await fetch("/interview/getSpeech", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ story, voice, voiceProfile }),
+        // Erstellt Stimmenprofil für Person
+        try {
+          document.getElementById("interviewProgress").innerHTML =
+            "<p>⚙️ Für die Person wird ein Stimmenprofil erstellt...</p>";
+          let response = await fetch(`/interview/getVoiceProfile`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ interviewPerson: interviewPerson }),
+          });
+          let responseData = await response.json();
+          voiceProfile = responseData.voiceProfile;
+        } catch (error) {
+          console.error("Fehler beim Generieren des Stimmenprofils:", error);
+          document.getElementById("interviewProgress").innerHTML = "❌ Fehler beim Generieren des Stimmenprofils:";
+        }
+
+        // Befragt Person
+        try {
+          let questionsText = document.getElementById("interviewQuestions").value;
+          let questionsArray = questionsText
+            .split("\n")
+            .map((q) => q.trim())
+            .filter((q) => q !== "");
+          let i = 0;
+
+          // Befragt die Person für jede Frage nacheinander
+          for (const question of questionsArray) {
+            i++;
+            document.getElementById(
+              "interviewProgress"
+            ).innerHTML = `<p>⚙️ Die Person anwortet auf Frage ${i} von ${questionsArray.length}...</p>`;
+            let responsePerson = await fetch(`/interview/askPerson`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ properties, question }),
             });
-            if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(`Fehler beim Generieren der Sprachdatei: ${errorText}`);
-            }
-            let data = await response.json();
-            return data.speech;
-        }
+            let answerPerson = await responsePerson.json();
+            outputHtml += `<strong>${question}</strong><p>${answerPerson.person}</p>`;
+            interviewData.push([question, answerPerson.person]);
+          }
+          document.getElementById("interviewOutput").innerHTML = outputHtml;
+          htmlString = outputHtml;
 
-        // Hauptprogramm
-        document.getElementById("generateInterview").addEventListener("click", async () => {
-            const properties = document.getElementById("interviewProperties").value;
-            let outputHtml = "";
-            let interviewData = [];
-            let interviewPerson;
+          // Erstellt Bild
+          let isChecked = document.getElementById("selectPicture").checked;
+          if (isChecked) {
+            document.getElementById("interviewProgress").innerHTML = `<p>⚙️ Erstelle Bild ...</p>`;
+            await generatePicture(interviewPerson.person);
+          }
 
-            // Generiert Person
-            try {
-                document.getElementById("interviewProgress").innerHTML =
-                    "<p>⚙️ Die zu interviewende Person wird generiert...</p>";
-                let responsePerson = await fetch(`/interview/startInterview`, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({ properties }),
-                });
-                interviewPerson = await responsePerson.json();
-                outputHtml += `<h2>Interview</h2><strong>Personenbeschreibung:</strong><p>${interviewPerson.person}</p>`;
-            } catch (error) {
-                console.error("Fehler beim Generieren der Person:", error);
-                document.getElementById("interviewProgress").innerHTML = "❌ Fehler beim Generieren der Person:";
-            }
+          // Erstellt Word- und PDF-Button
+          outputHtml += `<br><button id="buttonWord">📄 Word-Datei herunterladen</button>`;
+          outputHtml += `<br><button id="buttonPDF">📑 PDF-Datei herunterladen</button>`;
 
-            // Erstellt Stimmenprofil für Person
-            try {
-                document.getElementById("interviewProgress").innerHTML =
-                    "<p>⚙️ Für die Person wird ein Stimmenprofil erstellt...</p>";
-                let response = await fetch(`/interview/getVoiceProfile`, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({ interviewPerson: interviewPerson }),
-                });
-                let responseData = await response.json();
-                voiceProfile = responseData.voiceProfile;
-            } catch (error) {
-                console.error("Fehler beim Generieren des Stimmenprofils:", error);
-                document.getElementById("interviewProgress").innerHTML = "❌ Fehler beim Generieren des Stimmenprofils:";
-            }
+          document.getElementById("interviewOutput").innerHTML = outputHtml;
+          setTimeout(() => {
+            document.getElementById("buttonWord").addEventListener("click", () => {
+              generateWord(interviewData, interviewPerson.person);
+            });
+            document.getElementById("buttonPDF").addEventListener("click", () => {
+              generatePDF(htmlString);
+            });
+          }, 100);
 
-            // Befragt Person
-            try {
-                let questionsText = document.getElementById("interviewQuestions").value;
-                let questionsArray = questionsText
-                    .split("\n")
-                    .map((q) => q.trim())
-                    .filter((q) => q !== "");
-                let i = 0;
-
-                // Befragt die Person für jede Frage nacheinander
-                for (const question of questionsArray) {
-                    i++;
-                    document.getElementById(
-                        "interviewProgress"
-                    ).innerHTML = `<p>⚙️ Die Person anwortet auf Frage ${i} von ${questionsArray.length}...</p>`;
-                    let responsePerson = await fetch(`/interview/askPerson`, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ properties, question }),
-                    });
-                    let answerPerson = await responsePerson.json();
-                    outputHtml += `<strong>${question}</strong><p>${answerPerson.person}</p>`;
-                    interviewData.push([question, answerPerson.person]);
-                }
-                document.getElementById("interviewOutput").innerHTML = outputHtml;
-                htmlString = outputHtml;
-
-                // Erstellt Bild
-                let isChecked = document.getElementById("selectPicture").checked;
-                if (isChecked) {
-                    document.getElementById("interviewProgress").innerHTML = `<p>⚙️ Erstelle Bild ...</p>`;
-                    await generatePicture(interviewPerson.person);
-                }
-
-                // Erstellt Word- und PDF-Button
-                outputHtml += `<br><button id="buttonWord">📄 Word-Datei herunterladen</button>`;
-                outputHtml += `<br><button id="buttonPDF">📑 PDF-Datei herunterladen</button>`;
-
-                document.getElementById("interviewOutput").innerHTML = outputHtml;
-                setTimeout(() => {
-                    document.getElementById("buttonWord").addEventListener("click", () => {
-                        generateWord(interviewData, interviewPerson.person);
-                    });
-                    document.getElementById("buttonPDF").addEventListener("click", () => {
-                        generatePDF(htmlString);
-                    });
-                }, 100);
-
-                // Erstellt Audio-Ausgabe
-                document.getElementById("interviewProgress").innerHTML = `<p>⚙️ Sprachdatei wird erstellt...</p>`;
-                document.getElementById("speechOutput").innerHTML = "";
-                let audioBlobs = [];
-                let voice1 = document.getElementById("voice1").value;
-                let voice2 = document.getElementById("voice2").value;
-                let voiceProfileQuestion =
-                    "Sprich mit einer hellen, klaren Stimme, in einem lebhaften und leicht beschleunigten Tempo, mit einem fröhlichen, neugierigen Unterton und gelegentlichen, leicht atemlosen Momenten, die Aufregung und echtes Interesse widerspiegeln.";
-                console.log("voiceProfile Interviewperson:", voiceProfile);
-                const audioPromises = interviewData.flatMap(([question, answer]) => [
-                    generateSpeech(question, voice1, voiceProfileQuestion).then(async (speechURLQuestion) => {
-                        const frageBlob = await fetch(speechURLQuestion).then((res) => res.blob());
-                        return frageBlob;
-                    }),
-                    generateSpeech(answer, voice2, voiceProfile).then(async (speechURLAnswer) => {
-                        const antwortBlob = await fetch(speechURLAnswer).then((res) => res.blob());
-                        return antwortBlob;
-                    }),
-                ]);
-                Promise.all(audioPromises)
-                    .then((results) => {
-                        audioBlobs = results;
-                        const combinedBlob = new Blob(audioBlobs, { type: "audio/mp3" });
-                        const combinedUrl = URL.createObjectURL(combinedBlob);
-                        const combinedAudioHTML = `
+          // Erstellt Audio-Ausgabe
+          document.getElementById("interviewProgress").innerHTML = `<p>⚙️ Sprachdatei wird erstellt...</p>`;
+          document.getElementById("speechOutput").innerHTML = "";
+          let audioBlobs = [];
+          let voice1 = document.getElementById("voice1").value;
+          let voice2 = document.getElementById("voice2").value;
+          let voiceProfileQuestion =
+            "Sprich mit einer hellen, klaren Stimme, in einem lebhaften und leicht beschleunigten Tempo, mit einem fröhlichen, neugierigen Unterton und gelegentlichen, leicht atemlosen Momenten, die Aufregung und echtes Interesse widerspiegeln.";
+          console.log("voiceProfile Interviewperson:", voiceProfile);
+          const audioPromises = interviewData.flatMap(([question, answer]) => [
+            generateSpeech(question, voice1, voiceProfileQuestion).then(async (speechURLQuestion) => {
+              const frageBlob = await fetch(speechURLQuestion).then((res) => res.blob());
+              return frageBlob;
+            }),
+            generateSpeech(answer, voice2, voiceProfile).then(async (speechURLAnswer) => {
+              const antwortBlob = await fetch(speechURLAnswer).then((res) => res.blob());
+              return antwortBlob;
+            }),
+          ]);
+          Promise.all(audioPromises)
+            .then((results) => {
+              audioBlobs = results;
+              const combinedBlob = new Blob(audioBlobs, { type: "audio/mp3" });
+              const combinedUrl = URL.createObjectURL(combinedBlob);
+              const combinedAudioHTML = `
         <h3>Audioaufnahme des gesamten Interviews</h3>
         <audio controls src="${combinedUrl}"></audio>
     `;
-                        document.getElementById("speechOutput").innerHTML = combinedAudioHTML;
-                        document.getElementById("interviewProgress").innerHTML = ``;
-                    })
-                    .catch((error) => {
-                        console.error("Fehler beim Generieren der Sprachdatei:", error);
-                        document.getElementById("interviewProgress").innerHTML = `❌ Fehler beim Erstellen der Sprachdatei.`;
-                    });
-            } catch (error) {
-                console.error("Fehler beim Beantworten der Fragen:", error);
-                document.getElementById("interviewProgress").innerHTML = "❌ Fehler beim Beantworten der Fragen";
-            }
-        });
+              document.getElementById("speechOutput").innerHTML = combinedAudioHTML;
+              document.getElementById("interviewProgress").innerHTML = ``;
+            })
+            .catch((error) => {
+              console.error("Fehler beim Generieren der Sprachdatei:", error);
+              document.getElementById("interviewProgress").innerHTML = `❌ Fehler beim Erstellen der Sprachdatei.`;
+            });
+        } catch (error) {
+          console.error("Fehler beim Beantworten der Fragen:", error);
+          document.getElementById("interviewProgress").innerHTML = "❌ Fehler beim Beantworten der Fragen";
+        }
+      });
     </script>
-</body>
-
+  </body>
 </html>

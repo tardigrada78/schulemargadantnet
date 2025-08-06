@@ -8,7 +8,7 @@ async function generatePerson(properties) {
   const prompt = `Gib eine präzise Personenbeschreibung mit Fokus auf Charaktereigenschaften an.\n
     Überschreite dabei aber nicht 150 Wörter. Berücksichtige stark die folgenden Eigenschaften:\n${properties}`;
   const response = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
+    model: "gpt-4.1-mini",
     messages: [{ role: "user", content: prompt }],
     temperature: 0.8,
   });
@@ -21,7 +21,7 @@ async function askPerson(properties, question) {
     Frage:\n"${question}"\n\n
     Person:\n${properties}\n`;
   const response = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
+    model: "gpt-4.1-mini",
     messages: [{ role: "user", content: prompt }],
     temperature: 0.8,
   });
