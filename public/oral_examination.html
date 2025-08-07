@@ -4,46 +4,160 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>mündliche Prüfung</title>
+    <title>Mündliche Prüfung</title>
     <link rel="stylesheet" href="style_black.css" />
 </head>
 
 <body>
     <a href="/feedback.html" target="_blank">Feedback zu dieser Site geben.</a>
-    <h1>mündliche Prüfung</h1>
-    <form id="surveyForm">
-        <p>Geben Sie die Lernziele ein:</p>
-        <textarea id="contentForms" name="contentForms" cols="70" rows="8">
-Erklären Sie die Hauptfunktionen der folgenden Zellorganellen: Zellkern, Mitochondrium, Chloroplast, Ribosom, Zellsaftvakuole.</textarea>
-        <label for="voice1">Stimme für Fragen:</label>
-        <select id="voice1" name="voice1">
-            <option value="alloy">Alloy (f)</option>
-            <option value="ash">Ash (m)</option>
-            <option value="ballad">Ballad</option>
-            <option value="coral">Coral (f)</option>
-            <option value="echo">Echo (m)</option>
-            <option value="fable">Fable (m)</option>
-            <option value="nova" selected>Nova (f)</option>
-            <option value="onyx">Onyx (m)</option>
-            <option value="sage">Sage (f)</option>
-            <option value="shimmer">Shimmer (f)</option>
-            <option value="verse">Verse (m)</option>
-        </select>
-        <p>Die Stimmen können <a href="https://www.openai.fm/">hier</a> probegehört werden.</p>
-    </form>
-    <br />
-    <button id="buttonQuestion">Beginne die Prüfung</button>
-    <br />
-    <div id="progressQuestion"></div>
-    <br />
-    <div id="outputQuestion"></div>
-    <br />
-    <div id="outputAudio"></div>
-    <br />
+    <h1>Virtuelle mündliche Prüfung</h1>
+    <h3>Prüfungsstoff</h3>
+    <textarea id="contentForms" name="contentForms" cols="70" rows="6">
+Erklären Sie die Hauptfunktionen der folgenden Zellorganellen: Zellkern, Mitochondrium, Chloroplast, Ribosom.</textarea>
+    <button id="questionStart">🧑‍🏫 Prüfung starten</button>
+    <div id="invisible" style="display: none">
+        <h3>Prüfungsfrage</h3>
+        <div id="examQuestion"></div>
+    </div>
+    <h3>Ich</h3>
+    <textarea id="chatUser" name="chatUser" cols="70" rows="2"></textarea><br>
+    <audio id="recordedAudio" controls style="display: none; margin: 10px 0;"></audio><br>
+    <button id="recordButton">🎤 Sprechen</button>
+    <button id="chatStart">✉️ Textnachricht senden</button><br><br>
+    <div id="progressDiv"></div>
+    <h3>Prüfungsleitung</h3>
+    <div id="audioDiv"></div>
+    <div id="roundedDiv"></div>
+    <br><br>
+    <label for="voiceSelect">Stimme der KI. Die Stimmen können <a href="https://www.openai.fm/">hier</a> probegehört
+        werden.</label>
+    <select id="voiceSelect" name="voiceSelect">
+        <option value="alloy">Alloy (f)</option>
+        <option value="ash">Ash (m)</option>
+        <option value="ballad">Ballad</option>
+        <option value="coral">Coral (f)</option>
+        <option value="echo">Echo (m)</option>
+        <option value="fable">Fable (m)</option>
+        <option value="nova" selected>Nova (f)</option>
+        <option value="onyx">Onyx (m)</option>
+        <option value="sage">Sage (f)</option>
+        <option value="shimmer">Shimmer (f)</option>
+        <option value="verse">Verse (m)</option>
+    </select>
+    <label for="profileSelect">Charakter der Prüfungsleitung.</label>
+    <select id="profileSelect" name="profileSelect">
+        <option value="nett" selected>Nette, wohlwollende Atmosphäre</option>
+        <option value="unangenehm">Unangenehme Situation</option>
+    </select>
 
     <script>
+        let mediaRecorder;
+        let audioChunks = [];
+        let isRecording = false;
+        let voice
+        let chatAI
+        let voiceProfile
+        let profileText
+        let questionAI
 
-        // Funktion zum Generieren der Audio.Ausgabe
+        // Sprachaufnahme-Funktionalität  
+        document.getElementById("recordButton").addEventListener("click", async function () {
+            if (!isRecording) {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({
+                        audio: {
+                            sampleRate: 16000,
+                            channelCount: 1,
+                            echoCancellation: true,
+                            noiseSuppression: true
+                        }
+                    });
+                    mediaRecorder = new MediaRecorder(stream);
+                    audioChunks = [];
+                    mediaRecorder.ondataavailable = function (event) {
+                        audioChunks.push(event.data);
+                    };
+                    mediaRecorder.onstop = async function () {
+                        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                        const audioURL = URL.createObjectURL(audioBlob);
+                        const recordedAudio = document.getElementById("recordedAudio");
+                        recordedAudio.src = audioURL;
+                        recordedAudio.style.display = 'block';
+                        document.getElementById("progressDiv").textContent = "Sende Original-Audio...";
+                        processVoiceInput(audioBlob);
+                    };
+                    mediaRecorder.start();
+                    isRecording = true;
+                    document.getElementById("recordButton").textContent = "⏹️ Aufnahme stoppen und Prüfung abgeben";
+                    document.getElementById("progressDiv").textContent = "🔴 Sprechen Sie klar und deutlich...";
+                    setTimeout(() => {
+                        if (isRecording) {
+                            document.getElementById("progressDiv").textContent = "🔴 Aufnahme läuft...";
+                        }
+                    }, 1000);
+                } catch (error) {
+                    console.error("Mikrofon-Fehler:", error);
+                    document.getElementById("progressDiv").textContent = "❌ Mikrofon-Zugriff verweigert";
+                }
+            } else {
+                mediaRecorder.stop();
+                isRecording = false;
+                document.getElementById("recordButton").textContent = "🎤 Sprechen";
+                document.getElementById("progressDiv").textContent = "Verarbeite Audio...";
+                mediaRecorder.stream.getTracks().forEach(track => track.stop());
+            }
+        });
+
+        // Sprachaufnahme verarbeiten
+        async function processVoiceInput(audioBlob) {
+            try {
+                const formData = new FormData();
+                formData.append('audio', audioBlob, 'recording.webm'); // WebM statt WAV!
+                const response = await fetch('/oralexamination/transcribe', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                if (response.ok && data.transcript) {
+                    document.getElementById("chatUser").value = data.transcript;
+                    document.getElementById("chatStart").click();
+                    document.getElementById("progressDiv").textContent = "";
+                } else {
+                    throw new Error(data.error || 'Spracherkennung fehlgeschlagen');
+                }
+            } catch (error) {
+                console.error("Sprachverarbeitung-Fehler:", error);
+                document.getElementById("progressDiv").textContent = "❌ Spracherkennung fehlgeschlagen. Ist richtige Mikrofon aktiviert?";
+            }
+        }
+
+        // Funktion für Frage-Generierung serverseitig
+        async function generateQuestion(questionContent) {
+            let response = await fetch("/oralexamination/getQuestion", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ questionContent }),
+            });
+            let data = await response.json();
+            return data.chatAnswer;
+        }
+
+        // Funktion für Chat-Antwort serverseitig
+        async function generateChat(chatContent, questionAI, profileText) {
+            let response = await fetch("/oralexamination/getChat", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ chatContent, questionAI, profileText }),
+            });
+            let data = await response.json();
+            return data.chatAnswer;
+        }
+
+        // Funktion für Audio-Antwort serverseitig
         async function generateAudio(content, voice, voiceProfile) {
             let response = await fetch("/oralexamination/getAudio", {
                 method: "POST",
@@ -60,45 +174,75 @@ Erklären Sie die Hauptfunktionen der folgenden Zellorganellen: Zellkern, Mitoch
             return data.audio;
         }
 
-        // Hauptprogramm
-        document.getElementById("buttonQuestion").addEventListener("click", async () => {
-            const properties = document.getElementById("contentForms").value;
-            let outputHtml = "";
 
-            // Generiert Frage
+        // Frage generieren
+        document.getElementById("questionStart").addEventListener("click", async function () {
             try {
-                document.getElementById("progressQuestion").innerHTML = "<p>⚙️ Die Prüfungsfrage wird erstellt...</p>";
-                let responseQuestion = await fetch(`/oralexamination/getQuestion`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ properties }),
-                });
-                contentQuestion = await responseQuestion.json();
-                outputHtml += `<h2>Prüfungsfrage</h2><p>${contentQuestion.question}</p>`;
-                document.getElementById("outputQuestion").innerHTML = outputHtml;
+                document.getElementById("examQuestion").innerHTML = "";
+                document.getElementById("roundedDiv").innerHTML = "";
+                // document.getElementById("chatUser").innerHTML = "";
+                voice = document.getElementById("voiceSelect").value;
+                let profile = document.getElementById("profileSelect").value;
+                if (profile == "nett") {
+                    voiceProfile = "Sprich mit einer warmen, beruhigenden Stimme. Strahle Zuversicht und Wohlwollen aus. Du möchtest einen nervösen Prüfungskandidaten beruhigen.";
+                    profileText = "Du bist nett, wohlwollend und motivierend. Du möchtest, dass sich der Prüfungskandidat geborgen fühlt."
+                } else {
+                    voiceProfile = "Sprich mit einer kalten, harten Stimme. Du möchtest, dass sich der Prüfungskandidat unwohl und unsicher fühlt.";
+                    profileText = "Du bist arrogant, gestresst und uninteressiert. Du möchtest, dass sich der Prüfungskandidat unwohl und unsicher fühlt."
 
-                // Nur wenn Frage erfolgreich erstellt wurde, Audio generieren
-                document.getElementById("progressQuestion").innerHTML = `<p>⚙️ Sprachdatei wird erstellt...</p>`;
-                let voice1 = document.getElementById("voice1").value;
-                let voiceProfileQuestion = "Sprich mit einer seriösen ernsthaften Stimme, die aber wohlwollend ist. Du bist der Prüfer bei einem Examen.";
-
-                generateAudio(contentQuestion.question, voice1, voiceProfileQuestion)
-                    .then((speechURL) => {
-                        document.getElementById("outputAudio").innerHTML = `<audio id="audioPlayer" controls src="${speechURL}"></audio>`;
-                        let audio = document.getElementById("audioPlayer");
-                        audio.play(); document.getElementById("progressQuestion").innerHTML = "<p>✅ Prüfung bereit!</p>";
-                    })
-                    .catch((error) => {
-                        console.error("Fehler beim Generieren der Sprachdatei:", error);
-                        document.getElementById("progressQuestion").innerHTML = "❌ Fehler beim Generieren der Sprachdatei.";
-                    });
-
+                }
+                const questionContent = document.getElementById("contentForms").value;
+                document.getElementById("progressDiv").innerHTML = "<p>⚙️ Prüfungsfrage wird erstellt...</p>";
+                questionAI = await generateQuestion(questionContent);
+                questionAI = questionAI + "<br><br>Beantworten Sie die Frage mündlich oder per Textchat."
+                document.getElementById("invisible").style.display = "block";
+                document.getElementById("progressDiv").innerHTML = ``;
             } catch (error) {
-                console.error("Fehler beim Generieren der Frage:", error);
-                document.getElementById("progressQuestion").innerHTML = "❌ Fehler beim Generieren der Frage.";
+                console.error("Fehler beim Erstellen der Frage:", error);
+                document.getElementById("progressDiv").innerHTML = `<p>❌ Fehler beim Erstellen der Frage.</p>`;
             }
-        })
+            // Sprache generieren
+            console.log(voice, voiceProfile)
+            generateAudio(questionAI, voice, voiceProfile)
+                .then((speechURL) => {
+                    document.getElementById("audioDiv").innerHTML = `<audio id="audioPlayer" controls src="${speechURL}"></audio>`;
+                    let audio = document.getElementById("audioPlayer");
+                    audio.play();
+                    document.getElementById("examQuestion").innerHTML = questionAI
+                    document.getElementById("progressDiv").innerHTML = "";
+                })
+                .catch((error) => {
+                    console.error("Fehler beim Generieren der Sprachdatei:", error);
+                    document.getElementById("progressDiv").innerHTML = "❌ Fehler beim Generieren der Sprachdatei.";
+                });
 
+        });
+        // Antwort generieren
+        document.getElementById("chatStart").addEventListener("click", async function () {
+            try {
+                const chatContent = document.getElementById("chatUser").value;
+                document.getElementById("progressDiv").innerHTML = "<p>⚙️ Rückmeldung auf die Prüfungsantwort...</p>";
+                chatAI = await generateChat(chatContent, questionAI, profileText);
+                document.getElementById("progressDiv").innerHTML = `<p>⚙️ Sprachdatei wird erstellt...</p>`;
+            } catch (error) {
+                console.error("Fehler:", error);
+                document.getElementById("progressDiv").innerHTML = `<p>❌ Fehler</p>`;
+            }
+            // Sprache generieren
+            generateAudio(chatAI, voice, voiceProfile)
+                .then((speechURL) => {
+                    document.getElementById("audioDiv").innerHTML = `<audio id="audioPlayer" controls src="${speechURL}"></audio>`;
+                    let audio = document.getElementById("audioPlayer");
+                    audio.play();
+                    document.getElementById("roundedDiv").innerHTML = chatAI
+                    document.getElementById("progressDiv").innerHTML = "";
+                })
+                .catch((error) => {
+                    console.error("Fehler beim Generieren der Sprachdatei:", error);
+                    document.getElementById("progressDiv").innerHTML = "❌ Fehler beim Generieren der Sprachdatei.";
+                });
+
+        });
     </script>
 </body>
 
