@@ -1,282 +1,278 @@
 <!DOCTYPE html>
 <html lang="de">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>KI-Lern-Tutor</title>
-    <link rel="stylesheet" href="style_black.css" />
-    <script src="https://cdn.jsdelivr.net/npm/docx@7.1.0"></script>
-    <script src="https://cdn.jsdelivr.net/npm/file-saver"></script>
-    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.4.0/dist/mermaid.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.2/html2pdf.bundle.min.js"></script>
-  </head>
 
-  <body>
-    <a href="/feedback.html" target="_blank">Feedback zu dieser Site geben.</a>
-    <h1>KI-Lern-Tutor</h1>
-    <div id="progressDiv">
-      Neue Inhalte erscheinen hier, zuoberst auf der Site. Sie können aber stets nach unten scrollen und bei
-      <strong>Lernziele und Einstellungen</strong> andere Lernziele auswählen. Möchten Sie eine neue Lernzielliste
-      erfassen, gehen Sie ganz nach unten zu <strong>Neue Lernziele erfassen</strong>.
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KI-Lern-Tutor</title>
+  <link rel="stylesheet" href="style_black.css" />
+  <script src="https://cdn.jsdelivr.net/npm/docx@7.1.0"></script>
+  <script src="https://cdn.jsdelivr.net/npm/file-saver"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10.4.0/dist/mermaid.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.2/html2pdf.bundle.min.js"></script>
+</head>
+
+<body>
+  <a href="/index.html" target="_blank">Weitere KI-Tools (Startseite)</a>&nbsp;&nbsp;&nbsp;
+  <a href="/feedback.html" target="_blank">Feedback geben</a>
+  <h1>KI-Lern-Tutor</h1>
+  <div id="progressDiv">
+    Neue Inhalte erscheinen hier, zuoberst auf der Site. Sie können aber stets nach unten scrollen und bei
+    <strong>Lernziele und Einstellungen</strong> andere Lernziele auswählen. Möchten Sie eine neue Lernzielliste
+    erfassen, gehen Sie ganz nach unten zu <strong>Neue Lernziele erfassen</strong>.
+  </div>
+  <div id="podcastDiv"></div>
+  <div id="resultDiv"></div>
+  <div id="mermaid" style="text-align: center"></div>
+  <div id="mermaidCode"></div>
+  <div id="invisible" style="display: none">
+    <button id="generateQuestion">Erstelle eine Frage</button>
+    <div class="info-tooltip">
+      <span class="info-icon">i</span>
+      <span class="info-text">Wählen Sie vorher mindestens 1 Lernziel aus.</span>
     </div>
-    <div id="podcastDiv"></div>
-    <div id="resultDiv"></div>
-    <div id="mermaid" style="text-align: center"></div>
-    <div id="mermaidCode"></div>
-    <div id="invisible" style="display: none">
-      <button id="generateQuestion">Erstelle eine Frage</button>
+    <br />
+    <div class="oneline">
+      <button id="generateScript">Schreibe ein Skript</button>
+      <label for="wordcountScript">Anzahl Wörter: <span id="wordcountValue">100</span></label>
+      <input type="range" id="wordcountScript" name="wordcountScript" min="50" max="1000" step="5" value="100" />
       <div class="info-tooltip">
         <span class="info-icon">i</span>
         <span class="info-text">Wählen Sie vorher mindestens 1 Lernziel aus.</span>
       </div>
-      <br />
-      <div class="oneline">
-        <button id="generateScript">Schreibe ein Skript</button>
-        <label for="wordcountScript">Anzahl Wörter: <span id="wordcountValue">100</span></label>
-        <input type="range" id="wordcountScript" name="wordcountScript" min="50" max="1000" step="5" value="100" />
-        <div class="info-tooltip">
-          <span class="info-icon">i</span>
-          <span class="info-text">Wählen Sie vorher mindestens 1 Lernziel aus.</span>
-        </div>
-      </div>
-
-      <h2>Lernziele und Einstellungen</h2>
-      <label for="languageSelect">Sprache für KI-Inhalte:</label>
-      <select id="languageSelect" name="languageSelect">
-        <option value="Deutsch">Deutsch</option>
-        <option value="Deutsch einfache Sprache (kurze Sätze, schwierige Wörter vermeiden, sagen was man meint)">
-          einfache Sprache (Deutsch)
-        </option>
-        <option value="English">English</option>
-      </select>
-      <br /><br />
-      <label for="contextSelect">
-        Kontext:
-        <div class="info-tooltip">
-          <span class="info-icon">i</span>
-          <span class="info-text">
-            Hintergrundwissen für die KI.<br />
-            Zur Auswahl stehen Schulbücher oder die Schulskripte des Grundlagenfaches Biologie.
-          </span>
-        </div>
-      </label>
-      <select id="contextSelect" name="contextSelect">
-        <option value="kein">nur Allgmeinwissen der KI</option>
-        <option value="asst_40i6l1Ujl5vkflEIXhxWp3N3">Campbell Biologie 10</option>
-        <option value="asst_0Vd1B39PcqUA3ciqixLCcbcw">Skripte von D. Margadant (FMS, Gym; 108 Dateien)</option>
-      </select>
-      <p>Wählen Sie ein Lernziel aus (mittels CTRL- und SHIFT-Taste mehrere):</p>
-      <select id="objectivesSelect" multiple size="10"></select
-      ><br />
     </div>
-    <h2>Neue Lernziele erfassen</h2>
-    <p>
-      Fügen Sie hier Lernziele ein, damit das Programm damit arbeiten kann. Jedes Lernziel muss auf einer neuen Zeile
-      beginnen. Ignorieren Sie den automatischen Zeilenumbruch des Formularfeldes. <br />
-      Tipp: Achten Sie auf präzise Lernziele, z.B. "alle Zellorganellen" durch eine konkrete Liste ersetzen.
-    </p>
-    <textarea id="assesssmentStatements" name="assesssmentStatements" rows="7">
+
+    <h2>Lernziele und Einstellungen</h2>
+    <label for="languageSelect">Sprache für KI-Inhalte:</label>
+    <select id="languageSelect" name="languageSelect">
+      <option value="Deutsch">Deutsch</option>
+      <option value="Deutsch einfache Sprache (kurze Sätze, schwierige Wörter vermeiden, sagen was man meint)">
+        einfache Sprache (Deutsch)
+      </option>
+      <option value="English">English</option>
+    </select>
+    <br /><br />
+    <label for="contextSelect">
+      Kontext:
+      <div class="info-tooltip">
+        <span class="info-icon">i</span>
+        <span class="info-text">
+          Hintergrundwissen für die KI.<br />
+          Zur Auswahl stehen Bio-Schulbücher oder die Schulskripte des Grundlagenfaches Biologie.
+        </span>
+      </div>
+    </label>
+    <select id="contextSelect" name="contextSelect">
+      <option value="kein">nur Allgmeinwissen der KI (schneller)</option>
+      <option value="asst_40i6l1Ujl5vkflEIXhxWp3N3">Campbell Biologie 10</option>
+      <option value="asst_0Vd1B39PcqUA3ciqixLCcbcw">Bioskripte von D. Margadant (FMS, Gym; 108 Dateien)</option>
+    </select>
+    <p>Wählen Sie ein Lernziel aus (mittels CTRL- und SHIFT-Taste mehrere):</p>
+    <select id="objectivesSelect" multiple size="10"></select><br />
+  </div>
+  <h2>Neue Lernziele erfassen</h2>
+  <p>
+    Fügen Sie hier Lernziele ein, damit das Programm damit arbeiten kann. Jedes Lernziel muss auf einer neuen Zeile
+    beginnen. Ignorieren Sie den automatischen Zeilenumbruch des Formularfeldes. <br />
+    Tipp: Achten Sie auf präzise Lernziele, z.B. "alle Zellorganellen" durch eine konkrete Liste ersetzen.
+  </p>
+  <textarea id="assesssmentStatements" name="assesssmentStatements" rows="7">
 Sie wissen, wie ein Schwamm aufgebaut ist und wie er sich ernährt
 Sie können die Begriffe Radiärsymmetrie und Bilateralsymmetrie anhand von Beispielen erklären
 Sie können die Arthropoden in 5 Klassen einteilen und kennen die Einteilungskriterien
 Sie können erklären, wie Insekten atmen
 Sie wissen, wieso Insekten sich häuten
 Sie können die Fachbegriffe Metamorphose, Holometabolie, Hemimetabolie, Larve und Adulttier erklären      
-</textarea
-    ><br />
-    <button id="getObjectives">Erfasse diese Lernziele</button>
-    <script type="module">
-      // Eigene Funktionen importieren
-      import {
-        processObjectives,
-        checkAnswer,
-        generateWordFile,
-        generateDocxElementsFromHTML,
-        openMermaidLive,
-        generatePdfFile,
-        generatePodcastAudio,
-      } from "./functions_tutor.js";
+</textarea><br />
+  <button id="getObjectives">Erfasse diese Lernziele</button>
+  <script type="module">
+    // Eigene Funktionen importieren
+    import {
+      processObjectives,
+      checkAnswer,
+      generateWordFile,
+      generateDocxElementsFromHTML,
+      openMermaidLive,
+      generatePdfFile,
+      generatePodcastAudio,
+    } from "./tutor_functions.js";
 
-      // Variablen updaten / EventListeners
-      document.getElementById("getObjectives").addEventListener("click", processObjectives);
-      document.getElementById("wordcountScript").addEventListener("input", function () {
-        document.getElementById("wordcountValue").textContent = this.value;
-      });
-      let language = document.getElementById("languageSelect").value;
-      document.getElementById("languageSelect").addEventListener("change", function () {
-        language = this.value;
-      });
-      let assistant_id = document.getElementById("contextSelect").value;
-      document.getElementById("contextSelect").addEventListener("change", function () {
-        assistant_id = this.value;
-      });
-      mermaid.initialize({ startOnLoad: false });
+    // Variablen updaten / EventListeners
+    document.getElementById("getObjectives").addEventListener("click", processObjectives);
+    document.getElementById("wordcountScript").addEventListener("input", function () {
+      document.getElementById("wordcountValue").textContent = this.value;
+    });
+    let language = document.getElementById("languageSelect").value;
+    document.getElementById("languageSelect").addEventListener("change", function () {
+      language = this.value;
+    });
+    let assistant_id = document.getElementById("contextSelect").value;
+    document.getElementById("contextSelect").addEventListener("change", function () {
+      assistant_id = this.value;
+    });
+    mermaid.initialize({ startOnLoad: false });
 
-      document.getElementById("generateQuestion").addEventListener("click", async function () {
-        const select = document.getElementById("objectivesSelect");
-        const selected = Array.from(select.selectedOptions).map((option) => option.value);
-        const properties = selected.join("\n");
-        if (selected.length === 0) {
-          window.scrollTo({ top: 0, behavior: "smooth" });
-          document.getElementById("progressDiv").innerHTML = "❌ Bitte mindestens 1 Lernziel auswählen.";
-        } else {
-          try {
-            // KI-Frage erstellen
-            window.scrollTo({ top: 0, behavior: "smooth" });
-            document.getElementById("progressDiv").innerHTML = `<p>⚙️ Erstelle Frage aus den Lernzielen...</p>`;
-            document.getElementById("podcastDiv").innerHTML = ``;
-            document.getElementById("mermaid").innerHTML = ``;
-            let responseQuestion = await fetch(`/tutor/getQuestion`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ properties, language, assistant_id }),
-            });
-            let resultQuestion = await responseQuestion.json();
-            let questionText = resultQuestion.question;
-            let htmlOutput = "<h2>Frage zu den Lernzielen</h2>";
-            htmlOutput += `<p>${questionText}</p>`;
-            htmlOutput += `<br><br><textarea id="answerText" name="answerText" rows="7">Meine Antwort auf die Frage</textarea>`;
-            htmlOutput += `<br><button id="getAnswer">Überprüfe meine Antwort</button>`;
-            htmlOutput += `<br><br><button id="backToSelection">Zurück zur Auswahl</button>`; // Zurück-Button
-            document.getElementById("resultDiv").innerHTML = htmlOutput;
-
-            // Eigene Antwort überprüfen
-            document.getElementById("getAnswer").addEventListener("click", async function () {
-              try {
-                const answerText = document.getElementById("answerText").value;
-                await checkAnswer(answerText, questionText, language, assistant_id);
-              } catch (error) {
-                console.error("Fehler beim Überprüfen der Antwort:", error);
-                window.scrollTo({ top: 0, behavior: "smooth" });
-                document.getElementById("progressDiv").innerHTML = `<p>❌ Fehler beim Überprüfen der Antwort.</p>`;
-              }
-            });
-
-            // EventListener für "Zurück zur Auswahl"
-            document.getElementById("backToSelection").addEventListener("click", function () {
-              document.getElementById("resultDiv").innerHTML = "";
-              document.getElementById("progressDiv").innerHTML = "";
-            });
-          } catch (error) {
-            console.error("Fehler beim Generieren der Frage:", error);
-            document.getElementById("progressDiv").innerHTML = `<p>❌ Fehler beim Generieren der Frage.</p>`;
-          } finally {
-            document.getElementById("progressDiv").innerHTML = ``;
-          }
-        }
-      });
-
-      // Skript schreiben
-      document.getElementById("generateScript").addEventListener("click", async function () {
-        const select = document.getElementById("objectivesSelect");
-        const selected = Array.from(select.selectedOptions).map((option) => option.value);
+    document.getElementById("generateQuestion").addEventListener("click", async function () {
+      const select = document.getElementById("objectivesSelect");
+      const selected = Array.from(select.selectedOptions).map((option) => option.value);
+      const properties = selected.join("\n");
+      if (selected.length === 0) {
         window.scrollTo({ top: 0, behavior: "smooth" });
-        if (selected.length === 0) {
+        document.getElementById("progressDiv").innerHTML = "❌ Bitte mindestens 1 Lernziel auswählen.";
+      } else {
+        try {
+          // KI-Frage erstellen
           window.scrollTo({ top: 0, behavior: "smooth" });
-          document.getElementById("progressDiv").innerHTML = "❌ Bitte mindestens 1 Lernziel auswählen.";
-        } else {
-          const properties = selected.join("\n");
-          try {
-            let wordcount = document.getElementById("wordcountScript").value;
-            window.scrollTo({ top: 0, behavior: "smooth" });
-            document.getElementById(
-              "progressDiv"
-            ).innerHTML = `<p>⚙️ Erstelle Skript mit erklärendem Text zu den Lernzielen...</p>`;
-            document.getElementById("podcastDiv").innerHTML = ``;
-            document.getElementById("mermaid").innerHTML = ``;
-            let responseScript = await fetch(`/tutor/getScript`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ properties, wordcount, language, assistant_id }),
-            });
-            let resultScript = await responseScript.json();
-            let scriptText = resultScript.text;
-            let htmlOutput = "<h2>Skript zu den ausgewählten Lernzielen</h2>";
-            htmlOutput += scriptText;
-            htmlOutput += `<br><button id="generateWord">📄 Word-Datei herunterladen</button>`;
-            htmlOutput += `<button id="generatePdf">📑 PDF-Datei herunterladen</button>`;
-            htmlOutput += `<button id="buttonPodcast">🎧 Erstelle einen Podcast</button>`;
-            htmlOutput += `<button id="generateDiagram">📝 Zeichne ein Flowchart</button>`;
-            document.getElementById("resultDiv").innerHTML = htmlOutput;
+          document.getElementById("progressDiv").innerHTML = `<p>⚙️ Erstelle Frage aus den Lernzielen...</p>`;
+          document.getElementById("podcastDiv").innerHTML = ``;
+          document.getElementById("mermaid").innerHTML = ``;
+          document.getElementById("mermaidCode").innerHTML = ``;
+          let responseQuestion = await fetch(`/tutor/getQuestion`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ properties, language, assistant_id }),
+          });
+          let resultQuestion = await responseQuestion.json();
+          let questionText = resultQuestion.question;
+          let htmlOutput = "<h2>Frage zu den Lernzielen</h2>";
+          htmlOutput += `<p>${questionText}</p>`;
+          htmlOutput += `<br><br><textarea id="answerText" name="answerText" rows="7">Meine Antwort auf die Frage</textarea>`;
+          htmlOutput += `<br><button id="getAnswer">Überprüfe meine Antwort</button>`;
+          document.getElementById("resultDiv").innerHTML = htmlOutput;
 
-            setTimeout(() => {
-              document.getElementById("generateWord").addEventListener("click", () => {
-                let wordText = generateDocxElementsFromHTML(scriptText);
-                generateWordFile(wordText, selected);
-              });
-              document.getElementById("generatePdf").addEventListener("click", () => {
-                generatePdfFile(scriptText, selected);
-              });
-            }, 100);
-
-            // Mermaid-Diagramm erstellen
-            document.getElementById("generateDiagram").addEventListener("click", async function () {
-              try {
-                window.scrollTo({ top: 0, behavior: "smooth" });
-                document.getElementById(
-                  "progressDiv"
-                ).innerHTML = `<p>⚙️ Erstelle Mermaid-Diagramm aus Skript...<br>Diagramm wird unterhalb von Skript eingeblendet.</p>`;
-                let responseDiagram = await fetch(`/tutor/getDiagram`, {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ scriptText, language }),
-                });
-
-                let diagramCode = await responseDiagram.text();
-                console.log(diagramCode);
-                openMermaidLive(diagramCode);
-                console.log(
-                  `<p>Kopieren Sie den untenstehenden Code und fügen Sie ihn in die <a href="https://mermaid.live/" target="_blank">Mermaid-Website</a> ein:</p><pre>${diagramCode}</pre>`
-                );
-                document.getElementById(
-                  "mermaidCode"
-                ).innerHTML = `<p>Kopieren Sie den untenstehenden Code und fügen Sie ihn in die <a href="https://mermaid.live/" target="_blank">Mermaid-Website</a> ein, um das Diagramm grösser zu sehen und anzupassen:</p><pre>${diagramCode}</pre>`;
-              } catch (error) {
-                console.error("Fehler beim Generieren des Diagramms:", error);
-                document.getElementById("progressDiv").innerHTML = `<p>❌ Fehler beim Generieren des Diagramms.</p>`;
-              } finally {
-                document.getElementById("progressDiv").innerHTML = ``;
-              }
-            });
-
-            // Podcast erstellen
-            let podcastText;
-            document.getElementById("buttonPodcast").addEventListener("click", async function () {
-              try {
-                window.scrollTo({ top: 0, behavior: "smooth" });
-                document.getElementById("progressDiv").innerHTML = `<p>⚙️ Erstelle Podcast aus Skript...</p>`;
-                let response = await fetch(`/tutor/getPodcastText`, {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ scriptText, language }),
-                });
-                podcastText = await response.json();
-              } catch (error) {
-                console.error("Fehler beim Generieren des Podcasts:", error);
-                document.getElementById("progressDiv").innerHTML = `<p>❌ Fehler beim Generieren des Podcasts.</p>`;
-              }
-              generatePodcastAudio(podcastText)
-                .then((speechURL) => {
-                  document.getElementById(
-                    "podcastDiv"
-                  ).innerHTML = `<audio id="audioPlayer" controls src="${speechURL}"></audio><br>
-                  <h2>Transkript des Podcasts</h2><p>${podcastText}</p>`;
-                  let audio = document.getElementById("audioPlayer");
-                  document.getElementById("progressDiv").innerHTML = "";
-                })
-                .catch((error) => {
-                  console.error("Fehler beim Generieren der Sprachdatei:", error);
-                  alert("Es gab ein Problem beim Generieren der Sprachdatei.");
-                });
-            });
-          } catch (error) {
-            console.error("Fehler beim Generieren des Skripts:", assistant_id, error);
-            document.getElementById("progressDiv").innerHTML = `<p>❌ Fehler beim Generieren des Skripts.</p>`;
-          } finally {
-            document.getElementById("progressDiv").innerHTML = ``;
-          }
+          // Eigene Antwort überprüfen
+          document.getElementById("getAnswer").addEventListener("click", async function () {
+            try {
+              const answerText = document.getElementById("answerText").value;
+              await checkAnswer(answerText, questionText, language, assistant_id);
+            } catch (error) {
+              console.error("Fehler beim Überprüfen der Antwort:", error);
+              window.scrollTo({ top: 0, behavior: "smooth" });
+              document.getElementById("progressDiv").innerHTML = `<p>❌ Fehler beim Überprüfen der Antwort.</p>`;
+            }
+          });
+        } catch (error) {
+          console.error("Fehler beim Generieren der Frage:", error);
+          document.getElementById("progressDiv").innerHTML = `<p>❌ Fehler beim Generieren der Frage.</p>`;
+        } finally {
+          document.getElementById("progressDiv").innerHTML = ``;
         }
-      });
-    </script>
-  </body>
+      }
+    });
+
+    // Skript schreiben
+    document.getElementById("generateScript").addEventListener("click", async function () {
+      const select = document.getElementById("objectivesSelect");
+      const selected = Array.from(select.selectedOptions).map((option) => option.value);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      if (selected.length === 0) {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        document.getElementById("progressDiv").innerHTML = "❌ Bitte mindestens 1 Lernziel auswählen.";
+      } else {
+        const properties = selected.join("\n");
+        try {
+          let wordcount = document.getElementById("wordcountScript").value;
+          window.scrollTo({ top: 0, behavior: "smooth" });
+          document.getElementById(
+            "progressDiv"
+          ).innerHTML = `<p>⚙️ Erstelle Skript mit erklärendem Text zu den Lernzielen...</p>`;
+          document.getElementById("podcastDiv").innerHTML = ``;
+          document.getElementById("mermaid").innerHTML = ``;
+          document.getElementById("mermaidCode").innerHTML = ``;
+          let responseScript = await fetch(`/tutor/getScript`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ properties, wordcount, language, assistant_id }),
+          });
+          let resultScript = await responseScript.json();
+          let scriptText = resultScript.text;
+          let htmlOutput = "<h2>Skript zu den ausgewählten Lernzielen</h2>";
+          htmlOutput += scriptText;
+          htmlOutput += `<br><button id="generateWord">📄 Word-Datei herunterladen</button>`;
+          htmlOutput += `<button id="generatePdf">📑 PDF-Datei herunterladen</button>`;
+          htmlOutput += `<button id="buttonPodcast">🎧 Erstelle einen Podcast</button>`;
+          htmlOutput += `<button id="generateDiagram">📝 Zeichne ein Flowchart</button>`;
+          document.getElementById("resultDiv").innerHTML = htmlOutput;
+
+          setTimeout(() => {
+            document.getElementById("generateWord").addEventListener("click", () => {
+              let wordText = generateDocxElementsFromHTML(scriptText);
+              generateWordFile(wordText, selected);
+            });
+            document.getElementById("generatePdf").addEventListener("click", () => {
+              generatePdfFile(scriptText, selected);
+            });
+          }, 100);
+
+          // Mermaid-Diagramm erstellen
+          document.getElementById("generateDiagram").addEventListener("click", async function () {
+            try {
+              window.scrollTo({ top: 0, behavior: "smooth" });
+              document.getElementById(
+                "progressDiv"
+              ).innerHTML = `<p>⚙️ Erstelle Mermaid-Diagramm aus Skript...<br>Diagramm wird unterhalb des Skripts eingeblendet.</p>`;
+              let responseDiagram = await fetch(`/tutor/getDiagram`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ scriptText, language }),
+              });
+
+              let diagramCode = await responseDiagram.text();
+              console.log(diagramCode);
+              openMermaidLive(diagramCode);
+              console.log(
+                `<p>Kopieren Sie den untenstehenden Code und fügen Sie ihn in die <a href="https://mermaid.live/" target="_blank">Mermaid-Website</a> ein:</p><pre>${diagramCode}</pre>`
+              );
+              document.getElementById(
+                "mermaidCode"
+              ).innerHTML = `<p>Kopieren Sie den untenstehenden Code und fügen Sie ihn in die <a href="https://mermaid.live/" target="_blank">Mermaid-Website</a> ein, um das Diagramm grösser zu sehen und anzupassen:</p><pre>${diagramCode}</pre>`;
+            } catch (error) {
+              console.error("Fehler beim Generieren des Diagramms:", error);
+              document.getElementById("progressDiv").innerHTML = `<p>❌ Fehler beim Generieren des Diagramms.</p>`;
+            } finally {
+              document.getElementById("progressDiv").innerHTML = ``;
+            }
+          });
+
+          // Podcast erstellen
+          let podcastText;
+          document.getElementById("buttonPodcast").addEventListener("click", async function () {
+            try {
+              window.scrollTo({ top: 0, behavior: "smooth" });
+              document.getElementById("progressDiv").innerHTML = `<p>⚙️ Erstelle Podcast aus Skript...</p>`;
+              let response = await fetch(`/tutor/getPodcastText`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ scriptText, language }),
+              });
+              podcastText = await response.json();
+            } catch (error) {
+              console.error("Fehler beim Generieren des Podcasts:", error);
+              document.getElementById("progressDiv").innerHTML = `<p>❌ Fehler beim Generieren des Podcasts.</p>`;
+            }
+            generatePodcastAudio(podcastText)
+              .then((speechURL) => {
+                document.getElementById(
+                  "podcastDiv"
+                ).innerHTML = `<audio id="audioPlayer" controls src="${speechURL}"></audio><br>
+                  <h2>Transkript des Podcasts</h2><p>${podcastText}</p>`;
+                let audio = document.getElementById("audioPlayer");
+                document.getElementById("progressDiv").innerHTML = "";
+              })
+              .catch((error) => {
+                console.error("Fehler beim Generieren der Sprachdatei:", error);
+                alert("Es gab ein Problem beim Generieren der Sprachdatei.");
+              });
+          });
+        } catch (error) {
+          console.error("Fehler beim Generieren des Skripts:", assistant_id, error);
+          document.getElementById("progressDiv").innerHTML = `<p>❌ Fehler beim Generieren des Skripts.</p>`;
+        } finally {
+          document.getElementById("progressDiv").innerHTML = ``;
+        }
+      }
+    });
+  </script>
+</body>
+
 </html>

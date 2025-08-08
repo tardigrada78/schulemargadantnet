@@ -3,10 +3,8 @@ const router = Router();
 import OpenAI from "openai";
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-
 // Funktion für LLM-Anfrage (mit und ohne Kontext)
 async function LLMtext(assistant_id, prompt) {
-  console.log("In LLMtext(): ", assistant_id)
   // Variante ohne Kontext
   if (assistant_id == "kein") {
     const response = await openai.chat.completions.create({
@@ -113,17 +111,19 @@ ${properties}
 // Funktion um eigene Antwort zu überprüfen
 async function checkAIAnswer(answerText, questionText, language, assistant_id) {
   console.log(language);
-  const prompt = `Du bist ein Lehrer. Bewerte bitte die folgende Schülerantwort auf die gestellte Frage.
+  const prompt = `Du bist ein Lehrer. Bewerte bitte die folgende Schüler*inantwort auf die gestellte Frage.
 Frage: ${questionText}
 
-Schülerantwort: ${answerText}
+Schüler*inantwort: ${answerText}
 
 Beurteile die Antwort fair, sachlich und präzise:
 - Nimm zuerst die beigelegten Skripte und Fachbücher als Quelle und erst wenn die nicht ergiebig sind andere Quellen.
 - Ist die Antwort inhaltlich korrekt?
 - Welche Aspekte fehlen oder sind unvollständig?
 - Falls falsch, erkläre warum und was richtig wäre.
+- Bevor du etwas kritisiert, kontrolliere ob das nicht in der Schüler*inantwort steht. Vielleicht ist es sprachlich ungenau geschrieben aber inhaltlich korrekt.
 - Gib nur Rückmeldungen auf die Antwort, keine allgemeinen Lerntipps. 
+- Antworte direkt der Schüler*in, vermeide Anreden wie "Der Schüler hat". 
 - **Formuliere die Antwort in der Sprache: ${language}.** Achte darauf, dass die gesamte Ausgabe ausschließlich in dieser Sprache erfolgt.  
 
 Gib eine kurze Rückmeldung (max. 5 Sätze), die dem Schüler hilft, sich zu verbessern. Sei wohlwollend und motivierend.`;

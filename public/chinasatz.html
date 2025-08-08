@@ -1,105 +1,108 @@
 <!DOCTYPE html>
 <html lang="de">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Satz zu übersetzen</title>
-    <link rel="stylesheet" href="style_black.css" />
-  </head>
 
-  <body>
-    <a href="/feedback.html" target="_blank">Feedback zu dieser Site geben.</a>
-    <h1>Satz zu übersetzen</h1>
-    <p>
-      Klicken Sie auf den Button, um einen chinesischen Satz mit dem Wortschatz HSK-1 zu generieren. Die Übersetzung
-      wird wortgetreu und nicht grammatikalisch korrekt gemacht.
-    </p>
-    <button id="generateSentence">Schreibe einen Satz</button>
-    <div id="progressDiv"></div>
-    <br />
-    <div id="resultDiv"></div>
-    <br />
-    <div id="speechOutput"></div>
-    <div id="searchDiv" style="display: none">
-      <br /><br />
-      <button id="buttonTranslation">Zeige Übersetzung</button>
-      <div id="translationDiv"></div>
-    </div>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Satz zu übersetzen</title>
+  <link rel="stylesheet" href="style_black.css" />
+</head>
 
-    <script>
-      // Funktion um Sprachausgabe zu generieren
-      async function generateSpeech(storyText) {
-        let response = await fetch("/chinasatz/speech", {
+<body>
+  <a href="/index.html" target="_blank">Weitere KI-Tools (Startseite)</a>&nbsp;&nbsp;&nbsp;
+  <a href="/feedback.html" target="_blank">Feedback geben</a>
+  <h1>Satz zu übersetzen</h1>
+  <p>
+    Klicken Sie auf den Button, um einen chinesischen Satz mit dem Wortschatz HSK-1 zu generieren. Die Übersetzung
+    wird wortgetreu und nicht grammatikalisch korrekt gemacht.
+  </p>
+  <button id="generateSentence">Schreibe einen Satz</button>
+  <div id="progressDiv"></div>
+  <br />
+  <div id="resultDiv"></div>
+  <br />
+  <div id="speechOutput"></div>
+  <div id="searchDiv" style="display: none">
+    <br /><br />
+    <button id="buttonTranslation">Zeige Übersetzung</button>
+    <div id="translationDiv"></div>
+  </div>
+
+  <script>
+    // Funktion um Sprachausgabe zu generieren
+    async function generateSpeech(storyText) {
+      let response = await fetch("/chinasatz/speech", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ story: storyText }),
+      });
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Fehler beim Generieren der Sprachdatei: ${errorText}`);
+      }
+      let data = await response.json();
+      return data.speech;
+    }
+
+    // Wait for the DOM to load
+    document.getElementById("generateSentence").addEventListener("click", async () => {
+      try {
+        document.getElementById("progressDiv").innerHTML =
+          "<p>⚙️ Der Satz wird geschrieben und das Audiofile erstellt...</p>";
+        document.getElementById("resultDiv").innerHTML = "";
+        document.getElementById("speechOutput").innerHTML = "";
+        document.getElementById("translationDiv").innerHTML = "";
+        let response = await fetch("/chinasatz/sentence", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ story: storyText }),
         });
-        if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(`Fehler beim Generieren der Sprachdatei: ${errorText}`);
-        }
         let data = await response.json();
-        return data.speech;
-      }
+        chinaSentence = data.sentence;
+        document.getElementById("resultDiv").innerHTML = `<p>${chinaSentence}</p>`;
 
-      // Wait for the DOM to load
-      document.getElementById("generateSentence").addEventListener("click", async () => {
-        try {
-          document.getElementById("progressDiv").innerHTML =
-            "<p>⚙️ Der Satz wird geschrieben und das Audiofile erstellt...</p>";
-          document.getElementById("resultDiv").innerHTML = "";
-          document.getElementById("speechOutput").innerHTML = "";
-          document.getElementById("translationDiv").innerHTML = "";
-          let response = await fetch("/chinasatz/sentence", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
+        // Generate voice output
+        generateSpeech(chinaSentence)
+          .then((speechURL) => {
+            document.getElementById(
+              "speechOutput"
+            ).innerHTML = `<audio id="audioPlayer" controls src="${speechURL}"></audio>`;
+            document.getElementById("progressDiv").innerHTML = "";
+          })
+          .catch((error) => {
+            console.error("Fehler beim Generieren der Sprachdatei:", error);
+            alert("Es gab ein Problem beim Generieren der Sprachdatei.");
           });
-          let data = await response.json();
-          chinaSentence = data.sentence;
-          document.getElementById("resultDiv").innerHTML = `<p>${chinaSentence}</p>`;
 
-          // Generate voice output
-          generateSpeech(chinaSentence)
-            .then((speechURL) => {
-              document.getElementById(
-                "speechOutput"
-              ).innerHTML = `<audio id="audioPlayer" controls src="${speechURL}"></audio>`;
-              document.getElementById("progressDiv").innerHTML = "";
-            })
-            .catch((error) => {
-              console.error("Fehler beim Generieren der Sprachdatei:", error);
-              alert("Es gab ein Problem beim Generieren der Sprachdatei.");
-            });
-
-          // Erstelle Übersetzung
-          document.getElementById("searchDiv").style.display = "block";
-          document.getElementById("buttonTranslation").addEventListener("click", async function () {
-            try {
-              document.getElementById("progressDiv").innerHTML =
+        // Erstelle Übersetzung
+        document.getElementById("searchDiv").style.display = "block";
+        document.getElementById("buttonTranslation").addEventListener("click", async function () {
+          try {
+            document.getElementById("progressDiv").innerHTML =
               "<p>⚙️ Die Übersetzung wird erstellt...</p>";
-              let responseTranslation = await fetch(`/chinasatz/getTranslation`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ sentence: chinaSentence }),
-              });
-              let resultTranslation = await responseTranslation.json();
-              let translation = resultTranslation.translation;
-              document.getElementById("translationDiv").innerHTML = `<p>${translation}</p>`;
-              document.getElementById("progressDiv").innerHTML = "";
-            } catch (error) {
-              console.error("Fehler beim Überprüfen der Antwort:", error);
-              document.getElementById("progressDiv").innerHTML = `<p>❌ Fehler beim Überprüfen der Antwort.</p>`;
-            }
-          });
-        } catch (error) {
-          console.error("Error fetching story:", error);
-          document.getElementById("progressDiv").innerHTML = "Fehler beim Erstellen der Geschichte";
-        }
-      });
-    </script>
-  </body>
+            let responseTranslation = await fetch(`/chinasatz/getTranslation`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ sentence: chinaSentence }),
+            });
+            let resultTranslation = await responseTranslation.json();
+            let translation = resultTranslation.translation;
+            document.getElementById("translationDiv").innerHTML = `<p>${translation}</p>`;
+            document.getElementById("progressDiv").innerHTML = "";
+          } catch (error) {
+            console.error("Fehler beim Überprüfen der Antwort:", error);
+            document.getElementById("progressDiv").innerHTML = `<p>❌ Fehler beim Überprüfen der Antwort.</p>`;
+          }
+        });
+      } catch (error) {
+        console.error("Error fetching story:", error);
+        document.getElementById("progressDiv").innerHTML = "Fehler beim Erstellen der Geschichte";
+      }
+    });
+  </script>
+</body>
+
 </html>
