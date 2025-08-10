@@ -25,7 +25,7 @@ async function getStory() {
     Jeder Satz endet mit einem Punkt.`;
 
   const response = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
+    model: "gpt-5-mini",
     messages: [
       { role: "system", content: systemMessage },
       { role: "user", content: userMessage },
@@ -51,7 +51,7 @@ async function getTitle(story) {
     
     "${story}"`;
   const response = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
+    model: "gpt-5-nano",
     messages: [
       { role: "system", content: systemMessage },
       { role: "user", content: userMessage },
