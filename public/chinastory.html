@@ -6,14 +6,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>KI-Geschichten-Generator</title>
     <link rel="stylesheet" href="style_black.css" />
+    <script src="https://cdn.jsdelivr.net/npm/pinyin-pro@3.19.2/dist/index.js"></script>
 </head>
 
 <body>
     <a href="/index.html" target="_blank">Weitere KI-Tools (Startseite)</a>&nbsp;&nbsp;&nbsp;
     <a href="/feedback.html" target="_blank">Feedback geben</a>
     <h1>KI-Geschichten-Generator</h1>
-    <p>Klicken Sie auf den Button, um eine Geschichte mit Übersetzung zu generieren.</p>
     <button id="generateStory">Erfinde eine Geschichte !</button>
+    <p>Bewegen Sie den Mauszeiger über ein Wort, um die Übersetzung zu sehen.</p>
     <div id="storyOutput"></div>
     <br /><br />
     <div id="imageOutput">
@@ -23,7 +24,6 @@
     <br /><br />
 
     <script>
-        // define async functions
         async function generateTitle(storyText) {
             let response = await fetch("/chinastory/title", {
                 method: "POST",
@@ -64,85 +64,79 @@
             return data.speech;
         }
 
-        // Wait for the DOM to load
-        document.getElementById("generateStory").addEventListener("click", async () => {
-            try {
-                document.getElementById("storyOutput").innerHTML =
-                    "<p>⚙️ Die Geschichte wird geschrieben, bitte warten ...</p>";
-                let response = await fetch("/chinastory/", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                });
-                let data = await response.json();
-                console.log(data.story)
-
-                // Split the story for hover effect
-                let story = data.story.replace(/\n/g, " ");
-                story = story.replace(/\) *\)/g, ")");
-                story = story.replace(/  +/g, " ");
-                story = story.replace(/\)/g, "(");
-                story = story.replace(/\( /g, "(");
-                let storyArray = story.split("(");
-                let storyText = "";
-                let storyTitle = "";
-                let imageURL = "";
-
-                // Create HTML with hover text
-                let storyHtml = "";
-                for (let i = 0; i < storyArray.length - 1; i += 2) {
-                    // Translate Chinese to Pinyin
-                    const text = storyArray[i];
-                    const response = await fetch("/chinastory/convert", {
+        // Wait for the DOM and all scripts to load
+        window.addEventListener('load', function () {
+            document.getElementById("generateStory").addEventListener("click", async () => {
+                try {
+                    document.getElementById("storyOutput").innerHTML =
+                        "<p>⚙️ Die Geschichte wird geschrieben, bitte warten ...</p>";
+                    let response = await fetch("/chinastory/", {
                         method: "POST",
                         headers: {
                             "Content-Type": "application/json",
                         },
-                        body: JSON.stringify({ text }),
                     });
-                    const result = await response.json();
-                    if (response.ok) {
+                    let data = await response.json();
+                    // console.log(data.story)
+
+                    // Split the story for hover effect
+                    let story = data.story.replace(/\n/g, " ");
+                    story = story.replace(/\) *\)/g, ")");
+                    story = story.replace(/  +/g, " ");
+                    story = story.replace(/\)/g, "(");
+                    story = story.replace(/\( /g, "(");
+                    let storyArray = story.split("(");
+                    let storyText = "";
+                    let storyTitle = "";
+                    let imageURL = "";
+
+                    // Create HTML with hover text
+                    let storyHtml = "";
+                    for (let i = 0; i < storyArray.length - 1; i += 2) {
+                        let pinyinText = pinyinPro.pinyin(storyArray[i], { toneType: 'symbol' });
                         storyHtml += `<div class="hover"><span>${storyArray[i]
-                            }</span><span class="hover-text"><span class="hover-pinyin">${result.pinyin}</span><br>${storyArray[i + 1]
+                            }</span><span class="hover-text"><span class="hover-pinyin">${pinyinText}</span><br>${storyArray[i + 1]
                             }</span></div>\n`;
                         storyText += ` ${storyArray[i]}`;
+
                     }
+                    // Generate title and update website
+                    generateTitle(storyText).then((title) => {
+                        storyTitle = title;
+                        storyHtml = `<h2>${storyTitle}</h2>${storyHtml}`;
+                        document.getElementById("storyOutput").innerHTML = storyHtml;
+                    });
+
+                    // Generate voice output
+                    generateSpeech(storyText)
+                        .then((speechURL) => {
+                            document.getElementById(
+                                "speechOutput"
+                            ).innerHTML = `<audio id="audioPlayer" controls src="${speechURL}"></audio>`;
+                            let audio = document.getElementById("audioPlayer");
+                        })
+                        .catch((error) => {
+                            console.error("Fehler beim Generieren der Sprachdatei:", error);
+                            alert("Es gab ein Problem beim Generieren der Sprachdatei.");
+                        });
+
+                    // Generate picture and update website
+                    generatePicture(storyText)
+                        .then((image) => {
+                            imageURL = image;
+                            document.getElementById("generatedImage").src = imageURL;
+                        })
+                        .catch((error) => {
+                            console.error("Fehler beim Generieren des Bildes:", error);
+                            alert("Es gab ein Problem beim Generieren des Bildes.");
+                        });
+
+
+                } catch (error) {
+                    console.error("Error fetching story:", error);
+                    document.getElementById("storyOutput").innerHTML = "Fehler beim Erstellen der Geschichte";
                 }
-                // Generate title and update website
-                generateTitle(storyText).then((title) => {
-                    storyTitle = title;
-                    storyHtml = `<p>ℹ️ Diese Geschichte mit Übersetzung, Bild und Sprachausgabe wurde von KI erstellt. Bewegen Sie den Mauszeiger über ein Wort, um die Übersetzung zu sehen. Die Sprachausgabe kann unterhalb des Bildes gestartet werden.</p><h2>${storyTitle}</h2>${storyHtml}`;
-                    document.getElementById("storyOutput").innerHTML = storyHtml;
-                });
-
-                // Generate picture and update website
-                generatePicture(storyText)
-                    .then((image) => {
-                        imageURL = image;
-                        document.getElementById("generatedImage").src = imageURL;
-                    })
-                    .catch((error) => {
-                        console.error("Fehler beim Generieren des Bildes:", error);
-                        alert("Es gab ein Problem beim Generieren des Bildes.");
-                    });
-
-                // Generate voice output
-                generateSpeech(storyText)
-                    .then((speechURL) => {
-                        document.getElementById(
-                            "speechOutput"
-                        ).innerHTML = `<audio id="audioPlayer" controls src="${speechURL}"></audio>`;
-                        let audio = document.getElementById("audioPlayer");
-                    })
-                    .catch((error) => {
-                        console.error("Fehler beim Generieren der Sprachdatei:", error);
-                        alert("Es gab ein Problem beim Generieren der Sprachdatei.");
-                    });
-            } catch (error) {
-                console.error("Error fetching story:", error);
-                document.getElementById("storyOutput").innerHTML = "Fehler beim Erstellen der Geschichte";
-            }
+            });
         });
     </script>
 </body>

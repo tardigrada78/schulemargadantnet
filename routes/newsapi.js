@@ -13,11 +13,12 @@ async function doSummary(data) {
   Die Übersicht soll prägnant und leicht lesbar sein, ohne dass wichtige Themen ausgelassen werden. 
 
   Fokus:
+  - Der Text soll ungefähr 1000 Wörter umfassen
   - Gliedere den Text thematisch.
   - Erwähne Hauptthemen, Entdeckungen, Ereignisse oder relevante Entwicklungen.
-  - Fasse alles zu einem flüssigen Text zusammen, der als Rückblick und Übersicht dient.
+  - Fasse alles zu einem flüssigen Text zusammen, der als Übersicht dient.
   - Schreibe kein Schlusswort in Form von so etwas wie "Diese Entwicklungen...". 
-  - Füge keine Titel oder andere Formatierungen hinzu. Schreibe auf Deutsch in einer wissenschaftich präzisen, aber lebendigen Sprache. 
+  - Füge keine Titel oder andere Formatierungen hinzu. Schreibe auf Deutsch in einer präzisen, aber lebendigen Sprache. 
   - Schreibe den Text so, dass er als Podcast vorgetragen werden kann. 
 
   Artikel:

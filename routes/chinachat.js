@@ -22,9 +22,9 @@ async function doChat(chatContent) {
     - Verwende ein klares und sehr einfaches Vokabular. Orientiere dich an HSK1.
     `;
   const response = await openai.chat.completions.create({
-    model: "gpt-5-nano",
+    model: "gpt-4.1-nano",
     messages: [{ role: "user", content: prompt }],
-    // temperature: 0.6,
+    temperature: 0.6,
   });
   return response.choices[0].message.content;
 }

@@ -17,10 +17,10 @@ async function doSentence() {
     - Schreibe den Satz direkt auf Chinesisch ohne zusätzliche Erklärungen oder Übersetzungen.`;
 
   const response = await openai.chat.completions.create({
-    model: "gpt-5-nano",
+    model: "gpt-4.1-nano",
     messages: [{ role: "user", content: prompt }],
-    // temperature: 1.0, // Erhöht die Kreativität und Variation
-    // max_tokens: 50, // Begrenzt die Länge, um präzise Antworten zu erhalten
+    temperature: 1.0, // Erhöht die Kreativität und Variation
+    max_tokens: 50, // Begrenzt die Länge, um präzise Antworten zu erhalten
   });
   return response.choices[0].message.content;
 }

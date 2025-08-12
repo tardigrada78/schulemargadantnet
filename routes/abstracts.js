@@ -19,7 +19,7 @@ async function doSummary(text, words, lang) {
     - Schreibe die gesamte Zusammenfassung in der Sprache ${lang}
     `;
   const response = await openai.chat.completions.create({
-    model: "gpt-4o",
+    model: "gpt-4.1",
     messages: [{ role: "user", content: prompt }],
     temperature: 0.6,
   });
