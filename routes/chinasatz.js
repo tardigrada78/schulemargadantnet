@@ -17,7 +17,7 @@ async function doSentence() {
     - Schreibe den Satz direkt auf Chinesisch ohne zusätzliche Erklärungen oder Übersetzungen.`;
 
   const response = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
+    model: "gpt-5-nano",
     messages: [{ role: "user", content: prompt }],
     temperature: 1.0, // Erhöht die Kreativität und Variation
     max_tokens: 50, // Begrenzt die Länge, um präzise Antworten zu erhalten
@@ -53,7 +53,7 @@ async function doTranslation(sentence) {
     - Übersetze Wort für Wort, auch wenn dabei Verständlichkeit und Grammatik leiden`;
 
   const response = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
+    model: "gpt-5-nano",
     messages: [{ role: "user", content: prompt }],
     temperature: 0.8,
   });

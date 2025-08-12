@@ -25,7 +25,7 @@ async function doSummary(data) {
   `;
 
   const response = await openai.chat.completions.create({
-    model: "gpt-4o",
+    model: "gpt-5-nano",
     messages: [{ role: "user", content: prompt }],
     temperature: 0.6,
   });
