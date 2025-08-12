@@ -30,7 +30,7 @@ async function getStory() {
       { role: "system", content: systemMessage },
       { role: "user", content: userMessage },
     ],
-    temperature: 0.8,
+    // temperature: 0.8,
   });
 
   return response.choices[0].message.content;
@@ -56,7 +56,7 @@ async function getTitle(story) {
       { role: "system", content: systemMessage },
       { role: "user", content: userMessage },
     ],
-    temperature: 0.7,
+    // temperature: 0.7,
   });
   return response.choices[0].message.content.trim();
 }

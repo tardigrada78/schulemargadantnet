@@ -24,7 +24,7 @@ async function doChat(chatContent) {
   const response = await openai.chat.completions.create({
     model: "gpt-5-nano",
     messages: [{ role: "user", content: prompt }],
-    temperature: 0.6,
+    // temperature: 0.6,
   });
   return response.choices[0].message.content;
 }

@@ -19,8 +19,8 @@ async function doSentence() {
   const response = await openai.chat.completions.create({
     model: "gpt-5-nano",
     messages: [{ role: "user", content: prompt }],
-    temperature: 1.0, // Erhöht die Kreativität und Variation
-    max_tokens: 50, // Begrenzt die Länge, um präzise Antworten zu erhalten
+    // temperature: 1.0, // Erhöht die Kreativität und Variation
+    // max_tokens: 50, // Begrenzt die Länge, um präzise Antworten zu erhalten
   });
   return response.choices[0].message.content;
 }
@@ -55,7 +55,7 @@ async function doTranslation(sentence) {
   const response = await openai.chat.completions.create({
     model: "gpt-5-nano",
     messages: [{ role: "user", content: prompt }],
-    temperature: 0.8,
+    // temperature: 0.8,
   });
   return response.choices[0].message.content;
 }
