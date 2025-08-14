@@ -14,19 +14,20 @@
   <a href="/index.html" target="_blank">Weitere KI-Tools (Startseite)</a>&nbsp;&nbsp;&nbsp;
   <a href="/feedback.html" target="_blank">Feedback geben</a>
   <h1>News-Zusammenfassung</h1>
-  <p>Diese Website verwendet newsapi.org um News der letzen 3 Tage zur Kategorie "Science" oder den Stichworten AI zu
-    finden. Die Zusammenfassung wird von OpenAI o4 erstellt.</p>
+  <p>Diese Website verwendet newsapi.org um News der letzen 3 Tage zur einer bestimmten Kategorie zu finden. Die KI
+    fasst diese News dann in einem spannenden Podcast zusammen.</p>
   <button id="buttonScienceNews" data-url="/news/getScienceNews">Suche Science-News (mit Fokus Biologie,
     Naturwissenschaft)</button>
-  <button id="buttonAINews" data-url="/news/getAINews">Suche AI-News (mit Fokus Schule, Biologie, ohne
+  <button id="buttonAINews" data-url="/news/getAINews">Suche KI-News (mit Fokus Schule, Biologie, ohne
     Sicherheit)</button>
+  <button id="buttonglobalNews" data-url="/news/getglobalNews">Suche globale News aus Politik und Weltgeschehen</button>
   <div id="newsProgress"></div>
   <div id="summaryOutput"></div>
   <div id="speechOutput"></div>
   <div id="newsOutput"></div>
 
   <script>
-    const fetchButtons = document.querySelectorAll("#buttonScienceNews, #buttonAINews");
+    const fetchButtons = document.querySelectorAll("#buttonScienceNews, #buttonAINews, #buttonglobalNews");
     const summaryOutput = document.getElementById("summaryOutput");
     const newsOutput = document.getElementById("newsOutput");
     const progressOutput = document.getElementById("newsProgress");

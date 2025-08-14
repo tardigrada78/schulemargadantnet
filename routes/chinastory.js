@@ -69,14 +69,10 @@ async function getPicture(story) {
 
     Vorgaben:
     - Stil: Traditionelle chinesische Tuschmalerei (Shuǐmòhuà) modern interpretiert – fließende Pinselstriche, aber mit zeitgenössischen Elementen und Perspektiven.
-    - Linienführung: Charakteristische schwarze Tuschlinien verschiedener Stärken, von feinen Details bis zu kräftigen, ausdrucksstarken Konturen.
-    - Farbpalette: Zurückhaltende, aber ausdrucksvolle Farben – Tuschechwarz, warme Erdtöne, sanfte Akzente in Rot, Gold oder Blau, mit modernen Farbverläufen.
-    - Komposition: Asymmetrische Balance nach klassischen chinesischen Prinzipien, aber mit modernen räumlichen Konzepten und Perspektiven.
-    - Textur: Sichtbare Pinselstruktur und Papierqualität, aber digital verfeinert mit modernen Schattierungstechniken.
-    - Atmosphäre: Poetische Stimmung mit Nebel, sanften Übergängen und dem charakteristischen "leeren Raum" der chinesischen Malerei, aber mit modernen Lichtsetzungen.
     - Keine sichtbaren Texte, Kalligrafie nur als dekoratives Element falls passend.
     - Zeitgenössische Interpretation: Moderne Gegenstände oder Situationen nahtlos in den traditionellen Malstil integriert.
-    - Charaktere und Umgebung: Zeichne nur Tiere und Personen welche in der Geschichte vorkommen. Setze die in der Geschichte erwähnte Umgebung in eine modernes chinesische Variante.`;
+    - Charaktere und Umgebung: Zeichne nur Tiere und Personen welche in der Geschichte vorkommen. 
+    - Setze die in der Geschichte erwähnte Umgebung in eine modernes chinesische Variante.`;
 
   try {
     const response = await openai.images.generate({
@@ -155,17 +151,6 @@ router.post("/speech", async (req, res) => {
   } catch (error) {
     console.error("Fehler beim Generieren der Sprachdatei:", error);
     res.status(500).json({ error: "Fehler beim Generieren der Sprachdatei." });
-  }
-});
-
-// route to translates Chinese to Pinyin
-router.post("/convert", (req, res) => {
-  const { text } = req.body;
-  if (pinyin.isSupported() && text) {
-    const pinyinText = pinyin.convertToPinyin(text, null, true);
-    res.json({ pinyin: pinyinText });
-  } else {
-    res.status(400).json({ error: "Invalid input or Pinyin not supported" });
   }
 });
 

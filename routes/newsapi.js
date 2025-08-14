@@ -13,11 +13,11 @@ async function doSummary(data) {
   Die Übersicht soll prägnant und leicht lesbar sein, ohne dass wichtige Themen ausgelassen werden. 
 
   Fokus:
-  - Der Text soll ungefähr 1000 Wörter umfassen
+  - Der Text soll ungefähr 300 Wörter umfassen
   - Gliedere den Text thematisch.
-  - Erwähne Hauptthemen, Entdeckungen, Ereignisse oder relevante Entwicklungen.
+  - Beschränke dich auf Hauptthemen, Entdeckungen, Ereignisse oder relevante Entwicklungen.
   - Fasse alles zu einem flüssigen Text zusammen, der als Übersicht dient.
-  - Schreibe kein Schlusswort in Form von so etwas wie "Diese Entwicklungen...". 
+  - Schreibe keine eigenen Einschätzungen und Kommentare wie "Diese Entwicklungen zeigen...". 
   - Füge keine Titel oder andere Formatierungen hinzu. Schreibe auf Deutsch in einer präzisen, aber lebendigen Sprache. 
   - Schreibe den Text so, dass er als Podcast vorgetragen werden kann. 
 
@@ -106,6 +106,36 @@ router.get("/getAINews", async (req, res) => {
   } catch (error) {
     console.error("Error fetching AI news:", error);
     res.status(500).json({ error: "Failed to fetch AI news" });
+  }
+});
+
+
+// Sammelt globale News zu Politik und wichtigen Ereignissen
+router.get("/getglobalNews", async (req, res) => {
+  try {
+    const startData = moment().subtract(3, "days").format("YYYY-MM-DD");
+    const keywords = [
+      "global politics", "international relations", "world leaders",
+      "diplomatic crisis", "trade war", "summit",
+      "government collapse", "military conflict",
+      "peace agreement", "economic crisis", "inflation", "recession",
+      "currency crisis", "natural disaster",
+      "climate change", "pandemic", "humanitarian crisis",
+      "refugee crisis", "international law", "UN Security Council",
+      "G7", "G20", "BRICS", "NATO", "EU politics"
+    ].join(" OR ");
+
+    const response = await newsapi.v2.everything({
+      q: `(${keywords}) -local -city -county -municipal -entertainment -celebrity -gossip -fashion`,
+      from: startData,
+      sortBy: "relevancy",
+      language: "en",
+      pageSize: 100
+    });
+    res.json(response);
+  } catch (error) {
+    console.error("Error fetching global news:", error);
+    res.status(500).json({ error: "Failed to fetch global news" });
   }
 });
 
