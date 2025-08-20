@@ -69,6 +69,7 @@ async function getPicture(story) {
 
     Vorgaben:
     - Stil: Traditionelle chinesische Tuschmalerei (Shuǐmòhuà) modern interpretiert – fließende Pinselstriche, aber mit zeitgenössischen Elementen und Perspektiven.
+    - Farbe: Bewahre den historischen und traditionellen Stil, verwende aber Farben.
     - Keine sichtbaren Texte, Kalligrafie nur als dekoratives Element falls passend.
     - Zeitgenössische Interpretation: Moderne Gegenstände oder Situationen nahtlos in den traditionellen Malstil integriert.
     - Charaktere und Umgebung: Zeichne nur Tiere und Personen welche in der Geschichte vorkommen. 

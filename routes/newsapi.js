@@ -9,7 +9,7 @@ import moment from "moment";
 // Erstellt KI-Wochenschau
 async function doSummary(data) {
   const prompt = `Du erhältst eine Sammlung von aktuellen News-Artikeln. 
-  Erstelle eine kompakte Wochenschau, die die wichtigsten Highlights der letzten Tage zusammenfasst. 
+  Erstelle eine kompakte Wochenschau für das Radio, die die wichtigsten Highlights der letzten Tage zusammenfasst. 
   Die Übersicht soll prägnant und leicht lesbar sein, ohne dass wichtige Themen ausgelassen werden. 
 
   Fokus:
@@ -18,6 +18,7 @@ async function doSummary(data) {
   - Beschränke dich auf Hauptthemen, Entdeckungen, Ereignisse oder relevante Entwicklungen.
   - Fasse alles zu einem flüssigen Text zusammen, der als Übersicht dient.
   - Schreibe keine eigenen Einschätzungen und Kommentare wie "Diese Entwicklungen zeigen...". 
+  - Erkläre nicht, wie du den Text gegliedert hast, sondern beginne direkt mit einer freundlichen Begrüssung.
   - Füge keine Titel oder andere Formatierungen hinzu. Schreibe auf Deutsch in einer präzisen, aber lebendigen Sprache. 
   - Schreibe den Text so, dass er als Podcast vorgetragen werden kann. 
 

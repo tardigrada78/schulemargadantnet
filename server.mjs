@@ -10,8 +10,11 @@ import tutor from "./routes/tutor.js";
 import abstracts from "./routes/abstracts.js";
 import oralexamination from "./routes/oral_examination.js";
 import news from "./routes/newsapi.js"; 
-import overview from "./routes/overview.js";
+import virtualclass from "./routes/virtual_class.js"; 
+
 import feedback from "./routes/feedback.js"; // in all pages, allowes feedback-form
+
+import overview from "./routes/overview.js";
 // add new routes here
 
 
@@ -30,8 +33,11 @@ app.use("/tutor", tutor);
 app.use("/abstracts", abstracts);
 app.use("/oralexamination", oralexamination);
 app.use("/news", news);
-app.use("/overview", overview);
+app.use("/virtualclass", virtualclass);
 app.use("/feedback", feedback);
+
+app.use("/overview", overview);
+
 // add new routes here
 
 
