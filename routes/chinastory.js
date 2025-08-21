@@ -2,7 +2,6 @@ import { Router } from "express";
 const router = Router();
 import OpenAI from "openai";
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-import pinyin from "tiny-pinyin"; // https://github.com/creeperyang/pinyin/blob/master/README_EN.md
 
 // create story
 async function getStory() {
