@@ -6,20 +6,31 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>virtuelle Schulklasse</title>
   <link rel="stylesheet" href="style_black.css" />
+  <!-- PDF.js für clientseitige PDF-Verarbeitung -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script>
+    if (typeof pdfjsLib !== 'undefined') {
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    }
+  </script>
 </head>
 
 <body>
   <a href="/index.html" target="_blank">Weitere KI-Tools (Startseite)</a>&nbsp;&nbsp;&nbsp;
   <a href="/feedback.html" target="_blank">Feedback geben</a>
   <h1>virtuelle Schulklasse</h1>
-  <p>Geben Sie das Unterrichtsmaterial ein (als Text, später dann pdf-Upload)</p>
-  <textarea id="documents" name="documents" cols="70" rows="8">
-Recherchieren Sie selbständig im Internet zum Thema "Zellkern". Schreiben Sie eine Zusammenfassung von drei Sätzen auf ein Papier.
-</textarea>
+  <p>Lassen Sie Ihre Schulunterlagen von einer Schulklasse mit 8 speziellen KI-simulierten Schüler*innen kritisch
+    beurteilen. </p>
+  <button id="buttonPersons">Charakterprofile der virtuellen Klasse lesen</button>
+  <p></p>
+  <div style="margin: 10px 0;">
+    <label for="pdfFile">Laden Sie Ihr Unterrichtsmaterial im Format PDF hoch (nur die erste Seite wird
+      analysiert)</label>
+    <input type="file" id="pdfFile" accept=".pdf" />
+  </div>
 
   <br />
-  <button id="buttonDocuments">Schulunterlagen der Klasse aushändigen</button>
-  <button id="buttonPersons">Charakterprofile der virtuellen Klasse lesen</button>
+  <button id="buttonDocuments">Schulunterlagen der Klasse zur Analyse aushändigen</button>
   <div id="classFeedback"></div>
   <div id="progressDiv"></div>
   <div id="classCharacters"></div>
@@ -28,7 +39,7 @@ Recherchieren Sie selbständig im Internet zum Thema "Zellkern". Schreiben Sie e
     // Beschreibungen der virtuellen Schüler*innen
     const personTitles = ["Mit ADHS", "Mit Leseschwäche", "Fremdsprachlich", "Mit Depression", "Trans-Person",
       "aus anderer Kultur", "Hochbegabt", "Soziale Phobie"];
-    const persons = [`Du bist ein 18-jähriger Schüler im letzten Schuljahr mit einer diagnostizierten ADHS. 
+    const persons = [`Du bist ein 18-jähriger Schüler mit einer diagnostizierten ADHS. 
 
 Deine Eigenschaften:
 - Du hast Schwierigkeiten, dich länger als 2-3 Minuten auf einen Text zu konzentrieren
@@ -89,7 +100,7 @@ Deine Eigenschaften:
 - Du erkennst, wann Materialien dich zusätzlich belasten oder unterstützen
 - Du brauchst das Gefühl, dass Fehler okay sind und Teil des Lernprozesses
 - Dein Selbstvertrauen ist fragil - du zweifelst oft an deinen Fähigkeiten`,
-      `Du bist eine 17-jährige trans Schülerin, die sensitiv auf geschlechtsbezogene Themen und Sprache reagiert.
+      `Du bist eine 17-jährige trans-Schüler*in, die sensitiv auf geschlechtsbezogene Themen und Sprache reagiert.
 
 Deine Eigenschaften:
 - Du bemerkst sofort, wenn Materialien nur binäre Geschlechterrollen oder -beispiele verwenden
@@ -155,23 +166,66 @@ Deine Eigenschaften:
 - Du brauchst sichere Räume und alternative Beteiligungsformen zum mündlichen Unterricht`
     ];
 
+    // PDF zu Bild konvertieren
+    async function convertPdfToImage(file) {
+      try {
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({
+          data: arrayBuffer,
+          cMapUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/cmaps/',
+          cMapPacked: true
+        }).promise;
+        const page = await pdf.getPage(1); // Erste Seite
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
+
+        // Mittlere Auflösung für kleinere Dateigröße
+        const viewport = page.getViewport({ scale: 1.5 });
+        canvas.height = viewport.height;
+        canvas.width = viewport.width;
+
+        await page.render({
+          canvasContext: context,
+          viewport: viewport
+        }).promise;
+
+        // Canvas zu Base64 konvertieren mit reduzierter Qualität
+        return canvas.toDataURL('image/jpeg', 0.7);
+      } catch (error) {
+        console.error('PDF-Konvertierung fehlgeschlagen:', error);
+        throw new Error('PDF konnte nicht gelesen werden. Bitte überprüfen Sie die Datei.');
+      }
+    }
 
     // Charakterbeschreibungen anzeigen
     document.getElementById("buttonPersons").addEventListener("click", function () {
-      let outputHtml = "";
+      let outputHtml = "<h2>Charakterprofile der virtuellen Klasse</h2>";
       persons.forEach((person, index) => {
-        outputHtml += `<h2>${personTitles[index]}</h2><p>${person}</p>`;
+        outputHtml += `<h3>${personTitles[index]}</h3><p>${person}</p>`;
       });
       document.getElementById("classCharacters").innerHTML = outputHtml;
     })
 
-    // Unterlagen rückmelden lassen
+    // Hauptfunktion: PDF analysieren lassen
     document.getElementById("buttonDocuments").addEventListener("click", async () => {
-      const properties = document.getElementById("documents").value;
+      const fileInput = document.getElementById("pdfFile");
+      const file = fileInput.files[0];
+      if (!file) {
+        alert("Bitte wählen Sie eine PDF-Datei aus.");
+        return;
+      }
+      if (file.type !== 'application/pdf') {
+        alert("Bitte laden Sie nur PDF-Dateien hoch.");
+        return;
+      }
       let outputHtml = "";
       try {
+        // PDF zu Bild konvertieren
         document.getElementById("progressDiv").innerHTML =
-          "<p>⚙️ Die Unterlagen werden kritisch angeschaut...</p>";
+          "<p>📄 PDF wird konvertiert...</p>";
+        const imageBase64 = await convertPdfToImage(file);
+        document.getElementById("progressDiv").innerHTML =
+          "<p>⚙️ Die Unterlagen werden von der virtuellen Klasse analysiert...</p>";
 
         // Alle Promises gleichzeitig abarbeiten
         const feedbackPromises = persons.map(async (characterProfile, index) => {
@@ -180,13 +234,16 @@ Deine Eigenschaften:
             headers: {
               "Content-Type": "application/json",
             },
-            body: JSON.stringify({ properties, characterProfile }),
+            body: JSON.stringify({
+              imageBase64: imageBase64,
+              characterProfile: characterProfile
+            }),
           });
           const feedbackPerson = await responsePerson.json();
           return {
             title: personTitles[index],
             content: feedbackPerson.content,
-            index: index // Für die ursprüngliche Reihenfolge, falls gewünscht
+            index: index
           };
         });
 
@@ -197,10 +254,11 @@ Deine Eigenschaften:
         for (const feedback of allFeedbacks) {
           outputHtml += `<h2>${feedback.title}</h2><p>${feedback.content}</p>`;
         }
-
       } catch (error) {
-        console.error("Fehler beim Erstellen des Feedbacks", error);
-        document.getElementById("progressDiv").innerHTML = "❌ Fehler beim Erstellen des Feedbacks.";
+        console.error("Fehler bei der Analyse:", error);
+        document.getElementById("progressDiv").innerHTML =
+          "❌ Fehler bei der Analyse: " + error.message;
+        return;
       }
       document.getElementById("progressDiv").innerHTML = "";
       document.getElementById("classFeedback").innerHTML = outputHtml;
