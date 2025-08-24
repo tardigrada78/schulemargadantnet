@@ -19,7 +19,17 @@ Wichtig:
 - Deine Antwort soll nicht mehr als 200 Wörter umfassen
 - Antworte natürlich und authentisch, nicht übertrieben dramatisch
 
-Schaue dir das Material jetzt genau an und gib dein Feedback:`;
+WICHTIG: Gib am Ende deines Feedbacks eine Note von 1-6, Halbnoten sind möglich (Schweizer Notensystem):
+- 6 = Ausgezeichnet, perfekt für mich
+- 5 = Gut, funktioniert gut für mich  
+- 4 = Genügend, geht okay
+- 3 = Ungenügend, schwierig für mich
+- 2 = Schlecht, sehr schwierig
+- 1 = Sehr schlecht, funktioniert gar nicht
+
+Format: Dein Feedback-Text... **Note: X/6**
+
+Schaue dir das Material jetzt genau an und gib dein Feedback mit Note:`;
 
   const response = await openai.chat.completions.create({
     model: "gpt-4o",
@@ -40,9 +50,23 @@ Schaue dir das Material jetzt genau an und gib dein Feedback:`;
         ]
       }
     ],
-    max_tokens: 300
+    max_tokens: 350
   });
-  return response.choices[0].message.content;
+
+  const fullResponse = response.choices[0].message.content;
+
+  // Note aus dem Text extrahieren
+  const noteMatch = fullResponse.match(/\*\*Note:\s*(\d+\.?\d*)\/6\*\*/);
+  let note = 4; // Fallback
+  let content = fullResponse;
+
+  if (noteMatch) {
+    note = parseFloat(noteMatch[1]);
+    // Note aus dem Text entfernen für saubere Darstellung
+    content = fullResponse.replace(/\*\*Note:\s*\d+\/6\*\*/, '').trim();
+  }
+
+  return { content, note };
 }
 
 // Route für Vision-basiertes Feedback
@@ -53,8 +77,8 @@ router.post("/getFeedback", async (req, res) => {
       return res.status(400).json({ error: "Bild oder Charakterprofil fehlt" });
     }
     console.log("Verarbeite Feedback für Charakter...");
-    const content = await doVisionFeedback(imageBase64, characterProfile);
-    res.json({ content });
+    const result = await doVisionFeedback(imageBase64, characterProfile);
+    res.json(result); // Sendet { content: "text", note: 5 }
   } catch (error) {
     console.error("Fehler beim Vision-Feedback:", error);
     res.status(500).json({ error: "Fehler bei der Analyse: " + error.message });

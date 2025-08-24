@@ -8,6 +8,8 @@
   <link rel="stylesheet" href="style_black.css" />
   <!-- PDF.js für clientseitige PDF-Verarbeitung -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <!-- Chart.js für SmartSpider-Diagramm -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
   <script>
     if (typeof pdfjsLib !== 'undefined') {
       pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
@@ -31,6 +33,18 @@
 
   <br />
   <button id="buttonDocuments">Schulunterlagen der Klasse zur Analyse aushändigen</button>
+  
+  <!-- SmartSpider-Diagramm für Noten-Übersicht -->
+  <div id="notesChart" style="display: none; margin: 20px 0;">
+    <h2>Bewertungen der virtuellen Klasse (Noten 1-6)</h2>
+    <div style="width: 400px; height: 400px; margin: 0 auto;">
+      <canvas id="spiderChart"></canvas>
+    </div>
+    <p style="text-align: center; font-size: 0.9em; color: #666;">
+      🟢 5-6: Gut funktionierend | 🟡 4: Akzeptabel | 🔴 1-3: Verbesserungsbedarf
+    </p>
+  </div>
+
   <div id="classFeedback"></div>
   <div id="progressDiv"></div>
   <div id="classCharacters"></div>
@@ -197,6 +211,84 @@ Deine Eigenschaften:
       }
     }
 
+    // SmartSpider-Diagramm erstellen
+    function createSpiderChart(notes) {
+      // Prüfen ob Chart.js geladen ist
+      if (typeof Chart === 'undefined') {
+        console.error('Chart.js ist nicht geladen');
+        return;
+      }
+      console.log('Erstelle Chart mit Noten:', notes);
+      const ctx = document.getElementById('spiderChart').getContext('2d');
+      
+      // Destroy existing chart if it exists
+      if (window.myChart) {
+        window.myChart.destroy();
+      }
+      
+      // Farben basierend auf Noten
+      const backgroundColors = notes.map(note => {
+        if (note >= 5) return 'rgba(34, 197, 94, 0.3)'; // Grün für 5-6
+        if (note >= 4) return 'rgba(251, 191, 36, 0.3)'; // Gelb für 4
+        return 'rgba(239, 68, 68, 0.3)'; // Rot für 1-3
+      });
+      const borderColors = notes.map(note => {
+        if (note >= 5) return 'rgba(34, 197, 94, 1)';
+        if (note >= 4) return 'rgba(251, 191, 36, 1)';
+        return 'rgba(239, 68, 68, 1)';
+      });
+      window.myChart = new Chart(ctx, {
+        type: 'radar',
+        data: {
+          labels: personTitles,
+          datasets: [{
+            label: 'Bewertung (1-6)',
+            data: notes,
+            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            borderColor: 'rgba(59, 130, 246, 1)',
+            borderWidth: 2,
+            pointBackgroundColor: backgroundColors,
+            pointBorderColor: borderColors,
+            pointBorderWidth: 2,
+            pointRadius: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          scales: {
+            r: {
+              beginAtZero: true,
+              min: 1,
+              max: 6,
+              ticks: {
+                stepSize: 0.5,
+                callback: function(value) {
+                  return value;
+                }
+              },
+              grid: {
+                color: 'rgba(128, 128, 128, 0.2)'
+              },
+              angleLines: {
+                color: 'rgba(128, 128, 128, 0.2)'
+              },
+              pointLabels: {
+                font: {
+                  size: 11
+                }
+              }
+            }
+          },
+          plugins: {
+            legend: {
+              display: false
+            }
+          }
+        }
+      });
+    }
+
     // Charakterbeschreibungen anzeigen
     document.getElementById("buttonPersons").addEventListener("click", function () {
       let outputHtml = "<h2>Charakterprofile der virtuellen Klasse</h2>";
@@ -243,6 +335,7 @@ Deine Eigenschaften:
           return {
             title: personTitles[index],
             content: feedbackPerson.content,
+            note: feedbackPerson.note || 4, // Fallback falls keine Note
             index: index
           };
         });
@@ -250,7 +343,17 @@ Deine Eigenschaften:
         // Auf alle Antworten warten
         const allFeedbacks = await Promise.all(feedbackPromises);
 
-        // HTML zusammenbauen
+        // Noten extrahieren und SmartSpider-Diagramm erstellen
+        const notes = allFeedbacks.map(feedback => feedback.note);
+        console.log("Erhaltene Noten:", notes); // Debug-Log
+        
+        // Kurz warten um sicherzustellen, dass Chart.js geladen ist
+        setTimeout(() => {
+          createSpiderChart(notes);
+          document.getElementById('notesChart').style.display = 'block';
+        }, 100);
+
+        // HTML für detailliertes Feedback zusammenbauen
         for (const feedback of allFeedbacks) {
           outputHtml += `<h2>${feedback.title}</h2><p>${feedback.content}</p>`;
         }
@@ -258,6 +361,7 @@ Deine Eigenschaften:
         console.error("Fehler bei der Analyse:", error);
         document.getElementById("progressDiv").innerHTML =
           "❌ Fehler bei der Analyse: " + error.message;
+        document.getElementById('notesChart').style.display = 'none'; // Chart verstecken bei Fehler
         return;
       }
       document.getElementById("progressDiv").innerHTML = "";
