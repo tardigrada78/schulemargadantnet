@@ -21,7 +21,8 @@
         <img id="generatedImage" alt="" style="max-width: 100%; height: auto" />
     </div>
     <div id="speechOutput"></div>
-    <br /><br />
+    <br>
+    <div id="wordListOutput"></div>
 
     <script>
         async function generateTitle(storyText) {
@@ -92,19 +93,30 @@
 
                     // Create HTML with hover text
                     let storyHtml = "";
+                    let wordList = [];
+                    let wordListHTML = "<h3>Wortliste</h3><table>";
                     for (let i = 0; i < storyArray.length - 1; i += 2) {
                         let pinyinText = pinyinPro.pinyin(storyArray[i], { toneType: 'symbol' });
                         storyHtml += `<div class="hover"><span>${storyArray[i]
                             }</span><span class="hover-text"><span class="hover-pinyin">${pinyinText}</span><br>${storyArray[i + 1]
                             }</span></div>\n`;
                         storyText += ` ${storyArray[i]}`;
-
+                        if (!wordList.some(entry => entry[2] === storyArray[i + 1])) {
+                            wordList.push([storyArray[i], pinyinText, storyArray[i + 1]]);
+                        }
                     }
+                    wordList.sort((x, y) => x[2].localeCompare(y[2]));
+                    wordList.forEach((word) => {
+                        wordListHTML += `<tr><td>${word[0]}</td><td>${word[1]}</td><td>${word[2]}</td></tr>`
+                    });
+                    wordListHTML += "</table>"
+
                     // Generate title and update website
                     generateTitle(storyText).then((title) => {
                         storyTitle = title;
                         storyHtml = `<h2>${storyTitle}</h2>${storyHtml}`;
                         document.getElementById("storyOutput").innerHTML = storyHtml;
+                        document.getElementById("wordListOutput").innerHTML = wordListHTML;
                     });
 
                     // Generate voice output
