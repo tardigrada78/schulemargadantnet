@@ -5,9 +5,8 @@ import moment from "moment";
 
 // My stocks [Index, Value (US$), Date, Amount]
 const myStocks = [
-  ["AMD", 139.39, moment("19.11.24", "D.M.YY"), 40],
-  ["INTC", 20.42, moment("3.1.25", "D.M.YY"), 150],
   ["NVDA", 172.66, moment("23.7.25", "D.M.YY"), 8.68],
+  ["GOOGL", 247.25, moment("26.9.25", "D.M.YY"), 4.044]
 ];
 
 // Function to get stock values from yahoo
