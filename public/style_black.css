@@ -310,6 +310,65 @@ button:active {
 }
 
 /* Story-Block Grid */
+/* Container für H3-Sektionen die nebeneinander angezeigt werden */
+.h3-grid-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 2rem;
+  margin: 2rem 0;
+}
+
+/* Einzelne H3-Sektion (H3 + story-block zusammen) */
+.h3-section {
+  display: flex;
+  flex-direction: column;
+}
+
+/* H3 innerhalb der Grid-Sektion anpassen */
+.h3-section h3 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+}
+
+/* story-block innerhalb der H3-Section kompakter machen */
+.h3-section .story-block {
+  grid-template-columns: 1fr;
+  margin: 0;
+  flex: 1;
+}
+
+.h3-section .story-block img {
+  width: 100%;
+  max-width: 200px;
+  height: auto;
+  justify-self: center;
+  margin-bottom: 1rem;
+}
+
+/* Responsive Anpassungen */
+@media (min-width: 769px) and (max-width: 1100px) {
+  .h3-grid-container {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1101px) {
+  .h3-grid-container {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .h3-grid-container {
+    grid-template-columns: 1fr;
+  }
+  
+  .h3-section .story-block {
+    grid-template-columns: 1fr;
+  }
+}
+
+
 .story-block {
   display: grid;
   grid-template-columns: 300px 1fr;
