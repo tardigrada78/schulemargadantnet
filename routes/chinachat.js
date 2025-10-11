@@ -9,9 +9,12 @@ const upload = multer({ dest: 'uploads/', limits: { fileSize: 25 * 1024 * 1024 }
 
 
 // Erstellt Antwort als Text
-async function doChat(chatContent) {
+async function doChat(chatContent, chatProtocol) {
   const prompt = `Antworte auf diese Chat-Nachricht:
     ${chatContent}
+
+    Berücksichtige den bisherigen Chatverlauf für das weitere Gespräch:
+    ${chatProtocol}
 
     WICHTIG:
     - Antworte ausschliesslich auf Chinesisch, mit chinesischen Schriftzeichen
@@ -52,8 +55,8 @@ async function doAudio(content, voice, voiceProfile) {
 // Route für Textchat
 router.post("/getChat", async (req, res) => {
   try {
-    const { chatContent } = req.body;
-    const result = await doChat(chatContent);
+    const { chatContent, chatProtocol } = req.body;
+    const result = await doChat(chatContent, chatProtocol);
     res.json({ chatAnswer: result });
   } catch (error) {
     console.error("Fehler beim Schreiben des Chats", error);

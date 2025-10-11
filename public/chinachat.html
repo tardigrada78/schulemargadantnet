@@ -41,6 +41,7 @@
         let mediaRecorder;
         let audioChunks = [];
         let isRecording = false;
+        let chatProtocol = "";
 
         // Sprachaufnahme-Funktionalität  
         document.getElementById("recordButton").addEventListener("click", async function () {
@@ -121,13 +122,13 @@
         }
 
         // Funktion für Chat-Antwort serverseitig
-        async function generateChat(chatContent) {
+        async function generateChat(chatContent, chatProtocol) {
             let response = await fetch("/chinachat/getChat", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify({ chatContent }),
+                body: JSON.stringify({ chatContent, chatProtocol }),
             });
             let data = await response.json();
             return data.chatAnswer;
@@ -155,7 +156,10 @@
             try {
                 const chatContent = document.getElementById("chatUser").value;
                 document.getElementById("progressDiv").innerHTML = "<p>⚙️ Antworte auf die Chat-Nachricht...</p>";
-                chatAI = await generateChat(chatContent);
+                chatProtocol += "User: " + chatContent + "\n";
+                console.log(chatProtocol)
+                chatAI = await generateChat(chatContent, chatProtocol);
+                chatProtocol += "AI: " + chatAI + "\n";
                 document.getElementById("roundedDiv").innerHTML = chatAI
                 document.getElementById("progressDiv").innerHTML = `<p>⚙️ Sprachdatei wird erstellt...</p>`;
             } catch (error) {
