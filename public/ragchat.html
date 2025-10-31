@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Chat mit Dokumenten</title>
+  <link rel="stylesheet" href="/style_black.css" />
+</head>
+
+<body>
+  <a href="/index.html" target="_blank">Weitere KI-Tools (Startseite)</a>&nbsp;&nbsp;
+  <a href="/feedback.html" target="_blank">Feedback</a>
+
+  <h1>Chat mit Dokumenten - RAG System</h1>
+
+  <div class="info-text">
+    <h4>Hinweise:</h4>
+    <ul>
+      <li>Die Seitenzahlen in den Quellenangaben entsprechen den tatsächlichen Seiten des
+        pdf-Dokuments. Das kann sich von den angegebenen Seitenzahlen im Dokument unterscheiden, wenn beispielsweise die
+        Titelseite nicht mitgezählt wurde.</li>
+      <li>Für eine Ausgabe in Englisch müssen meist sowohl die Frage auf Englisch geschrieben werden, wie auch die
+        Ausgabespreche auf Englisch gesetzt werden. Die Sprache der Datenquelle spielt aber keine Rolle.</li>
+      <li>Der Chat hat kein Gedächtnis. Jede Frage wird unabhängig beantwortet.</li>
+    </ul>
+  </div>
+
+  <label for="dataStoreSelect">
+    <h4>Datenquelle:</h4>
+  </label>
+  <select id="dataStoreSelect">
+    <option value="essbiol6_1761399968144" selected>Campbell Essential Biology 6</option>
+    <option value="campbell12e_1761397899880">Campbell Biology 12</option>
+    <option value="mad-scripts_1761863398166">Biologieskripte von Daniel Margadant</option>
+    <option value="aetna_1761862500489">AETNA Dokumente + Webpage</option>
+    <option value="ibbiology_1761500496392">IB Documentation for IA Biology Investigation</option>
+    <option value="ibextendedessay_1761500555706">IB Documentation for Extended Essay</option>
+    <option value="pu-unterlagen_1761864435092">PU Skript + Leitfäden Abschlussarbeiten</option>
+  </select>
+
+  <label for="languageSelect">
+    <h4>Anwortsprache der KI:</h4>
+  </label>
+  <select id="languageSelect">
+    <option value="Deutsch" selected>Deutsch</option>
+    <option value="Englisch">Englisch</option>
+  </select>
+  <h3>Deine Frage</h3>
+  <textarea id="chatUser" rows="4" placeholder="Stelle hier die Frage..."></textarea>
+
+  <div>
+    <button id="chatStart">Frage stellen</button>
+  </div>
+
+  <div id="progressDiv" style="margin-top:10px; color: #0066cc; font-weight: bold;"></div>
+
+  <h3>KI-Antwort</h3>
+  <div id="roundedDiv">Bitte stelle eine Frage, um zu beginnen.</div>
+
+  <script>
+    let chatProtocol = "";
+    async function sendChat(chatContent, dataStoreId, language) {
+      const r = await fetch("/ragchat/getChat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chatContent,
+          dataStoreId,
+          language
+        })
+      });
+      if (!r.ok) {
+        const errorText = await r.text();
+        throw new Error(errorText || "Unbekannter Fehler");
+      }
+      return await r.json();
+    }
+
+    document.getElementById("chatStart").onclick = async () => {
+      const text = document.getElementById("chatUser").value.trim();
+      const dataStoreId = document.getElementById("dataStoreSelect").value;
+      const language = document.getElementById("languageSelect").value;
+      const dataStoreName = document.getElementById("dataStoreSelect").options[document.getElementById("dataStoreSelect").selectedIndex].text;
+
+      if (!text) {
+        alert("Bitte gib eine Frage ein!");
+        return;
+      }
+
+      const progressDiv = document.getElementById("progressDiv");
+      const resultDiv = document.getElementById("roundedDiv");
+
+      progressDiv.textContent = `⏳ Suche in "${dataStoreName}"...`;
+
+      try {
+        const res = await sendChat(text, dataStoreId, language);
+
+        // Update Chatverlauf
+        if (res.chatProtocol) {
+          chatProtocol = res.chatProtocol;
+        }
+
+        // Ausgabe der KI-Antwort
+        if (res.chatAnswer) {
+          // Konvertiere die Antwort für bessere HTML-Darstellung
+          let formattedAnswer = res.chatAnswer
+            .replace(/\n/g, '<br>')
+            .replace(/•/g, '&bull;')
+            .replace(/→/g, '&rarr;')
+            .replace(/━/g, '─');
+
+          resultDiv.innerHTML = formattedAnswer;
+          if (res.sources && res.sources.length > 0) {
+            formattedAnswer += '<br><br><strong>Quellenangaben:</strong><br>';
+            res.sources.forEach(source => {
+              formattedAnswer += source + '<br>';
+            });
+            resultDiv.innerHTML = formattedAnswer;
+          }
+
+        } else {
+          resultDiv.textContent = "⚠️ Keine Antwort erhalten.";
+          progressDiv.textContent = "";
+        }
+
+        // Clear input after successful send
+        // document.getElementById("chatUser").value = "";
+
+        // Nach 3 Sekunden Progress-Meldung ausblenden
+        setTimeout(() => {
+          progressDiv.textContent = "";
+        }, 3000);
+
+      } catch (e) {
+        progressDiv.textContent = `❌ Fehler: ${e.message}`;
+        resultDiv.textContent = "Ein Fehler ist aufgetreten. Bitte versuche es erneut.";
+      }
+    };
+  </script>
+</body>
+
+</html>

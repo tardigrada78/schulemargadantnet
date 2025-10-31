@@ -16,6 +16,10 @@ RUN npm install -g nodemon
 # Alle Dateien kopieren
 COPY . .
 
+# Für Google Cloud
+ENV GOOGLE_APPLICATION_CREDENTIALS="./env.vertexkey.json"
+
+
 # Port freigeben
 EXPOSE 3000
 

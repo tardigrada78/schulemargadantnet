@@ -11,8 +11,14 @@ services:
         source: .
         target: /app
       - /app/node_modules
+      # Key-Datei sicher einbinden (nur lesend)
+      - type: bind
+        source: ./env.vertexkey.json
+        target: /app/env.vertexkey.json
+        read_only: true
     environment:
       - NODE_ENV=development
+      - GOOGLE_APPLICATION_CREDENTIALS=/app/.env.vertexkey.json
     env_file:
       - .env
     # Automatischer Neustart bei Änderungen

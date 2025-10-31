@@ -11,6 +11,7 @@ import abstracts from "./routes/abstracts.js";
 import oralexamination from "./routes/oral_examination.js";
 import news from "./routes/newsapi.js"; 
 import virtualclass from "./routes/virtual_class.js"; 
+import ragchat from "./routes/ragchat.js";
 
 import feedback from "./routes/feedback.js"; // in all pages, allowes feedback-form
 
@@ -36,6 +37,7 @@ app.use("/oralexamination", oralexamination);
 app.use("/news", news);
 app.use("/virtualclass", virtualclass);
 app.use("/feedback", feedback);
+app.use("/ragchat", ragchat);
 
 app.use("/overview", overview);
 

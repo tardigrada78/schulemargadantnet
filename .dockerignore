@@ -12,6 +12,7 @@ Dockerfile
 
 # Environment files
 .env
+.env.vertexkey.json
 .env.local
 .env.*.local
 
