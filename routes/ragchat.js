@@ -19,6 +19,7 @@ router.post("/getChat", async (req, res) => {
     // Google Auth Token holen (verwendet Application Default Credentials)
     const { GoogleAuth } = await import('google-auth-library');
     const auth = new GoogleAuth({
+      keyFilename: '.env.vertexkey.json', // relativer Pfad zur Key-Datei
       scopes: ['https://www.googleapis.com/auth/cloud-platform']
     });
     const client = await auth.getClient();
