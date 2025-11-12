@@ -6,13 +6,10 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 // create story
 async function getStory() {
   const systemMessage = `Du bist ein kreativer Geschichtenerzähler, der unterhaltsame Geschichten auf Chinesisch verfasst.
-    Deine Aufgabe ist es, eine originelle, kurzweilige Geschichte mit einem großen Wortschatz aus HSK1 zu schreiben. 
+    Deine Aufgabe ist es, eine originelle, kurzweilige Geschichte mit einem abwechslungsreichen Wortschatz aus HSK1 zu schreiben. 
     Die Geschichte soll sich um Erwachsene und Tiere, nicht um Kinder handeln. 
     Halte die Geschichte lebendig, aber achte darauf, dass sie genau den vorgegebenen Formatierungsregeln entspricht.
-
-    Zu verwendender Wortschatz (Empfehlung):
-    我, 我们, 你, 他, 她, 这, 那, 哪, 哪儿, 谁, 什么, 多少, 几, 怎么, 怎么样, 一, 二, 三, 四, 五, 六, 七, 八, 九, 十, 个, 岁, 本, 些, 块, 不, 没, 很, 太, 都, 一点儿, 和, 在, 的, 了, 吗, 呢, 喂, 家, 学校, 饭店, 商店, 医院, 中国, 北京, 上, 下, 前面, 后面, 里, 今天, 明天, 昨天, 上午, 中午, 下午, 年, 月, 号, 星期, 点, 分钟, 现在, 时候, 爸爸, 妈妈, 儿子, 女儿, 老师, 学生, 同学, 朋友, 医生, 先生, 小姐, 衣服, 水, 菜, 米饭, 水果, 苹果, 茶, 杯子, 钱, 飞机, 出租车, 电视, 电脑, 电影, 天气, 猫, 狗, 东西, 人, 名字, 书, 汉语, 字, 桌子, 椅子, Verb, 谢谢, 不客气, 再见, 请, 对不起, 没关系, 是, 有, 看, 听, 说, 读, 写, 看见, 叫, 来, 回, 去, 吃, 喝, 睡觉, 打电话, 做, 买, 开, 坐, 住, 学习, 工作, 下雨, 爱, 喜欢, 想, 认识, 会, 能, 好, 大, 小, 多, 少, 冷, 热, 高兴, 漂亮
-    
+  
     Format:
     - Schreibe jedes chinesische Wort auf eine eigene Zeile.
     - Schreibe direkt nach jedem chinesischen Wort die deutsche Übersetzung in Klammern.
@@ -44,6 +41,7 @@ async function getTitle(story) {
     - Der Titel soll maximal fünf Wörter lang sein.
     - Er soll die Hauptidee oder das spannendste Element der Geschichte widerspiegeln.
     - Vermeide generische oder sich wiederholende Titel.
+    - Schreibe den Titel auf Deutsch.
     - Gib nur den Titel aus, ohne Anführungszeichen oder zusätzliche Erklärungen.`;
 
   const userMessage = `Erstelle einen einzigartigen, prägnanten Titel für diese Geschichte:
@@ -95,7 +93,7 @@ async function getSpeech(story) {
       model: "gpt-4o-mini-tts",
       voice: "nova",
       instructions:
-        "Speak in a very clear standard Chinese language for students learning Chinese. Use a voice for telling fairytales.",
+        "Speak in a very clear standard Chinese language for students learning Chinese. Use a voice for telling fairytales. Speak slowly and clearly with appropriate pauses.",
       input: story,
     });
     const buffer = Buffer.from(await mp3.arrayBuffer());
