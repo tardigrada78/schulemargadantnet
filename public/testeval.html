@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Prüfungsfrage evaluieren</title>
+  <link rel="stylesheet" href="style_black.css" />
+</head>
+
+<body>
+  <a href="/index.html" target="_blank">Weitere KI-Tools (Startseite)</a>&nbsp;&nbsp;&nbsp;
+  <a href="/feedback.html" target="_blank">Feedback geben</a>
+  <h1>Prüfungsfrage evaluieren</h1>
+  <p>
+    Klicken Sie auf den Button, um Ihre Prüfungsfrage zu klassifizieren und mit virtuellen Schüler*innen zu evaluieren.
+  </p>
+  <h3>Die Prüfungsfrage</h3>
+  <textarea id="formQuestion" rows="4" placeholder="Stelle hier die Frage...">Was geschieht, wenn einem Patienten aus Versehen eine Spritze mit normalem Leitungswasser verabreicht wird? Begründen Sie Ihre Antwort mit zellbiologischen Prozessen.</textarea>
+
+  <div>
+    <button id="buttonEval">Evaluiere die Prüfungsfrage</button>
+    <div id="progressDiv"></div>
+    <br />
+    <div id="resultDiv"></div>
+    <br />
+
+    <script>
+
+      // Wait for the DOM to load
+      document.getElementById("buttonEval").addEventListener("click", async () => {
+        try {
+          const formText = document.getElementById("formQuestion").value.trim();
+          document.getElementById("progressDiv").innerHTML =
+            "<p>⚙️ Die Analyse der Prüfungsfrage läuft...</p>";
+          document.getElementById("resultDiv").innerHTML = "";
+
+          // Frage evaluieren
+          let prompt =
+            `Analysiere die folgende Prüfungsfrage nach den Kriterien von Bloom und Krathwohl. 
+            Gib die Stufe zurürck und eine kurze Begründung. Die Kriterien sind wie folgt:
+            Stufe; Kategorie; Beschreibung; Schlüsselwörter
+            K1; erinnern; Fakten und grundlegende Konzepte abrufen.; definieren, vervielfältigen, auflisten, auswendig lernen, wiederholen, angeben
+            K2; verstehen; Ideen oder Konzepte in eigenen Worten wiedergeben.; klassifizieren, beschreiben, diskutieren, erklären, identifizieren, lokalisieren, erkennen, berichten, auswählen, übersetzen
+            K3; anwenden; Informationen in neuen Situationen nutzen.; ausführen, umsetzen, lösen, verwenden, demonstrieren, interpretieren, operieren, planen, skizzieren
+            K4; analysieren; Verbindungen zwischen Ideen herstellen.; differenzieren, organisieren, in Beziehung setzen, vergleichen, kontrastieren, unterscheiden, untersuchen, experimentieren, fragen, testen
+            K5; bewerten; Basierend auf den Lernmaterialien einen Standpunkt rechtfertigen.; einschätzen, argumentieren, verteidigen, beurteilen, auswählen, unterstützen, bewerten, kritisieren, abwägen
+            K6; erschaffen; Eine neue oder originelle Arbeit entwickeln.; entwerfen, zusammenstellen, konstruieren, mutmaßen, entwickeln, formulieren, verfassen, untersuchen
+            Frage: "${formText}"`;
+          let response = await fetch("/testeval/getEval", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ question: prompt })
+          });
+          let data = await response.json();
+          evalSentence = data.sentence;
+          outputText = `<h3>Taxonomie nach Bloom und Krathwohl</h3><p>${evalSentence}</p>`;
+
+          // Leistungsschwache Schüler*in antwortet
+          prompt =
+            `Du bist ein leistungsschwacher Schüler des Gymnasiums. Beantworte die folgende Prüfungsfrage knapp, unpräzise, ohne Fachbegriffe und möglicherweise unvollständig und teilweise falsch. 
+            Schweife nicht ab und antworte wie in einer schriftlichen Prüfung.
+            Frage: "${formText}"`;
+          response = await fetch("/testeval/getEval", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ question: prompt })
+          });
+          data = await response.json();
+          evalSentence = data.sentence;
+          outputText += `<h3>Antwort einer leistungsschwachen Schüler*in</h3><p>${evalSentence}</p>`;
+
+          // Leistungstarke Schüler*in antwortet
+          prompt =
+            `Du bist ein leistungsstarker und engagierter Schüler des Gymnasiums. Beantworte die folgende Prüfungsfrage sehr gut, 
+            zeige, dass du den Stoff sehr gut verstanden hast. Verwende Fachbegriffe realistisch der Gymnasiualstufe 
+            entsprechend.
+            Frage: "${formText}"`;
+          response = await fetch("/testeval/getEval", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ question: prompt })
+          });
+          data = await response.json();
+          evalSentence = data.sentence;
+
+          // Ausgabe
+          outputText += `<h3>Antwort einer leistungsstarken Schüler*in</h3><p>${evalSentence}</p>`;
+          document.getElementById("resultDiv").innerHTML = outputText;
+          document.getElementById("progressDiv").innerHTML = "";
+        } catch (error) {
+          console.error("Error:", error);
+        }
+      });
+    </script>
+</body>
+
+</html>
