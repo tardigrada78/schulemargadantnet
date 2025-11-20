@@ -13,10 +13,16 @@
   <a href="/feedback.html" target="_blank">Feedback geben</a>
   <h1>Prüfungsfrage evaluieren</h1>
   <p>
-    Klicken Sie auf den Button, um Ihre Prüfungsfrage zu klassifizieren und mit virtuellen Schüler*innen zu evaluieren.
+    Auf den Button klicken um die Prüfungsfrage zu klassifizieren und mit virtuellen Schüler*innen zu evaluieren. Die
+    Frage kann auch auf Englisch (oder wohl in vielen anderen Sprachen) gestellt werden.
   </p>
-  <h3>Die Prüfungsfrage</h3>
-  <textarea id="formQuestion" rows="4" placeholder="Stelle hier die Frage...">Was geschieht, wenn einem Patienten aus Versehen eine Spritze mit normalem Leitungswasser verabreicht wird? Begründen Sie Ihre Antwort mit zellbiologischen Prozessen.</textarea>
+  <h3>Prüfungsfrage</h3>
+  <textarea id="formQuestion" rows="4"
+    placeholder="Stelle hier die Frage...">Was geschieht, wenn einem Patienten aus Versehen eine Spritze mit normalem Leitungswasser verabreicht wird? Begründen Sie Ihre Antwort mit zellbiologischen Prozessen.</textarea>
+  <h3>Lernziele</h3>
+  <p>Optional: Falls vorhanden hier Lernziele einfügen oder Stoffumfang beschreiben um der KI Kontext zu geben.</p>
+  <textarea id="formContext" rows="4"
+    placeholder="Stelle hier die Frage...">Erklären Sie, wie Diffusion funktioniert. Beschreiben Sie, wie Osmose den Wassergehalt einer Zelle beeinflusst und was das bedeutet. Erklären Sie die Begriffe hypotonisch, isotonisch, hypertonisch.</textarea>
 
   <div>
     <button id="buttonEval">Evaluiere die Prüfungsfrage</button>
@@ -31,6 +37,13 @@
       document.getElementById("buttonEval").addEventListener("click", async () => {
         try {
           const formText = document.getElementById("formQuestion").value.trim();
+          const formContext = document.getElementById("formContext").value.trim();
+          let textContext
+          if (!formContext) {
+            textContext = "";
+          } else {
+            textContext = "Berücksichtige bei deiner Antwort folgende Lernziele/Stoffumfang. Es ist das, was du gelernt hast:\n" + formContext + "\n";
+          }
           document.getElementById("progressDiv").innerHTML =
             "<p>⚙️ Die Analyse der Prüfungsfrage läuft...</p>";
           document.getElementById("resultDiv").innerHTML = "";
@@ -38,7 +51,8 @@
           // Frage evaluieren
           let prompt =
             `Analysiere die folgende Prüfungsfrage nach den Kriterien von Bloom und Krathwohl. 
-            Gib die Stufe zurürck und eine kurze Begründung. Die Kriterien sind wie folgt:
+            Gib nur die Stufe zurück und eine ganz kurze und prägnante Begründung. Die Prüfungsfrage muss die Stufe erfüllen und nicht bloss Schlüsselwörter enthalten. 
+            Die Kriterien sind wie folgt:
             Stufe; Kategorie; Beschreibung; Schlüsselwörter
             K1; erinnern; Fakten und grundlegende Konzepte abrufen.; definieren, vervielfältigen, auflisten, auswendig lernen, wiederholen, angeben
             K2; verstehen; Ideen oder Konzepte in eigenen Worten wiedergeben.; klassifizieren, beschreiben, diskutieren, erklären, identifizieren, lokalisieren, erkennen, berichten, auswählen, übersetzen
@@ -52,7 +66,7 @@
             headers: {
               "Content-Type": "application/json",
             },
-            body: JSON.stringify({ question: prompt })
+            body: JSON.stringify({ question: prompt , temperature: 0.2 })
           });
           let data = await response.json();
           evalSentence = data.sentence;
@@ -61,14 +75,16 @@
           // Leistungsschwache Schüler*in antwortet
           prompt =
             `Du bist ein leistungsschwacher Schüler des Gymnasiums. Beantworte die folgende Prüfungsfrage knapp, unpräzise, ohne Fachbegriffe und möglicherweise unvollständig und teilweise falsch. 
-            Schweife nicht ab und antworte wie in einer schriftlichen Prüfung.
+            Du hast den Stoff nicht ganz im Griff und glaubst an Alltagsweisheiten sowie typische Fehlkonzepte. Schweife nicht ab und antworte wie in einer schriftlichen Prüfung.
+            ${textContext}
             Frage: "${formText}"`;
+          console.log("Prompt leistungsschwache Schüler*in:", prompt);
           response = await fetch("/testeval/getEval", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
             },
-            body: JSON.stringify({ question: prompt })
+            body: JSON.stringify({ question: prompt, temperature: 0.4  })
           });
           data = await response.json();
           evalSentence = data.sentence;
@@ -77,15 +93,15 @@
           // Leistungstarke Schüler*in antwortet
           prompt =
             `Du bist ein leistungsstarker und engagierter Schüler des Gymnasiums. Beantworte die folgende Prüfungsfrage sehr gut, 
-            zeige, dass du den Stoff sehr gut verstanden hast. Verwende Fachbegriffe realistisch der Gymnasiualstufe 
-            entsprechend.
+            zeige, dass du den Stoff sehr gut verstanden hast. Verwende Fachbegriffe realistisch der Gymnasiualstufe entsprechend.
+            ${textContext}
             Frage: "${formText}"`;
           response = await fetch("/testeval/getEval", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
             },
-            body: JSON.stringify({ question: prompt })
+            body: JSON.stringify({ question: prompt, temperature: 0.4 })
           });
           data = await response.json();
           evalSentence = data.sentence;
