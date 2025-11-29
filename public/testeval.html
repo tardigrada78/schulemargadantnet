@@ -20,7 +20,7 @@
   <textarea id="formQuestion" rows="4"
     placeholder="Stelle hier die Frage...">Was geschieht, wenn einem Patienten aus Versehen eine Spritze mit normalem Leitungswasser verabreicht wird? Begründen Sie Ihre Antwort mit zellbiologischen Prozessen.</textarea>
   <h3>Lernziele</h3>
-  <p>Optional: Falls vorhanden hier Lernziele einfügen oder Stoffumfang beschreiben um der KI Kontext zu geben.</p>
+  <p>Optional: Falls vorhanden, hier Lernziele einfügen oder Stoffumfang beschreiben um der KI Kontext zu geben.</p>
   <textarea id="formContext" rows="4"
     placeholder="Stelle hier die Frage...">Erklären Sie, wie Diffusion funktioniert. Beschreiben Sie, wie Osmose den Wassergehalt einer Zelle beeinflusst und was das bedeutet. Erklären Sie die Begriffe hypotonisch, isotonisch, hypertonisch.</textarea>
 
@@ -74,8 +74,8 @@
 
           // Leistungsschwache Schüler*in antwortet
           prompt =
-            `Du bist ein leistungsschwacher Schüler des Gymnasiums. Beantworte die folgende Prüfungsfrage knapp, unpräzise, ohne Fachbegriffe und möglicherweise unvollständig und teilweise falsch. 
-            Du hast den Stoff nicht ganz im Griff und glaubst an Alltagsweisheiten sowie typische Fehlkonzepte. Schweife nicht ab und antworte wie in einer schriftlichen Prüfung.
+            `Du bist ein leistungsschwacher Schüler des Gymnasiums. Beantworte die folgende schriftliche Prüfungsfrage äusserst knapp, unpräzise, ohne Fachbegriffe, unvollständig und teilweise falsch. 
+            Du hast den Stoff nicht im Griff und glaubst eher an Alltagsweisheiten sowie typische Fehlkonzepte. Deine Antwort auf die Frage ist mangelhaft. 
             ${textContext}
             Frage: "${formText}"`;
           console.log("Prompt leistungsschwache Schüler*in:", prompt);
@@ -92,7 +92,7 @@
 
           // Leistungstarke Schüler*in antwortet
           prompt =
-            `Du bist ein leistungsstarker und engagierter Schüler des Gymnasiums. Beantworte die folgende Prüfungsfrage sehr gut, 
+            `Du bist ein leistungsstarker und engagierter Schüler des Gymnasiums. Beantworte die folgende Prüfungsfrage sehr gut und prägnant,  
             zeige, dass du den Stoff sehr gut verstanden hast. Verwende Fachbegriffe realistisch der Gymnasiualstufe entsprechend.
             ${textContext}
             Frage: "${formText}"`;
