@@ -17,7 +17,7 @@ RUN npm install -g nodemon
 COPY . .
 
 # Für Google Cloud
-ENV GOOGLE_APPLICATION_CREDENTIALS="./env.vertexkey.json"
+# ENV GOOGLE_APPLICATION_CREDENTIALS="./env.vertexkey.json"
 
 
 # Port freigeben
