@@ -13,7 +13,7 @@
   <a href="/feedback.html" target="_blank">Feedback geben</a>
   <h1>Abstracts-Zusammenfassung</h1>
   <p>
-    Geben Sie hier nur Stichworte ein, verbunden mit AND oder OR. Die Suchanfrage bei pubmmed ist sehr restriktiv,
+    Geben Sie hier nur Stichworte ein, verbunden mit AND oder OR. Die Suchanfrage bei pubmed ist sehr restriktiv,
     sodass schnell keine Resultate erscheinen.
   </p>
   <textarea id="searchTerm" name="searchTerm" cols="70" rows="2">microplastic AND human AND cell</textarea>
@@ -53,7 +53,7 @@
     // Funktion um die Abstracts anzuzueigen
     function displayAbstracts(abstracts) {
       if (abstracts.length === 0) {
-        progrssDiv.innerHTML = "❌ Keine Abstracts gefunden.";
+        progressDiv.innerHTML = "❌ Keine Abstracts gefunden.";
         return;
       }
       document.getElementById("abstractDiv").innerHTML =
