@@ -10,295 +10,210 @@
 
 <body>
   <div id="content">
-    <a href="/feedback.html" target="_blank">Feedback zu dieser Site geben.</a>
+    <nav class="top-nav">
+      <a href="/feedback.html" target="_blank">📝 Feedback geben</a>
+    </nav>
+
     <h1>Lernen und Arbeiten mit KI</h1>
 
-    <p>
-      Diese Site ist noch am Entstehen und Wachsen. Bitte senden Sie mir Feedback, falls etwas nicht funktioniert oder
-      unpraktisch ist, oder Sie weitere Funktionen wünschen.
-    </p>
-    <p>
-      Um hierhin zu gelangen, brauchten Sie ein (schwaches) Passwort, da nur Personen der Kantonsschule Wettingen sie
-      finden und nutzen sollen. Grund dafür sind die KI-Zugriffe, welche zwar günstig, aber nicht gratis sind.
+    <p style="text-align: center; max-width: 900px; margin: 0 auto 1.5rem;">
+      Diese Site ist noch im Aufbau. Bitte senden Sie Feedback, falls etwas nicht funktioniert oder Sie weitere
+      Funktionen wünschen. Der Zugang ist passwortgeschützt, da die KI-Zugriffe kostenpflichtig sind: 
+      Bitte nur innerhalb der Kantonsschule Wettingen sharen.
     </p>
 
-    <h3>Zum Datenschutz</h3>
-    <p>
-      Wie immer wenn Sie mit cloudbasierter KI interagieren, sollten Sie darauf achten, keine persönlichen Daten
-      einzugeben. Diese Daten werden zum Betreiber der KI-Modelle gesendet und unterliegen dessen AGB (momentan
-      OpenAI). Von dieser Site werden keine Meta-Daten wie IP-Adresse, Ort oder Betriebsystem erfasst,weitergeleitet
-      oder gespeichert (weder auf dem Server, noch als Cookie).
-    </p>
+    <div style="background: rgba(100, 50, 255, 0.1); border: 1px solid rgba(100, 150, 255, 0.3); border-radius: 10px; padding: 1rem; margin: 1rem 0; max-width: 900px; margin-left: auto; margin-right: auto;">
+      <h4 style="margin-top: 0;">⚠️ Datenschutz & KI-Zusammenarbeit</h4>
+      <p style="margin: 0.5rem 0; font-size: 0.85em;">
+        Geben Sie in den Formularfeldern keine persönlichen Daten ein. Diese werden extern (momentan zu OpenAI) verarbeitet. Diese Site erfasst keinerlei Meta-Daten
+        (IP, Ort, etc.).
+      </p>
+      <p style="margin: 0.5rem 0; font-size: 0.85em;">
+        <strong>Bleiben Sie kritisch!</strong> KI-Inhalte können überzeugend wirken, aber Fehler enthalten. Sie sollten
+        die Kontrolle behalten und sich nicht Lernerfahrungen nehmen lassen.
+        <a href="doc/ki_mensch.pdf" target="_blank">→ Flyer zur Zusammenarbeit von Mensch und KI</a>
+      </p>
+    </div>
 
-    <h3>Zur Zusammenarbeit mit einer KI</h3>
-    <p>
-      Am meisten profitieren Sie, wenn Sie bereits Einiges vom Thema verstehen. Nur so können Sie beurteilen, ob die
-      KI-Inhalte korrekt sind und Ihren Ansprüchen genügen. Seien Sie bei allen KI-Inhalten aufmerksam und kritisch,
-      auch wenn sie sehr überzeugend wirken. Es kann vorkommen, dass komplexe Zusammenhänge korrekt sind, aber die
-      einfachen Grundlagen Fehler enthalten.
-    </p>
-    <p>
-      <strong>Sie sollten stets die Kontrolle behalten und sich nicht von der KI Lernerfahrung und Erfolgserlebnisse
-        nehmen
-        lassen.</strong>
-    </p>
-    <p>
-      Beachten Sie den <a href="doc/ki_mensch.pdf" target="_blank">Flyer zur Zusammenarbeit mit KI und Menschen</a>.
-    </p>
-    <h2>Lernen und Prüfungsvorbereitung</h2>
-    <div class="h3-grid-container">
-      <div class="h3-section">
-        <h3>KI-Lern-Tutor</h3>
-        <div class="story-block">
-          <img src="img/start_lerntutor.webp" alt="" />
-          <div>
-            <p>
-              Lernen Sie Biologie oder ein beliebiges anderes Fach oder Thema mit dem
-              <a href="tutor.html">KI-Lern-Tutor</a>
-              durch Beantworten von Fragen und automatischer Rückmeldung.
-            </p>
-            <ul>
-              <li>Eigene Lernziele hochladen, um daraus Skript (Bildschirm, Word, pdf) generieren</li>
-              <li>KI-Skript als Flowchart-Diagramm visualisieren oder als Podcast hören</li>
-              <li>Anspruchsvolle KI-Fragen beantworten und KI-Rückmeldung erhalten</li>
-              <li>Sprache der KI wählbar aus Deutsch, Deutsch in einfacher Sprache oder Englisch</li>
-              <li>Wählbarer Kontext aus Standard, Schulbücher oder Schulskripts (nur für Biologie)</li>
-            </ul>
-          </div>
-        </div>
+    <div class="section-header">
+      <div class="section-icon">📚</div>
+      <h2 style="margin: 0;">Lernen und Prüfungsvorbereitung</h2>
+    </div>
+
+    <div class="tools-grid">
+      <div class="tool-card">
+        <img src="img/start_lerntutor.webp" alt="KI-Lern-Tutor" />
+        <h3><a href="tutor.html">KI-Lern-Tutor</a></h3>
+        <p>Lernen durch Beantworten von KI-Fragen mit automatischer Rückmeldung.</p>
+        <ul>
+          <li>Lernziele hochladen → Skript generieren (Word, PDF, Podcast)</li>
+          <li>KI-Skript als Flowchart visualisieren</li>
+          <li>Anspruchsvolle Fragen mit KI-Feedback</li>
+          <li>Sprache: DE / einfaches DE / EN</li>
+          <li>Kontext: Standard / Schulbücher / Skripts</li>
+        </ul>
       </div>
 
-      <div class="h3-section">
-        <h3>Chat mit Dokumenten</h3>
-        <div class="story-block">
-          <img src="img/start_ragchat.png" alt="" />
-          <div>
-            <p>
-              Stellen Sie der KI Fragen, die nicht im Web, sondern in Dokumenten gesucht und beantwortet werden. Zur
-              Auswahl stehen Biologiebücher, IB-Dokumente zu Biology IA und EE sowie Dokumente für Abschlussarbeiten
-              an der kswe und zu AETNA. Der <a href="ragchat.html">Chat mit Dokumenten</a> ist nützlich um das
-              Biologiewissen zu vertiefen oder sich auf Prüfungen und grosse Arbeiten vorzubereiten.
-            </p>
-          </div>
-        </div>
+      <div class="tool-card">
+        <img src="img/start_ragchat.png" alt="Chat mit Dokumenten" />
+        <h3><a href="ragchat.html">Chat mit Dokumenten</a></h3>
+        <p>Fragen zu Biologiebüchern, IB-Dokumenten (IA, EE) und Abschlussarbeiten stellen.</p>
+        <ul>
+          <li>Biologiewissen vertiefen</li>
+          <li>Prüfungsvorbereitung</li>
+          <li>Große Arbeiten planen</li>
+        </ul>
       </div>
 
-      <div class="h3-section">
-        <h3>Mündliche Prüfung</h3>
-        <div class="story-block">
-          <img src="img/start_exam.png" alt="" />
-          <div>
-            <p>
-              Sind Sie nervös und ungeübt bei mündlichen Prüfungen? Oder Sie können sich eine solche Situation gar nicht
-              konkret vorstellen? Trainieren Sie in einer
-              <a href="oral_examination.html">virtuellen mündlichen Prüfung</a> um von einer KI geprüft und bewertet zu
-              werden. Sie können unter mehreren Stimmen auswählen und sich zwischen einer wohlwollenden oder
-              unsympathischen Prüfungssituation entscheiden.
-            </p>
-          </div>
-        </div>
+      <div class="tool-card">
+        <img src="img/start_exam.png" alt="Mündliche Prüfung" />
+        <h3><a href="oral_examination.html">Mündliche Prüfung</a></h3>
+        <p>Trainieren Sie mündliche Prüfungssituationen mit KI-Bewertung.</p>
+        <ul>
+          <li>Nervosität abbauen</li>
+          <li>Mehrere Stimmen verfügbar</li>
+          <li>Wohlwollende oder kritische Atmosphäre wählbar</li>
+        </ul>
       </div>
     </div>
 
-    <h2>Informationen bewältigen</h2>
-    <div class="h3-grid-container">
-      <div class="h3-section">
-        <h3>News-Übersicht</h3>
-        <div class="story-block">
-          <img src="img/start_news.png" alt="" />
-          <div>
-            <p>
-              Wer sich gerne informiert, aber nicht einzelne News-Meldungen lesen möchte, kann sich eine
-              <a href="news.html">News-Übersicht</a> erstellen lassen. Zu den Themen "Naturwissenschaft und Technik"
-              oder
-              "Künstliche Intelligenz" wird eine zusammenhängende Zusammenfassung zum Lesen oder Hören erstellt.
-            </p>
-          </div>
-        </div>
+    <div class="section-header">
+      <div class="section-icon">📰</div>
+      <h2 style="margin: 0;">Informationen bewältigen</h2>
+    </div>
+
+    <div class="tools-grid">
+      <div class="tool-card">
+        <img src="img/start_news.png" alt="News-Übersicht" />
+        <h3><a href="news.html">News-Übersicht</a></h3>
+        <p>Zusammenhängende Zusammenfassung zu "Naturwissenschaft & Technik" oder "KI".</p>
+        <ul>
+          <li>Zum Lesen oder Hören</li>
+          <li>Keine einzelnen Meldungen</li>
+        </ul>
       </div>
 
-      <div class="h3-section">
-        <h3>KI-Fakten-Überprüfer</h3>
-        <div class="story-block">
-          <img src="img/start_factcheck.webp" alt="" />
-          <div>
-            <p>
-              Der <a href="factcheck.html">KI-Fakten-Überprüfer</a> vergleicht eigene Sätze gegen die besten
-              Google-Suchresultate und evaluiert, wie stark die Inhalte übereinstimmen.
-            </p>
-            <ul>
-              <li>Ungeklärte Aussagen rasch mit einer 2. Meinung überprüfen</li>
-              <li>Herausfinden, was das Netz zu kritischen oder kontroversen Aussagen findet</li>
-            </ul>
-          </div>
-        </div>
+      <div class="tool-card">
+        <img src="img/start_factcheck.webp" alt="KI-Fakten-Überprüfer" />
+        <h3><a href="factcheck.html">KI-Fakten-Überprüfer</a></h3>
+        <p>Vergleicht Aussagen gegen Google-Suchresultate und evaluiert Übereinstimmung.</p>
+        <ul>
+          <li>Schnelle 2. Meinung</li>
+          <li>Kritische Aussagen überprüfen</li>
+        </ul>
       </div>
 
-      <div class="h3-section">
-        <h3>Abstracts-Zusammenfassung</h3>
-        <div class="story-block">
-          <img src="img/start_abstractsummary.webp" alt="" />
-          <div>
-            <p>
-              Wer gerne wissenschaftliche Fakten hat, aber zu ungeduldig ist, die Abstracts von pubmed zu lesen,
-              kann sich
-              eine <a href="abstracts.html">Abstract-Zusammenfassung</a> schreiben lassen.
-            </p>
-            <ul>
-              <li>Sich rasch eine Übersicht zu einem Spezialthema verschaffen</li>
-              <li>Eine Zusammenfassung basierend auf wissenschaftlichen Papers erhalten</li>
-            </ul>
-          </div>
-        </div>
+      <div class="tool-card">
+        <img src="img/start_abstractsummary.webp" alt="Abstracts-Zusammenfassung" />
+        <h3><a href="abstracts.html">Abstracts-Zusammenfassung</a></h3>
+        <p>Wissenschaftliche Übersicht basierend auf PubMed-Abstracts.</p>
+        <ul>
+          <li>Schnelle Übersicht zu Spezialthemen</li>
+          <li>Wissenschaftlich fundiert</li>
+        </ul>
       </div>
     </div>
 
-    <h2>Projektunterricht</h2>
-    <div class="h3-grid-container">
-      <div class="h3-section">
-        <h3>virtuelle Umfrage</h3>
-        <div class="story-block">
-          <img src="img/start_umfrage.webp" alt="" />
-          <div>
-            <p>
-              Bei der <a href="umfrage.html">virtuellen Umfrage</a> generiert die KI synthetische Personen, welche
-              eine
-              eigene Umfrage beantworten. Die Ausgabe erfolgt als Excel-Datei und einem kurzen Report.
-            </p>
-            <ul>
-              <li>Eigene Fragen testen, ob sie die gewünschten Antwortformate und -tiefe ergeben</li>
-            </ul>
-          </div>
-        </div>
+    <div class="section-header">
+      <div class="section-icon">🎯</div>
+      <h2 style="margin: 0;">Projektunterricht</h2>
+    </div>
+
+    <div class="tools-grid">
+      <div class="tool-card">
+        <img src="img/start_umfrage.webp" alt="virtuelle Umfrage" />
+        <h3><a href="umfrage.html">Virtuelle Umfrage</a></h3>
+        <p>KI generiert synthetische Personen, die Ihre Umfrage beantworten.</p>
+        <ul>
+          <li>Fragen testen</li>
+          <li>Ausgabe als Excel + Report</li>
+        </ul>
       </div>
 
-      <div class="h3-section">
-        <h3>virtuelles Interview</h3>
-        <div class="story-block">
-          <img src="img/start_interview.webp" alt="" />
-          <div>
-            <p>
-              Im <a href="interview.html">virtuellen Interview</a> beschreiben Sie zuerst Ihre
-              Wunsch-Interviewperson.
-              Diese wird dann Ihre Fragen mündlich und als Transkript beantworten.
-            </p>
-            <ul>
-              <li>Die Methode "Interview" ausprobieren, ohne aufwändig echte Menschen befragen zu müssen</li>
-              <li>Erkennen, wie ein Interview-Transkript auszusehen hat</li>
-            </ul>
-          </div>
-        </div>
+      <div class="tool-card">
+        <img src="img/start_interview.webp" alt="virtuelles Interview" />
+        <h3><a href="interview.html">Virtuelles Interview</a></h3>
+        <p>Beschreiben Sie Ihre Wunsch-Person, die dann Ihre Fragen mündlich beantwortet.</p>
+        <ul>
+          <li>Interview-Methode ausprobieren</li>
+          <li>Transkript-Format kennenlernen</li>
+        </ul>
       </div>
     </div>
 
-    <h2>Tools für Lehrpersonen</h2>
-    <div class="h3-grid-container">
-      <div class="h3-section">
-        <h3>Unterrichtsmaterial testen</h3>
-        <div class="story-block">
-          <img src="img/start_virtual_class.png" alt="" />
-          <div>
-            <p>
-              Präsentieren Sie Ihren Unterrichtsauftrag einer <a href="virtual_class.html">virtuellen Klasse</a>
-              bestehend aus 8 speziellen Schüler*innen-Persönlichkeiten, welche kritisch und direkt Feedback geben.
-            </p>
-            <ul>
-              <li>Inputs erhalten zur Optimierung der eigenen Unterrichtsmaterialien</li>
-            </ul>
-          </div>
-        </div>
+    <div class="section-header">
+      <div class="section-icon">👨‍🏫</div>
+      <h2 style="margin: 0;">Tools für Lehrpersonen</h2>
+    </div>
+
+    <div class="tools-grid">
+      <div class="tool-card">
+        <img src="img/start_virtual_class.png" alt="Unterrichtsmaterial testen" />
+        <h3><a href="virtual_class.html">Unterrichtsmaterial testen</a></h3>
+        <p>Präsentieren Sie Ihren Auftrag einer virtuellen Klasse mit 8 Persönlichkeiten.</p>
+        <ul>
+          <li>Kritisches, direktes Feedback</li>
+          <li>Material optimieren</li>
+        </ul>
       </div>
 
-      <div class="h3-section">
-        <h3>Prüfungsfrage evaluieren</h3>
-        <div class="story-block">
-          <img src="img/start_testeval.png" alt="" />
-          <div>
-            <p>
-              Lassen Sie Ihre <a href="testeval.html">Prüfungsfrage</a> nach Bloom und Krathwohl einstufen und von
-              virtuellen Schüler*innen beantworten.
-            </p>
-            <ul>
-              <li>Inputs erhalten zur Verständlichkeit von Prüfungsfragen</li>
-            </ul>
-          </div>
-        </div>
+      <div class="tool-card">
+        <img src="img/start_testeval.png" alt="Prüfungsfrage evaluieren" />
+        <h3><a href="testeval.html">Prüfungsfrage evaluieren</a></h3>
+        <p>Einstufung nach Bloom/Krathwohl, beantwortet von virtuellen Schüler*innen.</p>
+        <ul>
+          <li>Verständlichkeit prüfen</li>
+          <li>Schwierigkeitsgrad einschätzen</li>
+        </ul>
       </div>
 
-      <div class="h3-section">
-        <h3>Namen der Schüler*innen lernen</h3>
-        <div class="story-block">
-          <img src="img/start_fotospiegeltool.png" alt="" />
-          <div>
-            <p>
-              Zwar keine KI, aber dennoch praktisch: Beim <a
-                href="https://margadant.net/no_wp/fotospiegel.html">Fotospiegeltool</a>
-              können Sie einen Foto-Klassenspiegel vom kswe Intranet hochladen, um danach hintereinander und
-              zufällig die
-              einzelnen Fotos zu erraten.
-            </p>
-            <ul>
-              <li>Spielerisch die Namen einer Abteilung lernen</li>
-            </ul>
-          </div>
-        </div>
+      <div class="tool-card">
+        <img src="img/start_fotospiegeltool.png" alt="Namen lernen" />
+        <h3><a href="https://margadant.net/no_wp/fotospiegel.html">Namen lernen</a></h3>
+        <p>Klassenfotospiegel hochladen und Namen spielerisch lernen.</p>
+        <ul>
+          <li>Zufällige Reihenfolge</li>
+          <li>Keine KI, aber praktisch</li>
+        </ul>
       </div>
     </div>
 
-    <h2>Sprachen lernen</h2>
-    <div class="h3-grid-container">
-      <div class="h3-section">
-        <h3>Chinesische Kurzgeschichte lesen</h3>
-        <div class="story-block">
-          <img src="img/start_chinasatz.webp" alt="" />
-          <div>
-            <p>
-              Der <a href="chinastory.html">KI-Geschichten-Generator</a> erstellt einfache Geschichten auf
-              Chinesisch mit
-              Pinyin, Übersetzung, Bild und Sprachausgabe.
-            </p>
-            <ul>
-              <li>Chinesisch lesen lernen mit einem sehr einfachen Vokabular</li>
-            </ul>
-          </div>
-        </div>
+    <div class="section-header">
+      <div class="section-icon">🗣️</div>
+      <h2 style="margin: 0;">Sprachen lernen</h2>
+    </div>
+
+    <div class="tools-grid">
+      <div class="tool-card">
+        <img src="img/start_chinasatz.webp" alt="Chinesische Geschichte" />
+        <h3><a href="chinastory.html">Chinesische Kurzgeschichte</a></h3>
+        <p>Einfache Geschichten mit Pinyin, Übersetzung, Bild und Sprachausgabe.</p>
+        <ul>
+          <li>Sehr einfaches Vokabular</li>
+          <li>Chinesisch lesen lernen</li>
+        </ul>
       </div>
 
-      <div class="h3-section">
-        <h3>Chinesisch plaudern</h3>
-        <div class="story-block">
-          <img src="img/start_chinachat.png" alt="" />
-          <div>
-            <p>
-              Plaudern Sie mit Textchat oder Spracheingabe mit einer
-              <a href="chinachat.html">geduldigen virtuellen Person</a>. Sie hören die Antworten in einer wählbaren
-              Stimme
-              und sehen sie gleichzeitig als Text.
-            </p>
-            <ul>
-              <li>Auf einfachem Niveau auf Chinesisch kommunizieren üben</li>
-            </ul>
-          </div>
-        </div>
+      <div class="tool-card">
+        <img src="img/start_chinachat.png" alt="Chinesisch plaudern" />
+        <h3><a href="chinachat.html">Chinesisch plaudern</a></h3>
+        <p>Textchat oder Spracheingabe mit geduldiger virtueller Person.</p>
+        <ul>
+          <li>Einfaches Niveau</li>
+          <li>Antworten hören und lesen</li>
+        </ul>
       </div>
 
-      <div class="h3-section">
-        <h3>Chinesischen Satz übersetzen</h3>
-        <div class="story-block">
-          <img src="img/start_chinastory.webp" alt="" />
-          <div>
-            <p>
-              Der <a href="chinasatz.html">Satz-Generator</a> erfindet nur einen Satz auf chinesisch, aber in Text
-              und
-              Sprache. Eine eigene Übersetzung kann dann mit der KI-Übersetzugn verglichen werden.
-            </p>
-            <ul>
-              <li>Lernen, einfache Sätze auf Chinesisch zu verstehen</li>
-            </ul>
-          </div>
-        </div>
+      <div class="tool-card">
+        <img src="img/start_chinastory.webp" alt="Satz übersetzen" />
+        <h3><a href="chinasatz.html">Chinesischen Satz übersetzen</a></h3>
+        <p>Ein Satz auf Chinesisch in Text und Sprache, eigene Übersetzung mit KI vergleichen.</p>
+        <ul>
+          <li>Einfache Sätze verstehen lernen</li>
+        </ul>
       </div>
     </div>
+
   </div>
 
   <script>
