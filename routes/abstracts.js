@@ -1,13 +1,16 @@
 import { Router } from "express";
 import axios from "axios";
 import xml2js from "xml2js";
-import OpenAI from "openai";
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+import { callAI } from "../aiCall.js";
 
 const router = Router();
 
+// Diese Site verwendet die Stufe "stark" (gpt-4.1 / Sonnet / qwen2.5:14b)
+const DEFAULT_MODEL = "openai/gpt-4.1";
+const TEMPERATURE = 0.6;
+
 // Funktion um Zusammenfassung zu erstellen
-async function doSummary(text, words, lang) {
+async function doSummary(text, words, lang, providerModel) {
   const prompt = `Schreibe eine prägnante Zusammenfassung welche die Inhalte und Schlussfolgerungen der folgenden Abstracts enthält:
     ${text}
 
@@ -18,12 +21,7 @@ async function doSummary(text, words, lang) {
     - Die Zusammenfassung soll ungefähr ${words} Worte umfassen
     - Schreibe die gesamte Zusammenfassung in der Sprache ${lang}
     `;
-  const response = await openai.chat.completions.create({
-    model: "gpt-4.1",
-    messages: [{ role: "user", content: prompt }],
-    temperature: 0.6,
-  });
-  return response.choices[0].message.content;
+  return await callAI(prompt, providerModel, TEMPERATURE, 2000);
 }
 
 // Suche PubMed
@@ -38,7 +36,7 @@ router.get("/search", async (req, res) => {
     const idList = searchResponse.data.esearchresult.idlist;
     if (!idList || idList.length === 0) {
       console.log("Keine PubMed IDs gefunden.");
-      return res.json({ abstracts: [] }); // Frühzeitig abbrechen
+      return res.json({ abstracts: [] });
     }
     // Schritt 2: Abstracts holen
     const ids = idList.join(",");
@@ -53,7 +51,6 @@ router.get("/search", async (req, res) => {
       const pmid = article.MedlineCitation[0].PMID[0]._;
       const abstractObj = article.MedlineCitation[0].Article[0].Abstract;
       const abstractText = abstractObj ? abstractObj[0].AbstractText.map((t) => t._ || t).join(" ") : null;
-      // nur längere Abstracts
       if (abstractText && abstractText.length > 50) {
         abstracts.push({
           pmid: `<a href="https://pubmed.ncbi.nlm.nih.gov/${pmid}/" target="_blank">${pmid}</a>`,
@@ -68,11 +65,11 @@ router.get("/search", async (req, res) => {
   }
 });
 
-// Route für Zusammenfassung zu schreiben
+// Route für Zusammenfassung
 router.post("/getSummary", async (req, res) => {
   try {
-    const { text, words, lang } = req.body;
-    const result = await doSummary(text, words, lang);
+    const { text, words, lang, providerModel = DEFAULT_MODEL } = req.body;
+    const result = await doSummary(text, words, lang, providerModel);
     res.json({ summary: result });
   } catch (error) {
     console.error("Fehler beim Erstellen der Zusammenfassung:", error);

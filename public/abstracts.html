@@ -28,8 +28,20 @@
     <select id="summaryLanguage" name="summaryLanguage">
       <option value="english">Englisch</option>
       <option value="deutsch">Deutsch</option>
-    </select><br />
-    <br />
+    </select><br /><br />
+
+    <label for="modelSelect">KI-Modell:</label>
+    <select id="modelSelect" name="modelSelect">
+      <optgroup label="Stark">
+        <option value="openai/gpt-4.1" selected>OpenAI GPT-4.1</option>
+        <option value="anthropic/claude-sonnet-4-5">Anthropic Sonnet</option>
+        <option value="ollama/qwen3.5:9b">Ollama qwen3.5:9b (lokal)</option>
+        <option value="ollama/custom-stark">Ollama – eigenes Modell…</option>
+      </optgroup>
+    </select>
+    <input type="text" id="ollamaCustomModel" placeholder="z.B. llama3.2:latest"
+      style="display:none; margin-left: 6px; width: 200px;" /><br /><br />
+
     <button id="summarizeBtn">Schreibe Zusammenfassung</button><br />
   </div>
   <div id="progressDiv"></div>
@@ -37,20 +49,34 @@
   <div id="abstractDiv"></div>
 
   <script>
+    // Ollama-Custom-Feld ein-/ausblenden
+    document.getElementById("modelSelect").addEventListener("change", function () {
+      const customField = document.getElementById("ollamaCustomModel");
+      customField.style.display = this.value.endsWith("custom-stark") ? "inline" : "none";
+    });
+
+    // Aktuell gewähltes providerModel ermitteln
+    function getProviderModel() {
+      const val = document.getElementById("modelSelect").value;
+      if (val.endsWith("custom-stark")) {
+        const custom = document.getElementById("ollamaCustomModel").value.trim();
+        return custom ? `ollama/${custom}` : "ollama/qwen2.5:14b";
+      }
+      return val;
+    }
+
     // Funktion um die Zusammenfassung zu schreiben
-    async function generateSummary(text, words, lang) {
+    async function generateSummary(text, words, lang, providerModel) {
       let response = await fetch("/abstracts/getSummary", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ text, words, lang }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text, words, lang, providerModel }),
       });
       let data = await response.json();
       document.getElementById("summaryDiv").innerHTML = "<h2>KI-Zusammenfassung</h2>" + data.summary;
     }
 
-    // Funktion um die Abstracts anzuzueigen
+    // Funktion um die Abstracts anzuzeigen
     function displayAbstracts(abstracts) {
       if (abstracts.length === 0) {
         progressDiv.innerHTML = "❌ Keine Abstracts gefunden.";
@@ -61,7 +87,7 @@
         abstracts.map((a) => `<p><b>PMID:</b> ${a.pmid}<br>${a.abstractText}</p>`).join("");
     }
 
-    // Hautpprogramm
+    // Hauptprogramm
     let abstractsData = [];
     document.getElementById("summarizeWords").addEventListener("input", function () {
       document.getElementById("wordcountValue").textContent = this.value;
@@ -79,7 +105,7 @@
       if (!res.ok) {
         const err = await res.json();
         document.getElementById("progressDiv").innerHTML = "❌ Fehler: " + err.error;
-        return; // wichtig, um Funktion zu beenden
+        return;
       }
       const data = await res.json();
       abstractsData = data.abstracts;
@@ -91,10 +117,12 @@
     document.getElementById("summarizeBtn").addEventListener("click", async function () {
       try {
         const allAbstracts = abstractsData.map((a) => a.abstractText).join(" ");
-        words = document.getElementById("summarizeWords").value;
-        lang = document.getElementById("summaryLanguage").value;
+        const words = document.getElementById("summarizeWords").value;
+        const lang = document.getElementById("summaryLanguage").value;
+        const providerModel = getProviderModel();
+        console.log("providerModel: ", providerModel)
         document.getElementById("progressDiv").innerHTML = "<p>⚙️ Schreibe Zusammenfassung der Abstracts...</p>";
-        await generateSummary(allAbstracts, words, lang);
+        await generateSummary(allAbstracts, words, lang, providerModel);
       } catch (error) {
         console.error("Fehler beim Schreiben der Zusammenfassung:", error);
         document.getElementById("progressDiv").innerHTML = `<p>❌ Fehler beim Schreiben der Zusammenfassung.</p>`;
