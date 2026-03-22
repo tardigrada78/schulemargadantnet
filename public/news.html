@@ -11,8 +11,10 @@
 </head>
 
 <body>
-  <a href="/index.html" target="_blank">Weitere KI-Tools (Startseite)</a>&nbsp;&nbsp;&nbsp;
-  <a href="/feedback.html" target="_blank">Feedback geben</a>
+  <div id="site-header"></div>
+  <script>
+    fetch('/header.html').then(r => r.text()).then(h => document.getElementById('site-header').innerHTML = h);
+  </script>
   <h1>News-Zusammenfassung</h1>
   <p>Diese Website verwendet newsapi.org um News der letzen 3 Tage zur einer bestimmten Kategorie zu finden. Die KI
     fasst diese News dann in einem spannenden Podcast zusammen.</p>

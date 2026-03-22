@@ -9,27 +9,34 @@
 </head>
 
 <body>
+  <div id="site-header"></div>
+  <script>
+    fetch('/header.html').then(r => r.text()).then(h => document.getElementById('site-header').innerHTML = h);
+  </script>
   <div id="content">
-    <nav class="top-nav">
-      <a href="/feedback.html" target="_blank">📝 Feedback geben</a>
-    </nav>
 
     <h1>Lernen und Arbeiten mit KI</h1>
 
     <p style="text-align: center; max-width: 900px; margin: 0 auto 1.5rem;">
-      Diese Site ist noch im Aufbau. Bitte senden Sie Feedback, falls etwas nicht funktioniert oder Sie weitere
-      Funktionen wünschen. Der Zugang ist passwortgeschützt, da die KI-Zugriffe kostenpflichtig sind: 
-      Bitte nur innerhalb der Kantonsschule Wettingen sharen.
+
     </p>
 
-    <div style="background: rgba(100, 50, 255, 0.1); border: 1px solid rgba(100, 150, 255, 0.3); border-radius: 10px; padding: 1rem; margin: 1rem 0; max-width: 900px; margin-left: auto; margin-right: auto;">
-      <h4 style="margin-top: 0;">⚠️ Datenschutz & KI-Zusammenarbeit</h4>
+    <div
+      style="background: rgba(100, 50, 255, 0.1); border: 1px solid rgba(100, 150, 255, 0.3); border-radius: 10px; padding: 1rem; margin: 1rem 0; max-width: 900px; margin-left: auto; margin-right: auto;">
+      <h4 style="margin-top: 0;">🚧 Wieso hat es hier ein Passwort?</h4>
       <p style="margin: 0.5rem 0; font-size: 0.85em;">
-        Geben Sie in den Formularfeldern keine persönlichen Daten ein. Diese werden extern (momentan zu OpenAI) verarbeitet. Diese Site erfasst keinerlei Meta-Daten
+        Diese Site ist noch im Aufbau. Bitte senden Sie Feedback, falls etwas nicht funktioniert oder Sie weitere
+        Funktionen wünschen. Der Zugang ist passwortgeschützt, da die KI-Zugriffe kostenpflichtig sind:
+        Bitte nur innerhalb der Kantonsschule Wettingen sharen.
+      </p>
+      <h4 style="margin-top: 0;">🔒️ Datenschutz & KI-Zusammenarbeit</h4>
+      <p style="margin: 0.5rem 0; font-size: 0.85em;">
+        Geben Sie in den Formularfeldern keine persönlichen Daten ein. Diese werden extern (momentan zu OpenAI)
+        verarbeitet. Diese Site erfasst keinerlei Meta-Daten
         (IP, Ort, etc.).
       </p>
       <p style="margin: 0.5rem 0; font-size: 0.85em;">
-        <strong>Bleiben Sie kritisch!</strong> KI-Inhalte können überzeugend wirken, aber Fehler enthalten. Sie sollten
+        Bleiben Sie kritisch: KI-Inhalte können überzeugend wirken, aber Fehler enthalten. Sie sollten stets
         die Kontrolle behalten und sich nicht Lernerfahrungen nehmen lassen.
         <a href="doc/ki_mensch.pdf" target="_blank">→ Flyer zur Zusammenarbeit von Mensch und KI</a>
       </p>

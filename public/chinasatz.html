@@ -9,8 +9,10 @@
 </head>
 
 <body>
-  <a href="/index.html" target="_blank">Weitere KI-Tools (Startseite)</a>&nbsp;&nbsp;&nbsp;
-  <a href="/feedback.html" target="_blank">Feedback geben</a>
+  <div id="site-header"></div>
+  <script>
+    fetch('/header.html').then(r => r.text()).then(h => document.getElementById('site-header').innerHTML = h);
+  </script>
   <h1>Satz zu übersetzen</h1>
   <p>
     Klicken Sie auf den Button, um einen chinesischen Satz mit dem Wortschatz HSK-1 zu generieren. Die Übersetzung
