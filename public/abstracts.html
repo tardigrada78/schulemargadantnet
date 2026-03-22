@@ -32,18 +32,23 @@
       <option value="deutsch">Deutsch</option>
     </select><br /><br />
 
+    <!-- Modellauswahl -->
     <label for="modelSelect">KI-Modell:</label>
     <select id="modelSelect" name="modelSelect">
       <optgroup label="Stark">
         <option value="openai/gpt-4.1" selected>OpenAI GPT-4.1</option>
         <option value="anthropic/claude-sonnet-4-5">Anthropic Sonnet</option>
-        <option value="ollama/qwen3.5:9b">Ollama qwen3.5:9b (lokal)</option>
-        <option value="ollama/custom-stark">Ollama – eigenes Modell…</option>
+        <option value="ollama/tunnel">Ollama via Cloudflare Tunnel…</option>
       </optgroup>
     </select>
-    <input type="text" id="ollamaCustomModel" placeholder="z.B. llama3.2:latest"
-      style="display:none; margin-left: 6px; width: 200px;" /><br /><br />
+    <span id="ollamaTunnelFields" style="display:none;">
+      <input type="text" id="ollamaTunnelUrl" placeholder="https://abc123.trycloudflare.com"
+        style="margin-left: 6px; width: 280px;" />
+      <input type="text" id="ollamaCustomModel" placeholder="Modell, z.B. qwen2.5:14b"
+        style="margin-left: 6px; width: 180px;" />
+    </span><br /><br />
 
+      
     <button id="summarizeBtn">Schreibe Zusammenfassung</button><br />
   </div>
   <div id="progressDiv"></div>
@@ -51,30 +56,40 @@
   <div id="abstractDiv"></div>
 
   <script>
-    // Ollama-Custom-Feld ein-/ausblenden
+    // Tunnel-Felder ein-/ausblenden
     document.getElementById("modelSelect").addEventListener("change", function () {
-      const customField = document.getElementById("ollamaCustomModel");
-      customField.style.display = this.value.endsWith("custom-stark") ? "inline" : "none";
+      document.getElementById("ollamaTunnelFields").style.display =
+        this.value === "ollama/tunnel" ? "inline" : "none";
     });
 
-    // Aktuell gewähltes providerModel ermitteln
+    // Aktuell gewähltes providerModel und Tunnel-URL ermitteln
     function getProviderModel() {
       const val = document.getElementById("modelSelect").value;
-      if (val.endsWith("custom-stark")) {
-        const custom = document.getElementById("ollamaCustomModel").value.trim();
-        return custom ? `ollama/${custom}` : "ollama/qwen2.5:14b";
+      if (val === "ollama/tunnel") {
+        const model = document.getElementById("ollamaCustomModel").value.trim();
+        return model ? `ollama/${model}` : "ollama/qwen2.5:14b";
       }
       return val;
     }
 
+    function getOllamaBaseUrl() {
+      if (document.getElementById("modelSelect").value === "ollama/tunnel") {
+        const url = document.getElementById("ollamaTunnelUrl").value.trim().replace(/\/$/, "");
+        return url ? `${url}/v1` : null;
+      }
+      return null;
+    }
+
     // Funktion um die Zusammenfassung zu schreiben
     async function generateSummary(text, words, lang, providerModel) {
+      const ollamaBaseUrl = getOllamaBaseUrl();
       let response = await fetch("/abstracts/getSummary", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text, words, lang, providerModel }),
+        body: JSON.stringify({ text, words, lang, providerModel, ollamaBaseUrl }),
       });
       let data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Serverfehler");
       document.getElementById("summaryDiv").innerHTML = "<h2>KI-Zusammenfassung</h2>" + data.summary;
     }
 

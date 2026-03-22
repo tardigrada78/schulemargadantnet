@@ -22,7 +22,7 @@ function supportsTemperature(model) {
  * @param {number} maxTokens   - Maximale Tokens (default: 1000)
  * @returns {Promise<string>}  - Die Antwort als Text
  */
-export async function callAI(prompt, providerModel, temperature = 0.6, maxTokens = 1000) {
+export async function callAI(prompt, providerModel, temperature = 0.6, maxTokens = 1000, ollamaBaseUrl = null) {
   const slashIndex = providerModel.indexOf("/");
   const provider = providerModel.slice(0, slashIndex);
   const model = providerModel.slice(slashIndex + 1);
@@ -39,7 +39,9 @@ export async function callAI(prompt, providerModel, temperature = 0.6, maxTokens
   }
 
   // OpenAI und Ollama verwenden denselben Client-Typ
-  const client = provider === "ollama" ? ollamaClient : openaiClient;
+  const client = provider === "ollama"
+    ? (ollamaBaseUrl ? new OpenAI({ baseURL: ollamaBaseUrl, apiKey: "ollama" }) : ollamaClient)
+    : openaiClient;
   const params = {
     model,
     messages: [{ role: "user", content: prompt }],
@@ -47,5 +49,6 @@ export async function callAI(prompt, providerModel, temperature = 0.6, maxTokens
     ...(supportsTemperature(model) && { temperature }),
   };
   const response = await client.chat.completions.create(params);
-  return response.choices[0].message.content;
+  const text = response.choices[0].message.content;
+  return text.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
 }

@@ -10,7 +10,7 @@ const DEFAULT_MODEL = "openai/gpt-4.1";
 const TEMPERATURE = 0.6;
 
 // Funktion um Zusammenfassung zu erstellen
-async function doSummary(text, words, lang, providerModel) {
+async function doSummary(text, words, lang, providerModel, ollamaBaseUrl) {
   const prompt = `Schreibe eine prägnante Zusammenfassung welche die Inhalte und Schlussfolgerungen der folgenden Abstracts enthält:
     ${text}
 
@@ -21,7 +21,7 @@ async function doSummary(text, words, lang, providerModel) {
     - Die Zusammenfassung soll ungefähr ${words} Worte umfassen
     - Schreibe die gesamte Zusammenfassung in der Sprache ${lang}
     `;
-  return await callAI(prompt, providerModel, TEMPERATURE, 2000);
+  return await callAI(prompt, providerModel, TEMPERATURE, 2000, ollamaBaseUrl);
 }
 
 // Suche PubMed
@@ -68,12 +68,12 @@ router.get("/search", async (req, res) => {
 // Route für Zusammenfassung
 router.post("/getSummary", async (req, res) => {
   try {
-    const { text, words, lang, providerModel = DEFAULT_MODEL } = req.body;
-    const result = await doSummary(text, words, lang, providerModel);
+    const { text, words, lang, providerModel = DEFAULT_MODEL, ollamaBaseUrl } = req.body;
+    const result = await doSummary(text, words, lang, providerModel, ollamaBaseUrl);
     res.json({ summary: result });
   } catch (error) {
     console.error("Fehler beim Erstellen der Zusammenfassung:", error);
-    res.status(500).send("Fehler beim Erstellen der Zusammenfassung.");
+    res.status(500).json({ error: error.message || "Fehler beim Erstellen der Zusammenfassung." });
   }
 });
 
