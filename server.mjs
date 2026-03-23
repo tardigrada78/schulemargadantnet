@@ -17,6 +17,7 @@ import oekobilanz from "./routes/oekobilanz.js";
 import feedback from "./routes/feedback.js"; // in all pages, allowes feedback-form
 import ragchat from "./routes/ragchat.js";
 import overview from "./routes/overview.js";
+import ideas from "./routes/ideas.js";
 // add new routes here
 
 
@@ -43,6 +44,7 @@ app.use("/oekobilanz", oekobilanz);
 app.use("/feedback", feedback);
 app.use("/ragchat", ragchat);
 app.use("/overview", overview);
+app.use("/ideas", ideas);
 
 // add new routes here
 
