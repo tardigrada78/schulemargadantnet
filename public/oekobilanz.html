@@ -5,24 +5,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Ökobilanz-Rechner</title>
-  <link rel="stylesheet" href="style_black.css" />
+  <link rel="stylesheet" href="styles_synthwave.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <style>
-    table { border-collapse: collapse; width: 100%; margin-top: 10px; }
-    th, td { border: 1px solid #555; padding: 6px 10px; text-align: left; }
-    th { background-color: #222; }
-    input[type="number"] { width: 80px; background: #111; color: #eee; border: 1px solid #555; padding: 3px; }
-    .badge-ki     { font-size: 0.7em; background: #334; color: #88f; border-radius: 3px; padding: 1px 4px; margin-left: 4px; }
-    .badge-manuell{ font-size: 0.7em; background: #343; color: #8f8; border-radius: 3px; padding: 1px 4px; margin-left: 4px; }
-    .tooltip-wrap { position: relative; display: inline-block; cursor: help; }
-    .tooltip-wrap .tip { display: none; position: absolute; bottom: 120%; left: 0; background: #222;
-      border: 1px solid #555; padding: 5px 8px; font-size: 0.8em; width: 260px; z-index: 10; border-radius: 4px; }
-    .tooltip-wrap:hover .tip { display: block; }
-    .charts-wrap { display: flex; gap: 30px; flex-wrap: wrap; margin-top: 20px; align-items: flex-start; }
-    .chart-box { flex: 1; min-width: 280px; max-width: 400px; }
-    .hinweis { background: #1a1a2e; border-left: 3px solid #66f; padding: 8px 12px;
-      font-size: 0.85em; color: #aac; margin: 15px 0; }
-  </style>
 </head>
 
 <body>
@@ -42,10 +26,10 @@
   </div>
 
   <label for="produkt1Input"><strong>Produkt 1:</strong></label><br />
-  <input type="text" id="produkt1Input" value="1 Liter Hafermilch" style="width: 300px;" />&nbsp;
+  <input type="text" id="produkt1Input" value="1 Liter Hafermilch" />&nbsp;
   <label>
     Teilkomponenten:
-    <input type="number" id="anzahlKomponenten" value="4" min="1" max="10" style="width: 50px;" />
+    <input type="number" id="anzahlKomponenten" value="4" min="1" max="10" />
   </label>
   &nbsp;&nbsp;
   <label>
@@ -58,10 +42,10 @@
   <div id="progress1"></div>
   <div id="output1"></div>
 
-  <div id="vergleichsSektion" style="display:none; margin-top: 30px;">
+  <div id="vergleichsSektion">
     <hr />
     <label for="produkt2Input"><strong>Produkt 2 (Vergleich):</strong></label><br />
-    <input type="text" id="produkt2Input" value="1 Liter Kuhmilch" style="width: 300px;" /><br /><br />
+    <input type="text" id="produkt2Input" value="1 Liter Kuhmilch" /><br /><br />
     <button id="analysiereBtn2">Vergleichsprodukt analysieren</button>
     <br /><br />
     <div id="progress2"></div>
@@ -96,7 +80,7 @@
       const container = document.getElementById(containerId);
 
       let html = `<h2>🌿 ${daten.produkt}</h2>`;
-      html += `<table><thead><tr>
+      html += `<table class="oeko-table"><thead><tr>
         <th>Teilkomponente</th>
         ${DIMENSIONEN.map(d => `<th>${d.label}<br/><small>${d.einheit}</small></th>`).join('')}
       </tr></thead><tbody>`;
@@ -123,7 +107,7 @@
       });
 
       // Summenzeile
-      html += `<tr style="font-weight:bold; background:#1a1a1a;"><td>TOTAL</td>`;
+      html += `<tr class="table-total"><td>TOTAL</td>`;
       DIMENSIONEN.forEach(dim => {
         const summe = berechneSumme(daten, dim.key);
         html += `<td id="total_${produktKey}_${dim.key}">${summe}</td>`;
@@ -313,7 +297,7 @@
       progressDiv.innerHTML = '';
 
       if (daten.error) {
-        outputDiv.innerHTML = `<p style='color:red;'>Fehler: ${daten.error}</p>`;
+        outputDiv.innerHTML = `<p class="error-text">Fehler: ${daten.error}</p>`;
         return;
       }
 

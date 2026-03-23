@@ -4,64 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Verwendete KI-Modelle</title>
-  <link rel="stylesheet" href="style_black.css" />
-  <style>
-    .model-card {
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 12px;
-      padding: 24px 28px;
-      margin-bottom: 20px;
-    }
-    .model-card h2 {
-      margin-top: 0;
-      font-size: 1.2rem;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .model-card p {
-      color: #bbb;
-      line-height: 1.6;
-      margin-bottom: 0;
-    }
-    .badge {
-      font-size: 0.7rem;
-      padding: 2px 8px;
-      border-radius: 999px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-    .badge-cloud { background: rgba(167,139,250,0.15); color: #a78bfa; border: 1px solid rgba(167,139,250,0.3); }
-    .badge-local { background: rgba(110,231,183,0.15); color: #6ee7b7; border: 1px solid rgba(110,231,183,0.3); }
-    .anleitung {
-      background: rgba(0,0,0,0.3);
-      border-left: 3px solid rgba(251,191,36,0.6);
-      border-radius: 0 8px 8px 0;
-      padding: 16px 20px;
-      margin-top: 16px;
-      font-size: 0.9rem;
-      color: #ccc;
-      line-height: 1.7;
-    }
-    .anleitung strong {
-      color: #fbbf24;
-      display: block;
-      margin-bottom: 4px;
-    }
-    .anleitung code {
-      background: rgba(255,255,255,0.08);
-      padding: 2px 7px;
-      border-radius: 4px;
-      font-family: monospace;
-      font-size: 0.95em;
-      color: #a5f3fc;
-    }
-    .anleitung a {
-      color: #60a5fa;
-    }
-  </style>
+  <link rel="stylesheet" href="styles_synthwave.css" />
 </head>
 <body>
   <div id="site-header"></div>
@@ -70,7 +13,7 @@
   </script>
 
   <h1>Verwendete KI-Modelle</h1>
-  <p style="color:#bbb; margin-bottom:28px;">
+  <p class="page-intro">
     Die Tools auf dieser Website können verschiedene KI-Modelle verwenden. Hier eine Übersicht der verfügbaren Optionen.
   </p>
 
@@ -81,7 +24,7 @@
     </h2>
     <p>
       Modelle von OpenAI (z.&nbsp;B. GPT-4o) werden über die OpenAI-API angesprochen. Dazu wird ein API-Schlüssel benötigt,
-      der auf <a href="https://platform.openai.com" style="color:#60a5fa">platform.openai.com</a> erstellt werden kann.
+      der auf <a href="https://platform.openai.com">platform.openai.com</a> erstellt werden kann.
       Die Anfragen werden an OpenAI-Server gesendet; die Daten verlassen das Gerät.
     </p>
   </div>
@@ -94,7 +37,7 @@
     <p>
       Modelle von Anthropic (z.&nbsp;B. Claude Sonnet oder Claude Haiku) werden über die Anthropic-API angesprochen.
       Ein API-Schlüssel ist erforderlich und kann auf
-      <a href="https://console.anthropic.com" style="color:#60a5fa">console.anthropic.com</a> bezogen werden.
+      <a href="https://console.anthropic.com">console.anthropic.com</a> bezogen werden.
       Auch hier werden Anfragen an externe Server gesendet.
     </p>
   </div>
@@ -110,30 +53,30 @@
     </p>
     <div class="anleitung">
       <strong>Anleitung</strong>
-      <ol style="margin: 0; padding-left: 20px;">
+      <ol>
         <li>
-          <strong style="color:#e5e7eb; display:inline;">Cloudflared installieren</strong> &ndash;
+          <strong>Cloudflared installieren</strong> &ndash;
           Anleitung und Downloads:
           <a href="https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/downloads/" target="_blank">
             developers.cloudflare.com &rarr; Tunnel Downloads
           </a>
         </li>
-        <li style="margin-top:10px;">
-          <strong style="color:#e5e7eb; display:inline;">Ollama starten</strong> &ndash;
+        <li>
+          <strong>Ollama starten</strong> &ndash;
           Ollama normal starten (es läuft standardmässig auf Port&nbsp;11434).
         </li>
-        <li style="margin-top:10px;">
-          <strong style="color:#e5e7eb; display:inline;">Tunnel öffnen</strong> &ndash;
+        <li>
+          <strong>Tunnel öffnen</strong> &ndash;
           In der Konsole eingeben:<br/>
           <code>cloudflared tunnel --url http://localhost:11434</code>
         </li>
-        <li style="margin-top:10px;">
-          <strong style="color:#e5e7eb; display:inline;">URL kopieren</strong> &ndash;
+        <li>
+          <strong>URL kopieren</strong> &ndash;
           Die angezeigte URL (erscheint nach der Meldung <em>„Your quick Tunnel has been created!"</em>)
           in die Zwischenablage kopieren und auf der Website eintragen.
         </li>
-        <li style="margin-top:10px;">
-          <strong style="color:#e5e7eb; display:inline;">Modell wählen</strong> &ndash;
+        <li>
+          <strong>Modell wählen</strong> &ndash;
           Auf der Website bei «Modell» eines der installierten lokalen Modelle eingeben.
           Installierte Modelle können mit <code>ollama list</code> aufgelistet werden.
         </li>
