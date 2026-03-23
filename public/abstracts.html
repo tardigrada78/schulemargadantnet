@@ -35,20 +35,41 @@
     <!-- Modellauswahl -->
     <label for="modelSelect">KI-Modell:</label>
     <select id="modelSelect" name="modelSelect">
-      <optgroup label="Stark">
-        <option value="openai/gpt-4.1" selected>OpenAI GPT-4.1</option>
-        <option value="anthropic/claude-sonnet-4-5">Anthropic Sonnet</option>
-        <option value="ollama/tunnel">Ollama via Cloudflare Tunnel…</option>
+      <optgroup label="Cloud-Dienste">
+        <option value="openai/gpt-4.1">OpenAI GPT 4.1</option>
+        <option value="anthropic/claude-sonnet-4-5" selected>Anthropic Sonnet 4.5</option>
+      </optgroup>
+      <optgroup label="Lokale Modelle">
+        <option value="ollama/tunnel">Ollama via Cloudflare-Tunnel</option>
+        <option value="webllm">WebLLM</option>
       </optgroup>
     </select>
     <span id="ollamaTunnelFields" style="display:none;">
       <input type="text" id="ollamaTunnelUrl" placeholder="https://abc123.trycloudflare.com"
         style="margin-left: 6px; width: 280px;" />
-      <input type="text" id="ollamaCustomModel" placeholder="Modell, z.B. qwen2.5:14b"
+      <input type="text" id="ollamaCustomModel" value="gemma3:27b"
         style="margin-left: 6px; width: 180px;" />
+    </span>
+    <span id="webllmFields" style="display:none;">
+      <select id="webllmModelSelect" style="margin-left: 6px;">
+        <optgroup label="Klein (~0.5 GB) – schnell">
+          <option value="Qwen2.5-1.5B-Instruct-q4f16_1-MLC">Qwen2.5-1.5B</option>
+          <option value="Llama-3.2-1B-Instruct-q4f16_1-MLC">Llama-3.2-1B</option>
+        </optgroup>
+        <optgroup label="Mittel (~2 GB) – gute Qualität">
+          <option value="Phi-3.5-mini-instruct-q4f16_1-MLC" selected>Phi-3.5-mini</option>
+          <option value="Llama-3.2-3B-Instruct-q4f16_1-MLC">Llama-3.2-3B</option>
+          <option value="Qwen2.5-3B-Instruct-q4f16_1-MLC">Qwen2.5-3B</option>
+        </optgroup>
+        <optgroup label="Gross (~5 GB) – beste Qualität">
+          <option value="Llama-3.1-8B-Instruct-q4f16_1-MLC">Llama-3.1-8B</option>
+          <option value="Qwen2.5-7B-Instruct-q4f16_1-MLC">Qwen2.5-7B</option>
+        </optgroup>
+      </select>
+      <button id="webllmLoadBtn" style="margin-left: 6px;">Modell laden</button>
+      <span id="webllmStatus" style="margin-left: 8px; font-size: 0.9em; color: #555;"></span>
     </span><br /><br />
 
-      
     <button id="summarizeBtn">Schreibe Zusammenfassung</button><br />
   </div>
   <div id="progressDiv"></div>
@@ -56,10 +77,12 @@
   <div id="abstractDiv"></div>
 
   <script>
-    // Tunnel-Felder ein-/ausblenden
+    // Tunnel-/WebLLM-Felder ein-/ausblenden
     document.getElementById("modelSelect").addEventListener("change", function () {
       document.getElementById("ollamaTunnelFields").style.display =
         this.value === "ollama/tunnel" ? "inline" : "none";
+      document.getElementById("webllmFields").style.display =
+        this.value === "webllm" ? "inline" : "none";
     });
 
     // Aktuell gewähltes providerModel und Tunnel-URL ermitteln
@@ -82,6 +105,10 @@
 
     // Funktion um die Zusammenfassung zu schreiben
     async function generateSummary(text, words, lang, providerModel) {
+      if (providerModel === "webllm") {
+        if (!window._webllmGenerateSummary) throw new Error("WebLLM noch nicht initialisiert.");
+        return await window._webllmGenerateSummary(text, words, lang);
+      }
       const ollamaBaseUrl = getOllamaBaseUrl();
       let response = await fetch("/abstracts/getSummary", {
         method: "POST",
@@ -147,6 +174,64 @@
         document.getElementById("progressDiv").innerHTML = ``;
       }
     });
+  </script>
+
+  <script type="module">
+    import * as webllm from "https://esm.run/@mlc-ai/web-llm";
+
+    document.getElementById("webllmLoadBtn").addEventListener("click", async () => {
+      const modelId = document.getElementById("webllmModelSelect").value;
+      const loadBtn = document.getElementById("webllmLoadBtn");
+      const statusEl = document.getElementById("webllmStatus");
+      const progressDiv = document.getElementById("progressDiv");
+      loadBtn.disabled = true;
+      window._webllmReady = false;
+      statusEl.textContent = "⚙️ Lade...";
+      progressDiv.innerHTML = "<p>⚙️ Lade WebLLM-Modell...</p>";
+
+      try {
+        window._webllmEngine = await webllm.CreateMLCEngine(modelId, {
+          initProgressCallback: (progress) => {
+            statusEl.textContent = progress.text || "Lade...";
+            if (progress.progress !== undefined) {
+              const pct = (progress.progress * 100).toFixed(1);
+              progressDiv.innerHTML = `<p>⚙️ Lade Modell: ${pct}%</p>`;
+            }
+          }
+        });
+        window._webllmReady = true;
+        statusEl.textContent = "✅ Bereit";
+        progressDiv.innerHTML = "";
+      } catch (err) {
+        statusEl.textContent = "❌ Fehler: " + err.message;
+        progressDiv.innerHTML = "";
+        console.error(err);
+      } finally {
+        loadBtn.disabled = false;
+      }
+    });
+
+    window._webllmGenerateSummary = async function (text, words, lang) {
+      if (!window._webllmEngine || !window._webllmReady) {
+        throw new Error("WebLLM-Modell noch nicht geladen. Bitte zuerst «Modell laden» klicken.");
+      }
+      const langText = lang === "deutsch" ? "German" : "English";
+      const prompt = `Summarize the following scientific abstracts in ${langText} in approximately ${words} words:\n\n${text}`;
+      const summaryDiv = document.getElementById("summaryDiv");
+      summaryDiv.innerHTML = "<h2>KI-Zusammenfassung</h2>";
+
+      const chunks = await window._webllmEngine.chat.completions.create({
+        messages: [{ role: "user", content: prompt }],
+        temperature: 0.7,
+        stream: true,
+      });
+
+      let fullText = "";
+      for await (const chunk of chunks) {
+        fullText += chunk.choices[0]?.delta.content || "";
+        summaryDiv.innerHTML = "<h2>KI-Zusammenfassung</h2>" + fullText;
+      }
+    };
   </script>
 </body>
 
