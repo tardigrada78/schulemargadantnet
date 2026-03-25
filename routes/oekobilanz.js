@@ -12,11 +12,11 @@ Deine Aufgabe: Analysiere ein Produkt und zerlege es in 3–5 sinnvolle Teilkomp
 Für jede Teilkomponente und jede der 5 Dimensionen liefere einen realistischen Schätzwert.
 
 Dimensionen:
-- klima:     kg CO₂-Äquivalente (Treibhausgase über gesamten Lebenszyklus)
-- wasser:    Liter Wasserverbrauch (inkl. virtuellem Wasser)
-- land:      m² Flächenverbrauch (Anbau, Abbau, Produktion)
-- transport: Punkte 1–100 (gewichteter Transportaufwand, 100 = sehr hoher globaler Transport)
-- recycling: Score 1–10 (10 = vollständig recyclierbar, 1 = nicht recyclierbar)
+- klima:          kg CO₂-Äquivalente (Treibhausgase über gesamten Lebenszyklus, inkl. Produktion, Transport, Entsorgung)
+- energie:        MJ (Megajoule) Primärenergieverbrauch über den gesamten Lebenszyklus
+- abfall:         Gramm nicht rezyklierbarer Abfall (Restmüll, Sondermüll – kein kompostierbarer oder recyclierbarer Anteil)
+- biodiversitaet: Punkte 1–10 (10 = sehr hohe Beeinträchtigung der Artenvielfalt durch Flächenverbrauch, Pestizide, Schadstoffeinträge; 1 = kaum Auswirkung)
+- ressourcen:     Punkte 1–10 (10 = sehr hoher Verbrauch nicht erneuerbarer Rohstoffe wie Metalle, Mineralien, fossile Stoffe; 1 = kaum kritische Rohstoffe nötig)
 
 Für jede Dimension:
 - rohwert:     Zahl (physikalischer Wert gemäss Einheit oben)
@@ -34,11 +34,11 @@ Das JSON muss exakt dieser Struktur entsprechen:
       "name": "Name der Teilkomponente",
       "anteil": "kurze Beschreibung (z.B. '~30g Kunststoffverpackung')",
       "dimensionen": {
-        "klima":     { "rohwert": 0.8,  "einheit": "kg CO₂eq", "quelle": "ki-recherche", "begruendung": "..." },
-        "wasser":    { "rohwert": 48,   "einheit": "Liter",    "quelle": "ki-recherche", "begruendung": "..." },
-        "land":      { "rohwert": 0.05, "einheit": "m²",       "quelle": "ki-annahme",   "begruendung": "..." },
-        "transport": { "rohwert": 25,   "einheit": "Punkte",   "quelle": "ki-annahme",   "begruendung": "..." },
-        "recycling": { "rohwert": 9,    "einheit": "Score",    "quelle": "ki-recherche", "begruendung": "..." }
+        "klima":          { "rohwert": 0.8,  "einheit": "kg CO₂eq",      "quelle": "ki-recherche", "begruendung": "..." },
+        "energie":        { "rohwert": 12,   "einheit": "MJ",             "quelle": "ki-recherche", "begruendung": "..." },
+        "abfall":         { "rohwert": 5,    "einheit": "g",              "quelle": "ki-annahme",   "begruendung": "..." },
+        "biodiversitaet": { "rohwert": 3,    "einheit": "Punkte 1–10",    "quelle": "ki-annahme",   "begruendung": "..." },
+        "ressourcen":     { "rohwert": 4,    "einheit": "Punkte 1–10",    "quelle": "ki-annahme",   "begruendung": "..." }
       }
     }
   ]
