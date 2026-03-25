@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sprachgeschichten</title>
+  <link rel="stylesheet" href="styles_synthwave.css" />
+  <link rel="stylesheet" href="styles_china.css" />
+  <script src="https://cdn.jsdelivr.net/npm/pinyin-pro@3.19.2/dist/index.js"></script>
+  <style>
+    .selector-group {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+
+    .selector-group label {
+      font-size: 0.85rem;
+      color: #a0a0c0;
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    .selector-btn {
+      padding: 8px 18px;
+      border-radius: 8px;
+      border: 1px solid rgba(100, 50, 255, 0.4);
+      background: linear-gradient(135deg, #1a1a2e, #16213e);
+      color: #a78bfa;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 500;
+      transition: all 0.2s ease;
+    }
+
+    .selector-btn:hover {
+      border-color: rgba(100, 50, 255, 0.8);
+      background: linear-gradient(135deg, #2d1b69, #1e3a5f);
+      color: #c4b5fd;
+    }
+
+    .selector-btn.active {
+      background: linear-gradient(135deg, #4c1d95, #1e3a8a);
+      border-color: #7c3aed;
+      color: #f5f3ff;
+    }
+
+    #storyOutput {
+      line-height: 2.2;
+      font-size: 1.05rem;
+      margin-top: 16px;
+    }
+
+    #continueSection {
+      margin-top: 24px;
+    }
+
+    .story-seed {
+      color: #c4b5fd;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="site-header"></div>
+  <script>
+    fetch('/header.html').then(r => r.text()).then(h => document.getElementById('site-header').innerHTML = h);
+  </script>
+
+  <h1 id="pageTitle">Sprachgeschichten</h1>
+  <p>Beginnen Sie mit einer Geschichte und erweitern Sie sie zusammen mit der KI. Falls Sie keine Ideen mehr haben,
+    können Sie auch einfach auf den Button"Geschichte weiter erzählen" klicken ohne eine Texteingabe. <br>
+    Fahren Sie mit der Maus über ein Wort, um die deutsche Übersetzung zu sehen.
+  </p>
+
+  <!-- Language selector -->
+  <div>
+    <label class="selector-group" style="display:block; font-size:0.85rem; color:#a0a0c0; margin-bottom:8px;"
+      id="langLabel">Sprache der Geschichte</label>
+    <div class="selector-group">
+      <button class="selector-btn active" data-lang="de" onclick="selectLanguage('de')">🇩🇪 Deutsch</button>
+      <button class="selector-btn" data-lang="en" onclick="selectLanguage('en')">🇬🇧 Englisch</button>
+      <button class="selector-btn" data-lang="fr" onclick="selectLanguage('fr')">🇫🇷 Français</button>
+      <button class="selector-btn" data-lang="it" onclick="selectLanguage('it')">🇮🇹 Italiano</button>
+      <button class="selector-btn" data-lang="zh" onclick="selectLanguage('zh')">🇨🇳 Chinesisch</button>
+    </div>
+  </div>
+
+  <!-- Level selector -->
+  <div>
+    <label class="selector-group" style="display:block; font-size:0.85rem; color:#a0a0c0; margin-bottom:8px;"
+      id="levelLabel">Sprachniveau</label>
+    <div class="selector-group">
+      <button class="selector-btn active" data-level="1" onclick="selectLevel(1)" id="lvl1btn">Sprachfrischling</button>
+      <button class="selector-btn" data-level="2" onclick="selectLevel(2)" id="lvl2btn">Redefähig</button>
+      <button class="selector-btn" data-level="3" onclick="selectLevel(3)" id="lvl3btn">Wortschatzgewaltig</button>
+    </div>
+  </div>
+
+  <!-- Seed textarea -->
+  <textarea id="seedInput" rows="3"
+    style="width:100%; margin-bottom:12px;">In einem Wald lebt ein Drache. Die Bauern im Dorf hatten Angst vor ihm.</textarea>
+  <button id="startBtn" onclick="startStory()">Starte neue Geschichte</button>
+
+  <!-- Story display -->
+  <div id="storyTitle"></div>
+  <div id="storyOutput"></div>
+  <div id="speechOutput"></div>
+
+  <!-- Continue section -->
+  <div id="continueSection" style="display:none;">
+    <textarea id="hintInput" rows="2" style="width:100%; margin-bottom:12px;"
+      placeholder="Deine Fortsetzung..."></textarea>
+    <button id="continueBtn" onclick="continueStory()">Geschichte weiter erzählen</button>
+  </div>
+
+  <script>
+    // --- State ---
+    let selectedLanguage = 'de';
+    let selectedLevel = 1;
+    let storyPlainText = '';
+    let storyDisplayHtml = '';
+    let storyStarted = false;
+
+    // --- UI text per language ---
+    const UI = {
+      de: {
+        pageTitle: 'Sprachgeschichten',
+        langLabel: 'Sprache der Geschichte',
+        levelLabel: 'Sprachniveau',
+        lvl1: 'Sprachfrischling',
+        lvl2: 'Redefähig',
+        lvl3: 'Wortschatzgewaltig',
+        startBtn: 'Starte neue Geschichte',
+        continueBtn: 'Geschichte weiter erzählen',
+        hintPlaceholder: 'Deine Fortsetzung...',
+        loading: '⚙️ Geschichte wird geschrieben...',
+        loadingContinue: '⚙️ Geschichte wird fortgesetzt...',
+        seedDefault: 'In einem Wald lebt ein Drache. Die Bauern im Dorf hatten Angst vor ihm.',
+      },
+      en: {
+        pageTitle: 'Language Stories',
+        langLabel: 'Story language',
+        levelLabel: 'Language level',
+        lvl1: 'Beginner',
+        lvl2: 'Conversational',
+        lvl3: 'Eloquent',
+        startBtn: 'Start new story',
+        continueBtn: 'Continue story',
+        hintPlaceholder: 'Your continuation...',
+        loading: '⚙️ Writing story...',
+        loadingContinue: '⚙️ Continuing story...',
+        seedDefault: 'In a forest lives a dragon. The farmers in the village were afraid of him.',
+      },
+      fr: {
+        pageTitle: 'Histoires en langue',
+        langLabel: 'Langue de l\'histoire',
+        levelLabel: 'Niveau de langue',
+        lvl1: 'Débutant',
+        lvl2: 'Intermédiaire',
+        lvl3: 'Éloquent',
+        startBtn: 'Commencer une histoire',
+        continueBtn: 'Continuer l\'histoire',
+        hintPlaceholder: 'Ta suite...',
+        loading: '⚙️ L\'histoire s\'écrit...',
+        loadingContinue: '⚙️ L\'histoire continue...',
+        seedDefault: 'Dans une forêt vit un dragon. Les paysans du village en avaient peur.',
+      },
+      it: {
+        pageTitle: 'Storie linguistiche',
+        langLabel: 'Lingua della storia',
+        levelLabel: 'Livello linguistico',
+        lvl1: 'Principiante',
+        lvl2: 'Intermedio',
+        lvl3: 'Eloquente',
+        startBtn: 'Inizia una storia',
+        continueBtn: 'Continua la storia',
+        hintPlaceholder: 'La tua continuazione...',
+        loading: '⚙️ La storia si scrive...',
+        loadingContinue: '⚙️ La storia continua...',
+        seedDefault: 'In una foresta vive un drago. I contadini del villaggio ne avevano paura.',
+      },
+      zh: {
+        pageTitle: '语言故事 · Sprachgeschichten',
+        langLabel: '故事语言 · Sprache der Geschichte',
+        levelLabel: '语言级别 · Sprachniveau',
+        lvl1: '初学者 · Anfänger (A1)',
+        lvl2: '流利交流 · Mittelstufe (B1)',
+        lvl3: '文学大师 · Experte (C2+)',
+        startBtn: '开始新故事 · Neue Geschichte starten',
+        continueBtn: '继续故事 · Geschichte weiter erzählen',
+        hintPlaceholder: '你的续写... · Deine Fortsetzung...',
+        loading: '⚙️ 故事正在生成... · Geschichte wird geschrieben...',
+        loadingContinue: '⚙️ 故事正在续写... · Geschichte wird fortgesetzt...',
+        seedDefault: '在森林里住着一条龙。村子里的农民都害怕它。',
+      },
+    };
+
+    function updateUI() {
+      const u = UI[selectedLanguage];
+      document.getElementById('pageTitle').textContent = u.pageTitle;
+      document.getElementById('langLabel').textContent = u.langLabel;
+      document.getElementById('levelLabel').textContent = u.levelLabel;
+      document.getElementById('lvl1btn').textContent = u.lvl1;
+      document.getElementById('lvl2btn').textContent = u.lvl2;
+      document.getElementById('lvl3btn').textContent = u.lvl3;
+      document.getElementById('startBtn').textContent = u.startBtn;
+      document.getElementById('continueBtn').textContent = u.continueBtn;
+      document.getElementById('hintInput').placeholder = u.hintPlaceholder;
+      document.getElementById('seedInput').value = u.seedDefault;
+    }
+
+    function selectLanguage(lang) {
+      selectedLanguage = lang;
+      document.querySelectorAll('[data-lang]').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.lang === lang);
+      });
+      updateUI();
+    }
+
+    function selectLevel(level) {
+      selectedLevel = level;
+      document.querySelectorAll('[data-level]').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.level === String(level));
+      });
+    }
+
+    // --- Annotation parser ---
+    function parseAnnotations(text) {
+      let html = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_, word, translation) => {
+        if (selectedLanguage === 'zh') {
+          const pinyin = pinyinPro.pinyin(word, { toneType: 'symbol' });
+          return `<span class="hover">${word}<span class="hover-text"><span class="hover-pinyin">${pinyin}</span><br>${translation}</span></span>`;
+        }
+        return `<span class="hover">${word}<span class="hover-text">${translation}</span></span>`;
+      });
+      // Fix French contractions: remove space between apostrophe and hover span
+      // e.g. "l' <span..." → "l'<span..."
+      html = html.replace(/(['']) <span class="hover">/g, '$1<span class="hover">');
+      return html;
+    }
+
+    function stripAnnotations(text) {
+      return text.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
+    }
+
+    // --- Start story ---
+    async function startStory() {
+      const seedText = document.getElementById('seedInput').value.trim();
+      if (!seedText) return;
+
+      const u = UI[selectedLanguage];
+      document.getElementById('storyOutput').innerHTML = `<p>${u.loading}</p>`;
+      document.getElementById('storyTitle').innerHTML = '';
+      document.getElementById('speechOutput').innerHTML = '';
+      document.getElementById('continueSection').style.display = 'none';
+      storyStarted = true;
+
+      try {
+        const resp = await fetch('/languagestory/start', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ language: selectedLanguage, level: selectedLevel, seedText }),
+        });
+        const data = await resp.json();
+        if (!resp.ok) throw new Error(data.error || 'Fehler');
+
+        const continuation = data.continuation;
+        const continuationPlain = stripAnnotations(continuation);
+
+        storyPlainText = seedText + ' ' + continuationPlain;
+        const seedHtml = `<span class="story-seed">${seedText}</span>`;
+        const continuationHtml = parseAnnotations(continuation);
+        storyDisplayHtml = seedHtml + '<br>' + continuationHtml;
+
+        document.getElementById('storyOutput').innerHTML = storyDisplayHtml;
+        document.getElementById('continueSection').style.display = 'block';
+        document.getElementById('hintInput').value = '';
+
+        // parallel: title + speech
+        generateTitle();
+        generateSpeech();
+
+      } catch (err) {
+        console.error(err);
+        document.getElementById('storyOutput').innerHTML = '<p>Fehler beim Generieren der Geschichte.</p>';
+      }
+    }
+
+    // --- Continue story ---
+    async function continueStory() {
+      const hint = document.getElementById('hintInput').value.trim();
+      const u = UI[selectedLanguage];
+
+      document.getElementById('storyOutput').innerHTML = storyDisplayHtml + ` <em>${u.loadingContinue}</em>`;
+
+      try {
+        const resp = await fetch('/languagestory/continue', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            language: selectedLanguage,
+            level: selectedLevel,
+            storyPlain: storyPlainText,
+            hint,
+          }),
+        });
+        const data = await resp.json();
+        if (!resp.ok) throw new Error(data.error || 'Fehler');
+
+        const continuation = data.continuation;
+        const continuationPlain = stripAnnotations(continuation);
+
+        storyPlainText += ' ' + continuationPlain;
+        storyDisplayHtml += '<br>' + parseAnnotations(continuation);
+
+        document.getElementById('storyOutput').innerHTML = storyDisplayHtml;
+        document.getElementById('hintInput').value = '';
+
+        generateSpeech();
+
+      } catch (err) {
+        console.error(err);
+        document.getElementById('storyOutput').innerHTML = storyDisplayHtml;
+        alert('Fehler beim Fortsetzen der Geschichte.');
+      }
+    }
+
+    async function generateTitle() {
+      try {
+        const resp = await fetch('/languagestory/title', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ storyPlain: storyPlainText, language: selectedLanguage }),
+        });
+        const data = await resp.json();
+        if (resp.ok) {
+          document.getElementById('storyTitle').innerHTML = `<h2>${data.title}</h2>`;
+        }
+      } catch (err) {
+        console.error('Titel-Fehler:', err);
+      }
+    }
+
+    async function generateSpeech() {
+      document.getElementById('speechOutput').innerHTML = '';
+      try {
+        const resp = await fetch('/languagestory/speech', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ storyPlain: storyPlainText, language: selectedLanguage }),
+        });
+        const data = await resp.json();
+        if (resp.ok) {
+          document.getElementById('speechOutput').innerHTML =
+            `<audio controls src="${data.speech}"></audio>`;
+        }
+      } catch (err) {
+        console.error('Audio-Fehler:', err);
+      }
+    }
+
+    // Initialize
+    updateUI();
+  </script>
+</body>
+
+</html>

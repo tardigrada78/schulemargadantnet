@@ -13,11 +13,11 @@ import news from "./routes/newsapi.js";
 import virtualclass from "./routes/virtual_class.js"; 
 import testeval from "./routes/testeval.js";
 import oekobilanz from "./routes/oekobilanz.js";
-
 import feedback from "./routes/feedback.js"; // in all pages, allowes feedback-form
 import ragchat from "./routes/ragchat.js";
 import overview from "./routes/overview.js";
 import ideas from "./routes/ideas.js";
+import languagestory from "./routes/languagestory.js";
 // add new routes here
 
 
@@ -40,11 +40,11 @@ app.use("/news", news);
 app.use("/virtualclass", virtualclass);
 app.use("/testeval", testeval);
 app.use("/oekobilanz", oekobilanz);
-
 app.use("/feedback", feedback);
 app.use("/ragchat", ragchat);
 app.use("/overview", overview);
 app.use("/ideas", ideas);
+app.use("/languagestory", languagestory);
 
 // add new routes here
 
