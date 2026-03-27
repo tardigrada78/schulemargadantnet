@@ -70,8 +70,10 @@
   </script>
 
   <h1 id="pageTitle">Sprachgeschichten</h1>
-  <p>Beginnen Sie mit einer Geschichte und erweitern Sie sie zusammen mit der KI. Falls Sie keine Ideen mehr haben,
-    können Sie auch einfach auf den Button"Geschichte weiter erzählen" klicken ohne eine Texteingabe. <br>
+  <p>Beginnen Sie mit einer Geschichte und erweitern Sie sie zusammen mit der KI. <br>
+    Am meisten lernen Sie, wenn Sie die Geschichte in der Fremdsprache und in korrekten Sätzen weiterschreiben. Doch
+    auch Stichworte oder in Deutsch funktioniert - und falls Sie keine Ideen mehr haben, können Sie auch einfach auf den
+    Button"Geschichte weiter erzählen" klicken ohne eine Texteingabe. <br>
     Fahren Sie mit der Maus über ein Wort, um die deutsche Übersetzung zu sehen.
   </p>
 
@@ -101,7 +103,7 @@
 
   <!-- Seed textarea -->
   <textarea id="seedInput" rows="3"
-    style="width:100%; margin-bottom:12px;">In einem Wald lebt ein Drache. Die Bauern im Dorf hatten Angst vor ihm.</textarea>
+    style="width:100%; margin-bottom:12px;">Es war einmal vor einer langen Zeit...</textarea>
   <button id="startBtn" onclick="startStory()">Starte neue Geschichte</button>
 
   <!-- Story display -->
@@ -116,10 +118,27 @@
     <button id="continueBtn" onclick="continueStory()">Geschichte weiter erzählen</button>
   </div>
 
+  <!-- Image section -->
+  <div id="imageSection"
+    style="display:none; margin-top:40px; border-top:1px solid rgba(100,50,255,0.3); padding-top:24px;">
+    <label style="display:block; font-size:0.85rem; color:#a0a0c0; margin-bottom:8px;">Bildstil</label>
+    <div class="selector-group">
+      <button class="selector-btn active" data-imgstyle="kino" onclick="selectImageStyle('kino')">🎬 Kino</button>
+      <button class="selector-btn" data-imgstyle="illustration" onclick="selectImageStyle('illustration')">🖼️
+        Illustration</button>
+      <button class="selector-btn" data-imgstyle="comic" onclick="selectImageStyle('comic')">💬 Comic</button>
+      <button class="selector-btn" data-imgstyle="kinderbuch" onclick="selectImageStyle('kinderbuch')">📖
+        Kinderbuch</button>
+    </div>
+    <button id="generateImageBtn" onclick="generateImage()">🎨 Erstelle Bild</button>
+    <div id="imageOutput" style="margin-top:20px;"></div>
+  </div>
+
   <script>
     // --- State ---
     let selectedLanguage = 'de';
     let selectedLevel = 1;
+    let selectedImageStyle = 'kino';
     let storyPlainText = '';
     let storyDisplayHtml = '';
     let storyStarted = false;
@@ -138,7 +157,7 @@
         hintPlaceholder: 'Deine Fortsetzung...',
         loading: '⚙️ Geschichte wird geschrieben...',
         loadingContinue: '⚙️ Geschichte wird fortgesetzt...',
-        seedDefault: 'In einem Wald lebt ein Drache. Die Bauern im Dorf hatten Angst vor ihm.',
+        seedDefault: 'Es war einmal vor einer langen Zeit...',
       },
       en: {
         pageTitle: 'Language Stories',
@@ -152,7 +171,7 @@
         hintPlaceholder: 'Your continuation...',
         loading: '⚙️ Writing story...',
         loadingContinue: '⚙️ Continuing story...',
-        seedDefault: 'In a forest lives a dragon. The farmers in the village were afraid of him.',
+        seedDefault: 'Once upon a time, long ago...',
       },
       fr: {
         pageTitle: 'Histoires en langue',
@@ -166,7 +185,7 @@
         hintPlaceholder: 'Ta suite...',
         loading: '⚙️ L\'histoire s\'écrit...',
         loadingContinue: '⚙️ L\'histoire continue...',
-        seedDefault: 'Dans une forêt vit un dragon. Les paysans du village en avaient peur.',
+        seedDefault: 'Il était une fois, il y a bien longtemps...',
       },
       it: {
         pageTitle: 'Storie linguistiche',
@@ -180,7 +199,7 @@
         hintPlaceholder: 'La tua continuazione...',
         loading: '⚙️ La storia si scrive...',
         loadingContinue: '⚙️ La storia continua...',
-        seedDefault: 'In una foresta vive un drago. I contadini del villaggio ne avevano paura.',
+        seedDefault: 'C\'era una volta, tanto tempo fa...',
       },
       zh: {
         pageTitle: '语言故事 · Sprachgeschichten',
@@ -194,7 +213,7 @@
         hintPlaceholder: '你的续写... · Deine Fortsetzung...',
         loading: '⚙️ 故事正在生成... · Geschichte wird geschrieben...',
         loadingContinue: '⚙️ 故事正在续写... · Geschichte wird fortgesetzt...',
-        seedDefault: '在森林里住着一条龙。村子里的农民都害怕它。',
+        seedDefault: '从前，在很久很久以前……',
       },
     };
 
@@ -277,6 +296,7 @@
 
         document.getElementById('storyOutput').innerHTML = storyDisplayHtml;
         document.getElementById('continueSection').style.display = 'block';
+        document.getElementById('imageSection').style.display = 'block';
         document.getElementById('hintInput').value = '';
 
         // parallel: title + speech
@@ -350,7 +370,7 @@
         const resp = await fetch('/languagestory/speech', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ storyPlain: storyPlainText, language: selectedLanguage }),
+          body: JSON.stringify({ storyPlain: storyPlainText, language: selectedLanguage, level: selectedLevel }),
         });
         const data = await resp.json();
         if (resp.ok) {
@@ -359,6 +379,56 @@
         }
       } catch (err) {
         console.error('Audio-Fehler:', err);
+      }
+    }
+
+    function selectImageStyle(style) {
+      selectedImageStyle = style;
+      document.querySelectorAll('[data-imgstyle]').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.imgstyle === style);
+      });
+    }
+
+    async function generateImage() {
+      if (!storyPlainText) return;
+      const btn = document.getElementById('generateImageBtn');
+      btn.disabled = true;
+      btn.textContent = '⚙️ Bild wird erstellt...';
+
+      const placeholder = document.createElement('div');
+      placeholder.style.cssText = 'margin-bottom:16px; color:#a0a0c0; font-size:0.9rem;';
+      placeholder.textContent = `⚙️ Generiere ${selectedImageStyle}-Bild...`;
+      document.getElementById('imageOutput').appendChild(placeholder);
+
+      try {
+        const resp = await fetch('/languagestory/image', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ storyPlain: storyPlainText, style: selectedImageStyle }),
+        });
+        const data = await resp.json();
+        if (!resp.ok) throw new Error(data.error || 'Fehler');
+
+        const wrapper = document.createElement('div');
+        wrapper.style.cssText = 'margin-bottom:20px;';
+        const label = document.createElement('div');
+        label.style.cssText = 'font-size:0.8rem; color:#7c6fb0; margin-bottom:6px;';
+        const styleLabels = { kino: '🎬 Kino', illustration: '🖼️ Illustration', comic: '💬 Comic', kinderbuch: '📖 Kinderbuch' };
+        label.textContent = styleLabels[selectedImageStyle] || selectedImageStyle;
+        const img = document.createElement('img');
+        img.src = data.image;
+        img.style.cssText = 'max-width:100%; border-radius:10px; display:block;';
+        wrapper.appendChild(label);
+        wrapper.appendChild(img);
+
+        placeholder.replaceWith(wrapper);
+      } catch (err) {
+        console.error(err);
+        placeholder.textContent = 'Fehler beim Generieren des Bildes.';
+        placeholder.style.color = '#f87171';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '🎨 Erstelle Bild';
       }
     }
 

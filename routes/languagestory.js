@@ -11,8 +11,11 @@ Beispiel: "Der Drache lebt im dunklen Wald." → "Der [Drache](dragon) [lebt](li
 Artikel, Präpositionen und Konjunktionen bleiben als normaler Text. Das Wort erscheint NUR in eckigen Klammern – niemals auch noch davor oder danach.`,
     annotationReminder: `Format-Erinnerung: Alle Nomen, Verben, Adjektive, Adverbien müssen als [Wort](English) stehen. Beispiel: "[Drache](dragon) [lebt](lives) im [Wald](forest)"`,
     titleLanguage: "Deutsch",
-    ttsInstructions:
+    ttsInstructions: [
       "Speak clearly in German, slowly and expressively, suitable for language learners. Use a voice for telling fairytales.",
+      "Speak in natural, everyday German at a moderate pace. Warm and conversational tone.",
+      "Speak in literary, expressive German at a slightly brisk pace. Emphasize the artistry of the language, like a professional narrator reading literature.",
+    ],
   },
   en: {
     name: "Englisch",
@@ -21,8 +24,11 @@ Example: "The dragon lives in the dark forest." → "The [dragon](Drache) [lives
 Articles, prepositions and conjunctions remain as plain text. The word appears ONLY in square brackets – never also before or after them.`,
     annotationReminder: `Format reminder: All nouns, verbs, adjectives, adverbs must be written as [word](Deutsch). Example: "[dragon](Drache) [lives](lebt) in the [forest](Wald)"`,
     titleLanguage: "English",
-    ttsInstructions:
+    ttsInstructions: [
       "Speak clearly in English, slowly and expressively, suitable for language learners. Use a voice for telling fairytales.",
+      "Speak in natural, everyday English at a moderate pace. Warm and conversational tone.",
+      "Speak in literary, expressive English at a slightly brisk pace. Emphasize the artistry of the language, like a professional narrator reading literature.",
+    ],
   },
   fr: {
     name: "Französisch",
@@ -32,8 +38,11 @@ Contractions : écris-les SANS espace entre l'apostrophe et le crochet : l'[enfa
 Articles, prépositions et conjonctions restent en texte ordinaire. Le mot n'apparaît QUE dans les crochets.`,
     annotationReminder: `Rappel de format : Tous les noms, verbes, adjectifs, adverbes au format [mot](Deutsch). Contractions sans espace : l'[enfant](Kind). Exemple : "[dragon](Drache) [vit](lebt) dans la [forêt](Wald)"`,
     titleLanguage: "Französisch",
-    ttsInstructions:
+    ttsInstructions: [
       "Speak clearly in French, slowly and expressively, suitable for language learners. Use a voice for telling fairytales.",
+      "Speak in natural, everyday French at a moderate pace. Warm and conversational tone.",
+      "Speak in literary, expressive French at a slightly brisk pace. Emphasize the artistry of the language, like a professional narrator reading literature.",
+    ],
   },
   it: {
     name: "Italienisch",
@@ -42,8 +51,11 @@ Esempio: "Il drago vive nel bosco oscuro." → "Il [drago](Drache) [vive](lebt) 
 Articoli, preposizioni e congiunzioni rimangono come testo normale. La parola appare SOLO nelle parentesi quadre – mai anche prima o dopo.`,
     annotationReminder: `Promemoria formato: Tutti i sostantivi, verbi, aggettivi, avverbi nel formato [parola](Deutsch). Esempio: "[drago](Drache) [vive](lebt) nel [bosco](Wald)"`,
     titleLanguage: "Italienisch",
-    ttsInstructions:
+    ttsInstructions: [
       "Speak clearly in Italian, slowly and expressively, suitable for language learners. Use a voice for telling fairytales.",
+      "Speak in natural, everyday Italian at a moderate pace. Warm and conversational tone.",
+      "Speak in literary, expressive Italian at a slightly brisk pace. Emphasize the artistry of the language, like a professional narrator reading literature.",
+    ],
   },
   zh: {
     name: "Chinesisch",
@@ -52,8 +64,11 @@ Beispiel: "龙住在黑暗的森林里。" → "[龙](Drache)[住](wohnt)在[黑
 Jede bedeutungstragende Vokabel erscheint NUR in eckigen Klammern – niemals auch noch davor oder danach.`,
     annotationReminder: `Format-Erinnerung: Jede chinesische Vokabel muss als [汉字](Deutsch) stehen. Beispiel: "[龙](Drache)[住](wohnt)在[森林](Wald)里"`,
     titleLanguage: "Chinesisch",
-    ttsInstructions:
+    ttsInstructions: [
       "Speak in very clear standard Chinese for students learning Chinese. Use a voice for telling fairytales. Speak slowly and clearly with appropriate pauses.",
+      "Speak in natural, everyday Mandarin Chinese at a moderate pace. Warm and conversational tone.",
+      "Speak in literary, expressive Mandarin Chinese at a slightly brisk pace. Emphasize the beauty and rhythm of the language, like a professional narrator.",
+    ],
   },
 };
 
@@ -118,13 +133,14 @@ Gib nur den Titel aus, ohne Anführungszeichen oder Erklärungen.`;
 }
 
 // generate speech audio
-async function getSpeech(storyPlain, language) {
+async function getSpeech(storyPlain, language, level) {
   const lang = LANG_CONFIG[language];
+  const instructions = lang.ttsInstructions[Math.min(level, 3) - 1];
 
   const mp3 = await openai.audio.speech.create({
     model: "gpt-4o-mini-tts",
     voice: "nova",
-    instructions: lang.ttsInstructions,
+    instructions,
     input: storyPlain,
   });
 
@@ -180,16 +196,55 @@ router.post("/title", async (req, res) => {
 
 // route: speech
 router.post("/speech", async (req, res) => {
-  const { storyPlain, language } = req.body;
+  const { storyPlain, language, level } = req.body;
   if (!storyPlain || !language) {
     return res.status(400).json({ error: "storyPlain und language erforderlich." });
   }
   try {
-    const speech = await getSpeech(storyPlain, language);
+    const speech = await getSpeech(storyPlain, language, parseInt(level) || 1);
     res.json({ speech });
   } catch (error) {
     console.error("Fehler bei der Sprachsynthese:", error);
     res.status(500).json({ error: "Fehler beim Generieren der Sprachdatei." });
+  }
+});
+
+// image style prompts
+const IMAGE_STYLE_PROMPTS = {
+  kino: "Cinematic Hollywood movie still, theatrical and pompous atmosphere, dramatic high-contrast lighting, epic widescreen composition, 4K HDR quality, volumetric light, cinematic color grading, photorealistic, no text.",
+  illustration: "Beautiful detailed illustration, precise and elegant artwork, visually stunning and aesthetic, high quality professional illustration, rich colors, fine linework, sophisticated composition, no text.",
+  comic: "2D comic book style, bold black outlines, limited flat color palette, dynamic panel composition, speech bubble included, classic comic book art, vibrant and expressive, no text in speech bubble.",
+  kinderbuch: "Simple 2D children's book illustration, soft pastel colors, friendly warm atmosphere, flat simple shapes, cute and inviting style, easy accessible visuals, no text.",
+};
+
+// generate image
+async function getImage(storyPlain, style) {
+  const stylePrompt = IMAGE_STYLE_PROMPTS[style] || IMAGE_STYLE_PROMPTS.illustration;
+  const prompt = `${stylePrompt} The illustration depicts the following story: ${storyPlain}`;
+
+  const response = await openai.images.generate({
+    model: "gpt-image-1",
+    prompt,
+    n: 1,
+    size: "1024x1024",
+  });
+
+  const b64 = response.data[0].b64_json;
+  return `data:image/png;base64,${b64}`;
+}
+
+// route: image
+router.post("/image", async (req, res) => {
+  const { storyPlain, style } = req.body;
+  if (!storyPlain || !style) {
+    return res.status(400).json({ error: "storyPlain und style erforderlich." });
+  }
+  try {
+    const image = await getImage(storyPlain, style);
+    res.json({ image });
+  } catch (error) {
+    console.error("Fehler beim Generieren des Bildes:", error);
+    res.status(500).json({ error: "Fehler beim Generieren des Bildes." });
   }
 });
 
