@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Arbeitsjournal</title>
+  <link rel="stylesheet" href="/styles_journal.css" />
+</head>
+
+<body>
+  <div id="site-header"></div>
+
+  <!-- LOGIN -->
+  <div id="loginSection" class="card center-card">
+    <h1>Gruppen-Arbeitsjournal</h1>
+    <p>Geben Sie den Gruppencode ein, um Ihr Projekt zu laden oder neu zu erstellen.</p>
+    <div class="input-row">
+      <input type="text" id="groupCode" placeholder="Gruppencode" maxlength="50" />
+      <button class="btn-primary" onclick="loadProject()">Laden / Erstellen</button>
+    </div>
+    <p id="loginError" class="error-msg"></p>
+  </div>
+
+  <!-- HAUPTINHALT -->
+  <div id="mainContent" style="display:none">
+
+    <!-- INFO -->
+    <details class="info-box">
+      <summary>Wie funktioniert dieses Arbeitsjournal?</summary>
+      <ul>
+        <li>Es ist nicht einfach, bei einem grossen Projekt die Übersicht zu bewahren. Das Arbeitsjournal ist ein
+          <strong>wichtiges und nützliches Planungs- und Reflexionsinstrument</strong> für Ihr Projekt.
+        </li>
+        <li>Das Arbeitsjournal wird wöchentlich von der ganzen Gruppe <strong>gemeinsam</strong> ausgefüllt.</li>
+        <li>Schreiben Sie prägnant, aber achten Sie darauf, dass Ihr Journal <strong>auch für Aussenstehnede
+            verständlich</strong> ist.</li>
+        <li>Schauen Sie sich gemeinsam die <strong>Detailplanung</strong> des letzten Eintrags an und überprüfen Sie, ob
+          Sie Ihre Ziele
+          erreicht haben. Füllen Sie dann die restlichen Einträge aus.</li>
+        <li>Achten Sie darauf, dass die <strong>Arbeitsteilung ausgeglichen</strong> ist. Besprechen Sie allfällige
+          Probleme frühzeitig.</li>
+        <li>Die KI-Beiträge auf dieser Site können Denkantösse geben oder Unklarheiten aufdecken. Seien Sie aber stets
+          <strong>kritisch mit der KI</strong>, da nicht alles zutreffend oder korrekt sein muss.</li>
+        <li>Diese Site ist nicht öffentlich im Internet sichtbar, doch nur schwach geschützt. Die Lehrpersonen können alle Beiträge einsehen. Alle Beiträge werden der KI (Anthropic Claude) anonymisiert übermittelt (bei Klick auf einen KI-Button): Die Daten gelangen in die Cloud, können aber nicht einem Profil, Person, Ort zugewiesen werden.</li>
+      </ul>
+    </details>
+
+    <!-- PROJEKT-HEADER -->
+    <section class="card" id="projectHeader">
+      <h2 id="displayTitle">Mein Projekt</h2>
+      <div class="project-fields">
+        <label>Projekttitel
+          <input type="text" id="projectTitle" placeholder="Projekttitel" />
+        </label>
+        <label>Kurzbeschreibung
+          <textarea id="projectDescription" rows="2" placeholder="Worum geht es in Ihrem Projekt?"></textarea>
+        </label>
+        <label>Mitglieder <span class="hint">(kommagetrennt)</span>
+          <input type="text" id="projectMembers" placeholder="Anna, Ben, Clara" />
+        </label>
+        <button class="btn-primary" onclick="saveProject()">Speichern</button>
+        <span id="saveMsg" class="save-msg"></span>
+      </div>
+    </section>
+
+    <!-- JOURNAL -->
+    <section class="card" id="journalSection">
+      <div class="section-header">
+        <h2>Arbeitsjournal – <span id="journalTitle">Mein Projekt</span></h2>
+        <button class="btn-primary" onclick="toggleNewEntryForm()">+ Neuer Eintrag</button>
+      </div>
+
+      <!-- Neuer-Eintrag-Formular -->
+      <div id="newEntryForm" style="display:none" class="entry-form">
+        <h3>Neuer Eintrag – <span id="entryDate"></span></h3>
+        <table class="form-table">
+          <thead>
+            <tr>
+              <th>Bearbeitete Inhalte / Resultate</th>
+              <th>Stolpersteine &amp; Lösungsansätze</th>
+              <th>Detailplanung</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td id="formContents"></td>
+              <td>
+                <textarea id="formObstacles" rows="4"
+                  placeholder="Was hat nicht funktioniert? Wie haben Sie es gelöst?"></textarea>
+              </td>
+              <td id="formPlanning"></td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="form-actions">
+          <button class="btn-primary" onclick="submitEntry()">Eintrag speichern</button>
+          <button class="btn-secondary" onclick="toggleNewEntryForm()">Abbrechen</button>
+        </div>
+      </div>
+
+      <!-- Eintrags-Tabelle -->
+      <div id="journalTableWrapper">
+        <table class="journal-table" id="journalTable">
+          <thead>
+            <tr>
+              <th>Datum</th>
+              <th>Bearbeitete Inhalte / Resultate</th>
+              <th>Stolpersteine &amp; Lösungsansätze</th>
+              <th>Detailplanung</th>
+              <th>Rückmeldung KI</th>
+            </tr>
+          </thead>
+          <tbody id="journalBody"></tbody>
+        </table>
+      </div>
+
+      <div class="ai-actions" style="margin-top:1rem;">
+        <button class="btn-ai" onclick="getAIJournal()">Rückmeldung KI zu Journal</button>
+        <div id="aiJournalResult" class="ai-result" style="display:none"></div>
+      </div>
+    </section>
+
+    <!-- PROJEKT-ZEITPLAN -->
+    <section class="card" id="timelineSection">
+      <h2>Projekt-Zeitplan</h2>
+
+      <div class="timeline-dates">
+        <label>Projektstart
+          <input type="date" id="tlStart" value="2026-04-20" onchange="saveTimeline()" />
+        </label>
+        <label>Projektabgabe
+          <input type="date" id="tlEnd" value="2026-12-15" onchange="saveTimeline()" />
+        </label>
+        <label>Präsentation
+          <input type="date" id="tlPresentation" value="2027-01-19" onchange="saveTimeline()" />
+        </label>
+        <span id="daysLeft" class="days-left"></span>
+      </div>
+
+      <div class="add-timeline-form">
+        <h3>Neuer Eintrag</h3>
+        <div class="input-row flex-wrap">
+          <input type="text" id="tlProcess" placeholder="Prozess / Tätigkeit" style="flex:2" />
+          <label class="inline-label">Von KW <input type="number" id="tlWeekFrom" min="1" max="53"
+              style="width:60px" /></label>
+          <label class="inline-label">Bis KW <input type="number" id="tlWeekTo" min="1" max="53"
+              style="width:60px" /></label>
+          <label class="inline-label">Farbe <input type="color" id="tlColor" value="#4CAF50" /></label>
+          <button class="btn-primary" onclick="addTimelineEntry()">Hinzufügen</button>
+        </div>
+      </div>
+
+      <!-- Gantt-Toolbar -->
+      <div class="gantt-toolbar">
+        <button class="btn-secondary btn-icon" id="btnFullwidth" onclick="toggleFullwidth()">↗ Seitenbreit</button>
+        <button class="btn-secondary btn-icon" onclick="openNewWindow()">🗗 Neues Fenster</button>
+      </div>
+
+      <!-- Gantt-Kalender -->
+      <div id="timelineCalendar" class="gantt-scroll-wrapper"></div>
+
+      <div class="ai-actions">
+        <button class="btn-ai" onclick="getAITimeline()">Rückmeldung KI zu Projekt-Zeitplan</button>
+        <div id="aiTimelineResult" class="ai-result" style="display:none"></div>
+      </div>
+    </section>
+
+    <!-- KI-CHAT -->
+    <section class="card" id="chatSection">
+      <h2>Projekt-Chat mit der KI</h2>
+      <p class="hint">Die KI kennt Ihr Projekt und hilft Ihnen, die nächsten Arbeitsschritte zu planen.</p>
+      <div id="chatHistory" class="chat-history"></div>
+      <div class="input-row">
+        <input type="text" id="chatInput" placeholder="Nachricht eingeben..."
+          onkeydown="if(event.key==='Enter')sendChat()" />
+        <button class="btn-primary" onclick="sendChat()">Senden</button>
+      </div>
+    </section>
+
+    <!-- JAHRESÜBERSICHT -->
+    <section class="card" id="yearSection">
+      <h2>Jahresübersicht</h2>
+      <p class="hint">Grün = Schulferien &nbsp;|&nbsp; <span class="legend-today">Heute</span></p>
+      <div id="yearCalendarContainer"></div>
+    </section>
+
+  </div>
+
+  <script>
+    // ── STATE ──────────────────────────────────────────────────────────────
+    let project = null;
+
+    // ── FERIEN (Schweiz) ───────────────────────────────────────────────────
+    const HOLIDAYS = [
+      { name: "Frühlingsferien 2026", start: "2026-04-06", end: "2026-04-17" },
+      { name: "Sommerferien 2026", start: "2026-07-04", end: "2026-08-09" },
+      { name: "Herbstferien 2026", start: "2026-09-26", end: "2026-10-11" },
+      { name: "Weihnachtsferien 26/27", start: "2026-12-19", end: "2027-01-03" },
+      { name: "Sportferien 2027", start: "2027-02-06", end: "2027-02-21" },
+      { name: "Frühlingsferien 2027", start: "2027-04-10", end: "2027-04-25" },
+      { name: "Sommerferien 2027", start: "2027-07-03", end: "2027-08-08" },
+    ];
+
+    // ── DATUM-HILFSFUNKTIONEN ──────────────────────────────────────────────
+    function isoToDate(str) { return new Date(str + "T00:00:00"); }
+
+    function todayIso() { return new Date().toISOString().slice(0, 10); }
+
+    function getISOWeek(date) {
+      const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+      d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+      const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+      return { week: Math.ceil(((d - yearStart) / 86400000 + 1) / 7), year: d.getUTCFullYear() };
+    }
+
+    function mondayOfWeek(year, week) {
+      const jan4 = new Date(Date.UTC(year, 0, 4));
+      const dayOfWeek = jan4.getUTCDay() || 7;
+      const monday = new Date(jan4);
+      monday.setUTCDate(jan4.getUTCDate() - (dayOfWeek - 1) + (week - 1) * 7);
+      return monday;
+    }
+
+    function isHolidayWeek(year, week) {
+      const mon = mondayOfWeek(year, week);
+      const sun = new Date(mon);
+      sun.setUTCDate(mon.getUTCDate() + 6);
+      for (const h of HOLIDAYS) {
+        const hs = isoToDate(h.start), he = isoToDate(h.end);
+        if (mon <= he && sun >= hs) return h.name;
+      }
+      return null;
+    }
+
+    function isHolidayDay(isoStr) {
+      for (const h of HOLIDAYS) {
+        if (isoStr >= h.start && isoStr <= h.end) return h.name;
+      }
+      return null;
+    }
+
+    function formatDate(dateStr) {
+      return isoToDate(dateStr).toLocaleDateString("de-CH", { day: "2-digit", month: "2-digit", year: "numeric" });
+    }
+
+    function weeksInRange(startDate, endDate) {
+      const weeks = [];
+      let d = new Date(startDate);
+      d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() || 7) - 1));
+      while (d <= endDate) {
+        const { week, year } = getISOWeek(d);
+        weeks.push({ week, year, monday: new Date(d) });
+        d.setUTCDate(d.getUTCDate() + 7);
+      }
+      return weeks;
+    }
+
+    // ── HEADER ─────────────────────────────────────────────────────────────
+    fetch("/header.html").then(r => r.text()).then(h => document.getElementById("site-header").innerHTML = h);
+
+    // ── LOGIN ──────────────────────────────────────────────────────────────
+    async function loadProject() {
+      const code = document.getElementById("groupCode").value.trim();
+      if (!code) { document.getElementById("loginError").textContent = "Bitte einen Gruppencode eingeben."; return; }
+      try {
+        const res = await fetch("/journal/load", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ code }),
+        });
+        const data = await res.json();
+        if (!res.ok) { document.getElementById("loginError").textContent = data.error; return; }
+        project = data.project;
+        document.getElementById("loginSection").style.display = "none";
+        document.getElementById("mainContent").style.display = "block";
+        renderAll();
+      } catch (e) {
+        document.getElementById("loginError").textContent = "Verbindungsfehler.";
+      }
+    }
+
+    // ── RENDER ALLES ──────────────────────────────────────────────────────
+    function renderAll() {
+      renderProjectHeader();
+      renderJournal();
+      renderTimeline();
+      renderChat();
+      renderYearCalendar();
+    }
+
+    // ── PROJEKT-HEADER ─────────────────────────────────────────────────────
+    function renderProjectHeader() {
+      document.getElementById("displayTitle").textContent = project.title || "Mein Projekt";
+      document.getElementById("journalTitle").textContent = project.title || "Mein Projekt";
+      document.getElementById("projectTitle").value = project.title || "";
+      document.getElementById("projectDescription").value = project.description || "";
+      document.getElementById("projectMembers").value = project.members.join(", ");
+    }
+
+    async function saveProject() {
+      const title = document.getElementById("projectTitle").value.trim();
+      const description = document.getElementById("projectDescription").value.trim();
+      const members = document.getElementById("projectMembers").value;
+      const timeline = {
+        start: document.getElementById("tlStart").value,
+        end: document.getElementById("tlEnd").value,
+        presentation: document.getElementById("tlPresentation").value,
+      };
+      const res = await fetch("/journal/saveProject", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: project.code, title, description, members, timeline }),
+      });
+      const data = await res.json();
+      project = data.project;
+      renderProjectHeader();
+      renderTimeline();
+      renderYearCalendar();
+      const msg = document.getElementById("saveMsg");
+      msg.textContent = "Gespeichert ✓";
+      setTimeout(() => { msg.textContent = ""; }, 2000);
+    }
+
+    // ── JOURNAL ────────────────────────────────────────────────────────────
+    function renderJournal() {
+      const tbody = document.getElementById("journalBody");
+      tbody.innerHTML = "";
+      if (project.journalEntries.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="empty-msg">Noch keine Einträge. Klicken Sie auf \"+ Neuer Eintrag\".</td></tr>';
+        return;
+      }
+      const sortedEntries = [...project.journalEntries].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      for (const entry of sortedEntries) {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${formatDate(entry.date)}</td>
+          <td>${renderContents(entry.contents)}</td>
+          <td>${escHtml(entry.obstacles)}</td>
+          <td>${renderPlanning(entry.planning)}</td>
+          <td class="feedback-cell">
+            ${entry.aiFeedback
+            ? `<div class="ai-feedback-text">${escHtml(entry.aiFeedback)}</div>`
+            : `<button class="btn-ai-small" onclick="getEntryFeedback('${entry.id}', this)">Rückmeldung KI</button>`
+          }
+          </td>`;
+        tbody.appendChild(tr);
+      }
+    }
+
+    function renderContents(contents) {
+      return Object.entries(contents).map(([n, t]) =>
+        `<p><strong>${escHtml(n)}:</strong> ${escHtml(t)}</p>`
+      ).join("");
+    }
+
+    function renderPlanning(planning) {
+      return Object.entries(planning).map(([n, p]) =>
+        `<p><strong>${escHtml(n)}:</strong> ${escHtml(p.text)}<br><small>bis ${formatDate(p.dueDate)}</small></p>`
+      ).join("");
+    }
+
+    function escHtml(str) {
+      return String(str || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "<br>");
+    }
+
+    function toggleNewEntryForm() {
+      const form = document.getElementById("newEntryForm");
+      const isHidden = form.style.display === "none";
+      form.style.display = isHidden ? "block" : "none";
+      if (isHidden) buildEntryForm();
+    }
+
+    function buildEntryForm() {
+      const today = new Date().toISOString().slice(0, 10);
+      document.getElementById("entryDate").textContent = formatDate(today);
+      const members = project.members.length ? project.members : ["Mitglied 1"];
+
+      let contentsHtml = "";
+      for (const m of members) {
+        contentsHtml += `<div class="member-field">
+          <label><strong>${escHtml(m)}</strong>
+            <textarea name="contents_${escHtml(m)}" rows="3" placeholder="Was hat ${escHtml(m)} erarbeitet?"></textarea>
+          </label></div>`;
+      }
+      document.getElementById("formContents").innerHTML = contentsHtml;
+
+      let planningHtml = "";
+      for (const m of members) {
+        planningHtml += `<div class="member-field">
+          <label><strong>${escHtml(m)}</strong>
+            <textarea name="planning_text_${escHtml(m)}" rows="2" placeholder="Geplante Aufgaben"></textarea>
+            <input type="date" name="planning_due_${escHtml(m)}" />
+          </label></div>`;
+      }
+      document.getElementById("formPlanning").innerHTML = planningHtml;
+    }
+
+    async function submitEntry() {
+      const members = project.members.length ? project.members : ["Mitglied 1"];
+      const contents = {};
+      const planning = {};
+      for (const m of members) {
+        contents[m] = document.querySelector(`[name="contents_${m}"]`)?.value.trim() || "";
+        const text = document.querySelector(`[name="planning_text_${m}"]`)?.value.trim() || "";
+        const dueDate = document.querySelector(`[name="planning_due_${m}"]`)?.value || "";
+        planning[m] = { text, dueDate };
+      }
+      const obstacles = document.getElementById("formObstacles").value.trim();
+      const res = await fetch("/journal/addEntry", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: project.code, entry: { contents, obstacles, planning } }),
+      });
+      const data = await res.json();
+      project.journalEntries.unshift(data.entry);
+      document.getElementById("formObstacles").value = "";
+      document.getElementById("newEntryForm").style.display = "none";
+      renderJournal();
+    }
+
+    async function getEntryFeedback(entryId, btn) {
+      btn.textContent = "…";
+      btn.disabled = true;
+      const res = await fetch("/journal/aiFeedback", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: project.code, entryId }),
+      });
+      const data = await res.json();
+      const entry = project.journalEntries.find(e => e.id === entryId);
+      if (entry) entry.aiFeedback = data.feedback;
+      renderJournal();
+    }
+
+    async function getAIJournal() {
+      const btn = document.querySelector("#journalSection .btn-ai");
+      const result = document.getElementById("aiJournalResult");
+      btn.textContent = "Analysiere…";
+      btn.disabled = true;
+      const res = await fetch("/journal/aiJournal", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: project.code }),
+      });
+      const data = await res.json();
+      result.style.display = "block";
+      result.innerHTML = `<p>${escHtml(data.feedback)}</p>`;
+      btn.textContent = "Rückmeldung KI zu Journal";
+      btn.disabled = false;
+    }
+
+    // ── ZEITPLAN ────────────────────────────────────────────────────────────
+    function renderTimeline() {
+      document.getElementById("tlStart").value = project.timeline.start || "2026-04-20";
+      document.getElementById("tlEnd").value = project.timeline.end || "2026-12-15";
+      document.getElementById("tlPresentation").value = project.timeline.presentation || "2027-01-19";
+      updateDaysLeft();
+      renderCalendar();
+    }
+
+    function updateDaysLeft() {
+      const abgabe = isoToDate(project.timeline.end || "2026-12-15");
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const diff = Math.ceil((abgabe - today) / 86400000);
+      const el = document.getElementById("daysLeft");
+      el.textContent = diff > 0 ? `${diff} Tage bis zur Projektabgabe` : "Projektabgabe bereits vorbei";
+    }
+
+    async function saveTimeline() {
+      const timeline = {
+        start: document.getElementById("tlStart").value,
+        end: document.getElementById("tlEnd").value,
+        presentation: document.getElementById("tlPresentation").value,
+      };
+      const res = await fetch("/journal/saveProject", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: project.code, timeline }),
+      });
+      const data = await res.json();
+      project = data.project;
+      updateDaysLeft();
+      renderCalendar();
+      renderYearCalendar();
+    }
+
+    function renderCalendar() {
+      const container = document.getElementById("timelineCalendar");
+      const startDate = isoToDate(project.timeline.start || "2026-04-20");
+      const endDate = isoToDate(project.timeline.presentation || "2027-01-19");
+      const weeks = weeksInRange(startDate, endDate);
+      if (weeks.length === 0) { container.innerHTML = ""; return; }
+
+      const today = new Date();
+      const { week: todayWeek, year: todayYear } = getISOWeek(today);
+      const { week: abgabeWeek, year: abgabeYear } = getISOWeek(isoToDate(project.timeline.end || "2026-12-15"));
+      const { week: presWeek, year: presYear } = getISOWeek(isoToDate(project.timeline.presentation || "2027-01-19"));
+
+      let html = '<div style="overflow-x:auto"><table class="gantt-table"><thead><tr><th class="gantt-label-col">Eintrag</th>';
+      for (const w of weeks) {
+        const holiday = isHolidayWeek(w.year, w.week);
+        const isToday = w.week === todayWeek && w.year === todayYear;
+        const isAbgabe = w.week === abgabeWeek && w.year === abgabeYear;
+        const isPres = w.week === presWeek && w.year === presYear;
+        const cls = holiday ? "gantt-holiday" : isPres ? "gantt-pres-header" : isAbgabe ? "gantt-abgabe-header" : isToday ? "gantt-today" : "";
+        html += `<th class="gantt-week-header ${cls}" title="${holiday || w.monday.toLocaleDateString("de-CH")}">KW ${w.week}</th>`;
+      }
+      html += '</tr></thead><tbody>';
+
+      // Ferienzeile
+      html += '<tr><td class="gantt-label">🏖 Ferien</td>';
+      for (const w of weeks) {
+        const holiday = isHolidayWeek(w.year, w.week);
+        html += `<td class="gantt-cell ${holiday ? "gantt-holiday-cell" : ""}" title="${holiday || ""}"></td>`;
+      }
+      html += '</tr>';
+
+      // Kombinierte Termine-Zeile: Heute 📅, Projektabgabe 📦, Präsentation 🎤
+      html += '<tr><td class="gantt-label">Termine</td>';
+      for (const w of weeks) {
+        const isToday = w.week === todayWeek && w.year === todayYear;
+        const isAbgabe = w.week === abgabeWeek && w.year === abgabeYear;
+        const isPres = w.week === presWeek && w.year === presYear;
+        const markers = [isToday ? "📅" : "", isAbgabe ? "📦" : "", isPres ? "🎤" : ""].filter(Boolean).join(" ");
+        const bg = isPres ? "background:#e9d8fd;" : isAbgabe ? "background:#fef3c7;" : isToday ? "background:#bee3f8;" : "";
+        const title = [isToday ? "Heute" : "", isAbgabe ? "Projektabgabe" : "", isPres ? "Präsentation" : ""].filter(Boolean).join(", ");
+        html += `<td class="gantt-cell gantt-marker" style="${bg}" title="${title}">${markers}</td>`;
+      }
+      html += '</tr>';
+
+      for (const entry of project.timelineEntries) {
+        html += `<tr><td class="gantt-label">${escHtml(entry.process)}
+          <button class="btn-delete" onclick="deleteTimelineEntry('${entry.id}')" title="Löschen">✕</button>
+        </td>`;
+        for (const w of weeks) {
+          const active = w.week >= entry.weekFrom && w.week <= entry.weekTo;
+          const style = active ? `background:${entry.color};opacity:0.85;` : "";
+          html += `<td class="gantt-cell" style="${style}"></td>`;
+        }
+        html += '</tr>';
+      }
+
+      html += '</tbody></table></div>';
+      container.innerHTML = html;
+    }
+
+    async function addTimelineEntry() {
+      const process = document.getElementById("tlProcess").value.trim();
+      const weekFrom = parseInt(document.getElementById("tlWeekFrom").value);
+      const weekTo = parseInt(document.getElementById("tlWeekTo").value);
+      const color = document.getElementById("tlColor").value;
+      if (!process || isNaN(weekFrom) || isNaN(weekTo)) {
+        alert("Bitte Beschreibung und KW-Bereich angeben."); return;
+      }
+      const res = await fetch("/journal/addTimelineEntry", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: project.code, entry: { process, weekFrom, weekTo, color } }),
+      });
+      const data = await res.json();
+      project.timelineEntries.push(data.entry);
+      document.getElementById("tlProcess").value = "";
+      renderCalendar();
+    }
+
+    async function deleteTimelineEntry(id) {
+      await fetch("/journal/deleteTimelineEntry", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: project.code, id }),
+      });
+      project.timelineEntries = project.timelineEntries.filter(e => e.id !== id);
+      renderCalendar();
+    }
+
+    function toggleFullwidth() {
+      const section = document.getElementById("timelineSection");
+      const btn = document.getElementById("btnFullwidth");
+      const isFullwidth = section.classList.toggle("section-fullwidth");
+      btn.textContent = isFullwidth ? "↙ Normal" : "↗ Seitenbreit";
+    }
+
+    function openNewWindow() {
+      const title = escHtml(project.title || "Projekt-Zeitplan");
+      const ganttHtml = document.getElementById("timelineCalendar").innerHTML;
+      const css = `
+        body{font-family:Segoe UI,Arial,sans-serif;background:#fff;padding:1.2rem;color:#1a1a2e}
+        h2{color:#1a3a5c;margin-bottom:.4rem}
+        .legend{font-size:.85rem;color:#718096;margin-bottom:1rem}
+        table{border-collapse:collapse;font-size:.78rem}
+        th,td{border:1px solid #e2e8f0;padding:3px 3px;text-align:center;white-space:nowrap}
+        .gantt-label-col{width:180px;text-align:left!important;padding-left:.5rem}
+        .gantt-label{text-align:left!important;padding-left:.5rem;font-size:.8rem}
+        .gantt-week-header{font-size:.72rem;color:#4a5568;background:#f7fafc;min-width:34px}
+        .gantt-holiday{background:#c6f6d5!important;color:#276749}
+        .gantt-today{background:#bee3f8!important;font-weight:bold}
+        .gantt-abgabe-header{background:#fef3c7!important;color:#92400e;font-weight:bold}
+        .gantt-pres-header{background:#e9d8fd!important;color:#553c9a;font-weight:bold}
+        .gantt-cell{height:20px}
+        .gantt-holiday-cell{background:#c6f6d5}
+        .gantt-marker{font-size:.82rem}
+        .btn-delete{display:none}
+      `;
+      const win = window.open("", "_blank", "width=1500,height=750,scrollbars=yes,resizable=yes");
+      win.document.write(`<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8">
+        <title>${title} – Zeitplan</title><style>${css}</style></head>
+        <body><h2>${title} – Projekt-Zeitplan</h2>
+        <p class="legend">📅 Heute &nbsp;|&nbsp; 📦 Projektabgabe &nbsp;|&nbsp; 🎤 Präsentation &nbsp;|&nbsp; 🏖 Ferien</p>
+        ${ganttHtml}</body></html>`);
+      win.document.close();
+    }
+
+    async function getAITimeline() {
+      const btn = document.querySelector("#timelineSection .btn-ai");
+      const result = document.getElementById("aiTimelineResult");
+      btn.textContent = "Analysiere…";
+      btn.disabled = true;
+      const res = await fetch("/journal/aiTimeline", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: project.code }),
+      });
+      const data = await res.json();
+      result.style.display = "block";
+      result.innerHTML = `<p>${escHtml(data.feedback)}</p>`;
+      btn.textContent = "Rückmeldung KI zu Projekt-Zeitplan";
+      btn.disabled = false;
+    }
+
+    // ── CHAT ──────────────────────────────────────────────────────────────
+    function renderChat() {
+      const container = document.getElementById("chatHistory");
+      container.innerHTML = "";
+      const groupLabel = project.title || "Gruppe";
+      for (const msg of project.chatHistory) {
+        const div = document.createElement("div");
+        div.className = msg.role === "user" ? "chat-user" : "chat-ai";
+        const label = msg.role === "user"
+          ? `👤 ${escHtml(groupLabel)}`
+          : `🤖 KI`;
+        div.innerHTML = `<span class="chat-role">${label}</span><p>${escHtml(msg.content)}</p>`;
+        container.appendChild(div);
+      }
+      container.scrollTop = container.scrollHeight;
+    }
+
+    async function sendChat() {
+      const input = document.getElementById("chatInput");
+      const message = input.value.trim();
+      if (!message) return;
+      input.value = "";
+      project.chatHistory.push({ role: "user", content: message });
+      renderChat();
+
+      const res = await fetch("/journal/chat", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: project.code, message }),
+      });
+      const data = await res.json();
+      project.chatHistory.push({ role: "assistant", content: data.answer });
+      if (project.chatHistory.length > 20) project.chatHistory = project.chatHistory.slice(-20);
+      renderChat();
+    }
+
+    // ── JAHRESÜBERSICHT ────────────────────────────────────────────────────
+    function renderYearCalendar() {
+      const container = document.getElementById("yearCalendarContainer");
+      const startDate = isoToDate(project.timeline.start || "2026-04-20");
+      const endDate = isoToDate(project.timeline.presentation || "2027-01-19");
+
+      const MONTH_NAMES = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"];
+      const DAY_ABBR = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
+      const todayStr = todayIso();
+
+      let html = '<div class="year-calendar-grid">';
+
+      let m = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
+      const endMonth = new Date(endDate.getFullYear(), endDate.getMonth(), 1);
+
+      while (m <= endMonth) {
+        const year = m.getFullYear();
+        const month = m.getMonth();
+
+        // Monday of the first week of this month
+        const firstDay = new Date(year, month, 1);
+        const startDow = firstDay.getDay() || 7;
+        let weekStart = new Date(year, month, 1 - (startDow - 1));
+
+        html += `<div class="month-block">`;
+        html += `<div class="month-header">${MONTH_NAMES[month]} ${year}</div>`;
+        html += `<table class="month-table"><thead><tr>`;
+        html += `<th class="kw-th">KW</th>`;
+        DAY_ABBR.forEach(d => { html += `<th class="day-th${d === "Sa" || d === "So" ? " we-th" : ""}">${d}</th>`; });
+        html += `</tr></thead><tbody>`;
+
+        let d = new Date(weekStart);
+        while (true) {
+          if (d.getFullYear() > year || (d.getFullYear() === year && d.getMonth() > month)) break;
+          const { week } = getISOWeek(d);
+          html += `<tr><td class="kw-cell">KW&nbsp;${week}</td>`;
+
+          for (let i = 0; i < 7; i++) {
+            const day = new Date(d.getFullYear(), d.getMonth(), d.getDate() + i);
+            const inMonth = day.getMonth() === month && day.getFullYear() === year;
+            const isoDay = day.toISOString().slice(0, 10);
+            const holiday = inMonth ? isHolidayDay(isoDay) : null;
+            const isToday = inMonth && isoDay === todayStr;
+            const isWe = i >= 5;
+
+            let cls = "day-cell";
+            if (!inMonth) cls += " day-out";
+            else if (isToday) cls += " day-today";
+            else if (holiday) cls += " day-holiday";
+            else if (isWe) cls += " day-weekend";
+
+            const title = holiday ? ` title="${holiday}"` : "";
+            html += `<td class="${cls}"${title}>${inMonth ? day.getDate() : ""}</td>`;
+          }
+          html += `</tr>`;
+          d = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 7);
+        }
+
+        html += `</tbody></table></div>`;
+        m = new Date(year, month + 1, 1);
+      }
+
+      html += '</div>';
+      container.innerHTML = html;
+    }
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,97 @@
+{
+  "code": "demo",
+  "title": "Kochbuch",
+  "description": "Ein Kochbuch für PrimarschülerInnen über Vitamine",
+  "members": [
+    "Kunigunde",
+    "Hugo",
+    "Fritz"
+  ],
+  "timeline": {
+    "start": "2026-04-20",
+    "end": "2026-12-15",
+    "presentation": "2027-01-20"
+  },
+  "timelineEntries": [
+    {
+      "id": "mo2pslhph7rha",
+      "process": "Umfrage in Primarschulhaus",
+      "weekFrom": 19,
+      "weekTo": 24,
+      "color": "#ae4c7b",
+      "createdAt": "2026-04-17"
+    },
+    {
+      "id": "mo2pu2suc083s",
+      "process": "Interview mit Kindern",
+      "weekFrom": 21,
+      "weekTo": 26,
+      "color": "#bddb29",
+      "createdAt": "2026-04-17"
+    }
+  ],
+  "journalEntries": [
+    {
+      "id": "mo2s7qow01aml",
+      "date": "2026-04-12",
+      "contents": {
+        "Kunigunde": "Sehr viele Bücher gelesen",
+        "Hugo": "im Internet recherchiert",
+        "Fritz": "zweites Schulhaus gefunden"
+      },
+      "obstacles": "",
+      "planning": {
+        "Kunigunde": {
+          "text": "ausruhen",
+          "dueDate": "2026-05-03"
+        },
+        "Hugo": {
+          "text": "chillen",
+          "dueDate": "2026-05-02"
+        },
+        "Fritz": {
+          "text": "Entwurf des Interview schreiben",
+          "dueDate": "2026-04-20"
+        }
+      },
+      "aiFeedback": "# Analyse Arbeitsjournal Kochbuch-Projekt\n\n**Teil 1 – Journaleintrag:**\nDer Eintrag ist unvollständig und vage. Konkrete Erkenntnisse aus Recherche fehlen. „Sehr viele Bücher gelesen\" und „im Internet recherchiert\" sind zu unspezifisch. Welche Inhalte wurden erarbeitet? Warum wurde ein zweites Schulhaus gesucht? Der Detailgrad ist unzureichend.\n\n**Teil 2 – Projekt:**\nKritische Mängel: Kunigunde und Hugo planen Pausen statt Arbeit. Nur Fritz hat konkrete Aufgaben. Keine Abstimmung zwischen Recherche und Interview erkennbar. Fehlende Zwischenziele für Kochbuch-Erstellung. Ohne klare Arbeitsteilung und Motivation droht Projektscheitern.",
+      "createdAt": "2026-04-12T10:45:08.960Z"
+    },
+    {
+      "id": "mo2pxmzf212yg",
+      "date": "2026-04-17",
+      "contents": {
+        "Kunigunde": "An Vereinbarung gearbeitet",
+        "Hugo": "",
+        "Fritz": "Mehrere Schulhäuser angefragt"
+      },
+      "obstacles": "Viele Schulhäuser haben abgesagt, aber wir haben schlussendlich doch eines gefunden",
+      "planning": {
+        "Kunigunde": {
+          "text": "Im Web recherchieren",
+          "dueDate": "2026-04-24"
+        },
+        "Hugo": {
+          "text": "In Mediothek gehen und Bücher ausleihen",
+          "dueDate": "2026-05-01"
+        },
+        "Fritz": {
+          "text": "Bei Primarschulhaus Termine anfragen",
+          "dueDate": "2026-04-20"
+        }
+      },
+      "aiFeedback": null,
+      "createdAt": "2026-04-17T09:41:18.363Z"
+    }
+  ],
+  "chatHistory": [
+    {
+      "role": "user",
+      "content": "Mit wievielen Lehrpersonen sollen wir ein Interview führen?"
+    },
+    {
+      "role": "assistant",
+      "content": "Das hängt von eurem Projektumfang ab – für ein Schulkochbuch würde ich **2–3 Lehrpersonen** empfehlen (z.B. Hauswirtschaft, Biologie, Schulleitung). **Konkret als nächster Schritt:** Legt fest, welche Fragen ihr stellen möchtet und welche Lehrpersonen am besten passen, dann fragt diese höflich an. So könnt ihr zeitnah mit den Interviews starten und habt verlässliche Aussagen für euer Projekt."
+    }
+  ]
+}

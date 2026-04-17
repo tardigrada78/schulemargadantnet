@@ -18,6 +18,7 @@ import ragchat from "./routes/ragchat.js";
 import overview from "./routes/overview.js";
 import ideas from "./routes/ideas.js";
 import languagestory from "./routes/languagestory.js";
+import journal from "./routes/journal.js";
 // add new routes here
 
 
@@ -45,6 +46,7 @@ app.use("/ragchat", ragchat);
 app.use("/overview", overview);
 app.use("/ideas", ideas);
 app.use("/languagestory", languagestory);
+app.use("/journal", journal);
 
 // add new routes here
 
