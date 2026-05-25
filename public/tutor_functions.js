@@ -35,7 +35,10 @@ export async function checkAnswer(answerText, questionText, language, assistant_
     });
     let result = await response.json();
     document.getElementById("progressDiv").innerHTML = ``;
-    document.getElementById("resultDiv").innerHTML = "<h2>Rückmeldung auf die Antwort</h2>" + result.feedback;
+    document.getElementById("resultDiv").innerHTML =
+      `<h2>Frage</h2><p>${questionText}</p>` +
+      `<h2>Deine Antwort</h2><p>${answerText.replace(/\n/g, "<br>")}</p>` +
+      `<h2>Rückmeldung der KI</h2>` + result.feedback;
   } catch (error) {
     console.error("Fehler beim Überprüfen der Antwort:", error);
     document.getElementById("progressDiv").innerHTML = `<p>❌ Fehler beim Überprüfen der Antwort.</p>`;

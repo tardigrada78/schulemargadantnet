@@ -38,11 +38,13 @@
       let outputDiv = document.getElementById("textOutput");
       let numResults = document.getElementById("numResults").value;
       let contentText = textArea.value.trim();
+      const targetCount = parseInt(numResults);
+      const bufferCount = targetCount * 2 + 5;
       progressDiv.innerHTML = `<p>⚙️ Führe Websuche durch...</p>`;
       let searchResponse = await fetch("/factcheck/search", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ contentText, numResults }),
+        body: JSON.stringify({ contentText, numResults: bufferCount }),
       });
       let searchData = await searchResponse.json();
       if (!searchData.results || searchData.results.length === 0) {
@@ -50,25 +52,42 @@
         return;
       }
       let resultHTML = `<h2>Analyse-Ergebnisse:</h2>`;
-      for (let i = 0; i < searchData.results.length; i++) {
+      let successCount = 0;
+      for (let i = 0; i < searchData.results.length && successCount < targetCount; i++) {
         let site = searchData.results[i];
-        progressDiv.innerHTML = `<p>⚙️ Analysiere Website ${i + 1} von ${searchData.results.length}: ${site.title
-          }</p>`;
-        let analyzeResponse = await fetch("/factcheck/analyze", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ contentText, site }),
-        });
-        let analysisResult = await analyzeResponse.json();
-        let color =
-          analysisResult.match_percent < 30 ? "red" : analysisResult.match_percent < 70 ? "yellow" : "green";
-        resultHTML += `<a href="${analysisResult.url}" target="_blank">${analysisResult.title}</a><br>→ Übereinstimmung: 
-        <strong style="color:${color};">${analysisResult.match_percent}%</strong> (${analysisResult.match_level})<br>
-        <span class="small">${analysisResult.reason}</span><br><br>`;
+        progressDiv.innerHTML = `<p>⚙️ Analysiere Website ${successCount + 1} von ${targetCount}: ${site.title}</p>`;
+        try {
+          let analyzeResponse = await fetch("/factcheck/analyze", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ contentText, site }),
+          });
+          if (!analyzeResponse.ok) continue;
+          let analysisResult = await analyzeResponse.json();
+          if (analysisResult.match_percent == null) continue;
+          successCount++;
+          let color =
+            analysisResult.match_percent < 30 ? "red" : analysisResult.match_percent < 70 ? "yellow" : "green";
+          resultHTML += `<a href="${analysisResult.url}" target="_blank">${analysisResult.title}</a><br>→ Übereinstimmung:
+          <strong style="color:${color};">${analysisResult.match_percent}%</strong> (${analysisResult.match_level})<br>
+          <span class="small">${analysisResult.reason}</span><br><br>`;
+          outputDiv.innerHTML = resultHTML;
+        } catch {
+          continue;
+        }
+      }
+      if (successCount === 0) {
+        resultHTML += `<p style='color:red;'>Keine der gefundenen Websites konnte analysiert werden.</p>`;
         outputDiv.innerHTML = resultHTML;
       }
       progressDiv.innerHTML = "";
     });
+
+    const urlText = new URLSearchParams(window.location.search).get('text');
+    if (urlText) {
+      document.getElementById('contentText').value = urlText;
+      document.getElementById('textCheck').click();
+    }
   </script>
 </body>
 

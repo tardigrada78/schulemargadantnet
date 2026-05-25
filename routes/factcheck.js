@@ -1,6 +1,6 @@
 import { Router } from "express";
 import axios from "axios";
-import OpenAI from "openai";
+import Anthropic from "@anthropic-ai/sdk";
 import * as cheerio from "cheerio";
 
 const router = Router();
@@ -9,7 +9,7 @@ const router = Router();
 const GOOGLE_CSE_ID = process.env.GOOGLE_CSE_ID;
 const GOOGLE_API_KEY = process.env.GOOGLE_WEB_API_KEY;
 const GOOGLE_ENDPOINT = `https://www.googleapis.com/customsearch/v1`;
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 // Funktion für Google Websuche
 async function searchWeb(query, numResults) {
@@ -49,12 +49,46 @@ async function searchWeb(query, numResults) {
   }
 }
 
+// Prüft ob eine URL laut robots.txt für Crawler / KI-Bots erlaubt ist
+async function isAllowedByRobots(url) {
+  try {
+    const { protocol, host, pathname } = new URL(url);
+    const res = await axios.get(`${protocol}//${host}/robots.txt`, { timeout: 3000 });
+    const groups = res.data.split(/\n[ \t]*\n/);
+    const aiAgents = ['*', 'gptbot', 'claude-web', 'ccbot', 'anthropic-ai', 'google-extended'];
+    for (const group of groups) {
+      const lines = group.split('\n').map(l => l.trim()).filter(l => l && !l.startsWith('#'));
+      const agents = lines
+        .filter(l => l.toLowerCase().startsWith('user-agent:'))
+        .map(l => l.split(':')[1].trim().toLowerCase());
+      const disallows = lines
+        .filter(l => l.toLowerCase().startsWith('disallow:'))
+        .map(l => l.split(':').slice(1).join(':').trim());
+      if (agents.some(a => aiAgents.includes(a))) {
+        if (disallows.some(d => d === '/' || (d && pathname.startsWith(d)))) return false;
+      }
+    }
+    return true;
+  } catch {
+    return true; // kein robots.txt oder Fehler = erlaubt
+  }
+}
+
 // Funktion zum Abrufen von Webseiten-Inhalten
 async function fetchWebsiteContent(url) {
   try {
+    if (!(await isAllowedByRobots(url))) {
+      console.log(`robots.txt blockiert: ${url}`);
+      return null;
+    }
     const response = await axios.get(url, { timeout: 5000 });
     const $ = cheerio.load(response.data);
-    let text = $("p, article").text();
+    const robotsMeta = ($('meta[name="robots"]').attr('content') || '').toLowerCase();
+    if (robotsMeta.includes('noai') || robotsMeta.includes('noimageai')) {
+      console.log(`Meta robots blockiert KI-Zugriff: ${url}`);
+      return null;
+    }
+    const text = $("p, article").text();
     return text.substring(0, 5000);
   } catch (error) {
     console.error(`Fehler beim Abrufen von ${url}:`, error.message);
@@ -62,7 +96,7 @@ async function fetchWebsiteContent(url) {
   }
 }
 
-// Funktion zur Bewertung der Übereinstimmung mit GPT-4
+// Funktion zur Bewertung der Übereinstimmung
 async function analyzeFact(originalText, websiteTitle, websiteContent) {
   const systemMessage = `Du bist ein KI-Experte für Faktenüberprüfung. 
     Deine Aufgabe ist es, eine gegebene Aussage mit einem Webseiten-Titel und Webseiten-Text zu vergleichen. 
@@ -101,17 +135,15 @@ async function analyzeFact(originalText, websiteTitle, websiteContent) {
     **Gib nur ein JSON-Objekt zurück, ohne zusätzlichen Text oder Markdown.**`;
 
   try {
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [
-        { role: "system", content: systemMessage },
-        { role: "user", content: userMessage },
-      ],
-      temperature: 0.1, // ✅ Sehr niedrige Temperatur für präzisere Antworten
+    const response = await anthropic.messages.create({
+      model: "claude-sonnet-4-6",
+      max_tokens: 256,
+      system: systemMessage,
+      messages: [{ role: "user", content: userMessage }],
     });
-    return JSON.parse(response.choices[0].message.content);
+    return JSON.parse(response.content[0].text);
   } catch (error) {
-    console.error("Fehler bei GPT-Analyse:", error);
+    console.error("Fehler bei Claude-Analyse:", error);
     return {
       match_percent: -0,
       match_level: "keine Übereinstimmung",

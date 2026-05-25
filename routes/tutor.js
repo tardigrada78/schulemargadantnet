@@ -89,7 +89,7 @@ async function LLMtext(assistant_id, prompt) {
 
 // Funktion um Frage zu erstellen
 async function doQuestion(properties, language, assistant_id) {
-  const prompt = `Erstelle eine anspruchsvolle Prüfungsfrage, die in maximal 5 Minuten beantwortet werden kann.
+  const prompt = `Erstelle eine anspruchsvolle Prüfungsfrage, die in maximal 3 Minuten beantwortet werden kann.
 
 Zielgruppe: 18-jährige Schüler eines Gymnasiums.
 
@@ -104,7 +104,8 @@ ${properties}
 - **Die Frage soll ein tiefes Verständnis erfordern und thematisch logisch aufgebaut sein.**  
 - **Vermeide isolierte Teilfragen oder Aufzählungen.** Formuliere die Frage so, dass alle Lernziele aufeinander aufbauen oder zusammenhängen.  
 - **Formuliere die Frage in der Sprache: ${language}.** Achte darauf, dass die gesamte Ausgabe ausschließlich in dieser Sprache erfolgt.  
-- **Gib nur die Frage zurück – ohne Erklärungen, Einleitungen oder Hinweise zur Antwort.**`;
+- **Gib nur die Frage zurück – ohne Erklärungen, Einleitungen oder Hinweise zur Antwort.**
+- **Die Frage soll maximal 100 Wörter umfassen.** Achte darauf, dass die Frage präzise und auf den Punkt formuliert ist.**`;
   const result = await LLMtext(assistant_id, prompt);
   return result
 }
@@ -128,7 +129,7 @@ Beurteile die Antwort fair, sachlich und präzise:
 - Antworte direkt der Schüler*in, vermeide Anreden wie "Der Schüler hat". 
 - **Formuliere die Antwort in der Sprache: ${language}.** Achte darauf, dass die gesamte Ausgabe ausschließlich in dieser Sprache erfolgt.  
 
-Gib eine kurze Rückmeldung (max. 5 Sätze), die dem Schüler hilft, sich zu verbessern. Sei wohlwollend und motivierend.`;
+Gib eine kurze Rückmeldung (max. 3 Sätze), die dem Schüler hilft, sich zu verbessern. Sei wohlwollend und motivierend.`;
 
   const result = await LLMtext(assistant_id, prompt);
   return result
@@ -166,7 +167,7 @@ async function doScript(properties, wordcount, language, assistant_id) {
 }
 
 
-// Funktion um Diagramm zu erstellen
+// Funktion um 2D-Diagramm zu erstellen
 async function doDiagram(scriptText, language) {
   const prompt = `Erstelle ein präzises, verständliches Flowchart-Diagramm basierend auf folgendem Text:
 
@@ -285,6 +286,33 @@ router.post("/getDiagram", async (req, res) => {
   } catch (error) {
     console.error("Fehler beim Erstellen des Diagramms:", error);
     res.status(500).send("Fehler beim Erstellen des Diagramms.");
+  }
+});
+
+// Route um 3D-Mindmap zu erstellen
+router.post("/get3DDiagram", async (req, res) => {
+  try {
+    const { scriptText, language } = req.body;
+    const prompt = `Erstelle eine Mindmap im Mermaid-Format aus folgendem Text:
+
+${scriptText}
+
+WICHTIG:
+- Verwende ausschließlich das Mermaid-Mindmap-Format.
+- Beginne mit "mindmap", danach "  root((Hauptthema))"
+- Maximal 4 Ebenen tief, maximal ~200 Knoten total
+- Knotenbezeichnungen kurz (max. 2-3 Wörter)
+- Formuliere in der Sprache: ${language}
+- Gib nur den reinen Mermaid-Code zurück, keine Backticks, keine Erklärungen`;
+    const response = await anthropic.messages.create({
+      model: "claude-sonnet-4-6",
+      max_tokens: 2048,
+      messages: [{ role: "user", content: prompt }],
+    });
+    res.send(response.content[0].text.trim());
+  } catch (error) {
+    console.error("Fehler beim Erstellen des 3D-Diagramms:", error);
+    res.status(500).send("Fehler beim Erstellen des 3D-Diagramms.");
   }
 });
 

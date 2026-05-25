@@ -6,6 +6,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>KI-Lern-Tutor</title>
   <link rel="stylesheet" href="styles_synthwave.css" />
+  <link rel="stylesheet" href="mindmap3d.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="mindmap3d_lib.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/docx@7.1.0"></script>
   <script src="https://cdn.jsdelivr.net/npm/file-saver"></script>
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10.4.0/dist/mermaid.min.js"></script>
@@ -27,6 +30,7 @@
   <div id="resultDiv"></div>
   <div id="mermaid" style="text-align: center"></div>
   <div id="mermaidCode"></div>
+  <div id="diagram3dContainer"></div>
   <div id="invisible" style="display: none">
     <button id="generateQuestion">Erstelle eine Frage</button>
     <div class="info-tooltip">
@@ -41,6 +45,14 @@
       <div class="info-tooltip">
         <span class="info-icon">i</span>
         <span class="info-text">Wählen Sie vorher mindestens 1 Lernziel aus.</span>
+      </div>
+    </div>
+    <div class="oneline">
+      <textarea id="factcheckInput" rows="1" placeholder="KI-Aussage hier einfügen…" style="width:320px;resize:vertical"></textarea>
+      <button onclick="const t=document.getElementById('factcheckInput').value.trim();if(t)window.open('/factcheck.html?text='+encodeURIComponent(t),'_blank')">🔍 Fakten prüfen</button>
+      <div class="info-tooltip">
+        <span class="info-icon">i</span>
+        <span class="info-text">Kopiere eine KI-Aussage und füge sie in das Textfeld ein um sie zu überprüfen.</span>
       </div>
     </div>
 
@@ -65,11 +77,11 @@
       </div>
     </label>
     <select id="contextSelect" name="contextSelect">
-      <option value="kein">nur Allgmeinwissen der KI (schneller)</option>
+      <option value="kein">nur Allgmeinwissen der KI (aber schneller, besseres KI-Modell)</option>
       <option value="asst_40i6l1Ujl5vkflEIXhxWp3N3">Campbell Biologie 10</option>
-      <option value="asst_0Vd1B39PcqUA3ciqixLCcbcw">Bioskripte von D. Margadant (FMS, Gym; 108 Dateien)</option>
+      <option value="asst_0Vd1B39PcqUA3ciqixLCcbcw">Frühere Bioskripte von D. Margadant (FMS, Gym; 108 Dateien)</option>
     </select>
-    <p>Wählen Sie ein Lernziel aus (mittels CTRL- und SHIFT-Taste mehrere):</p>
+    <p>Wählen Sie ein Lernziel aus (mittels CTRL- und SHIFT-Taste mehrere, mit CTRL+A alle):</p>
     <select id="objectivesSelect" multiple size="10"></select><br />
   </div>
   <h2>Neue Lernziele erfassen</h2>
@@ -129,6 +141,8 @@ Sie können die Fachbegriffe Metamorphose, Holometabolie, Hemimetabolie, Larve u
           document.getElementById("podcastDiv").innerHTML = ``;
           document.getElementById("mermaid").innerHTML = ``;
           document.getElementById("mermaidCode").innerHTML = ``;
+          if (window._mindmap3d) { window._mindmap3d.destroy(); window._mindmap3d = null; }
+          document.getElementById("diagram3dContainer").className = "";
           let responseQuestion = await fetch(`/tutor/getQuestion`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -181,6 +195,8 @@ Sie können die Fachbegriffe Metamorphose, Holometabolie, Hemimetabolie, Larve u
           document.getElementById("podcastDiv").innerHTML = ``;
           document.getElementById("mermaid").innerHTML = ``;
           document.getElementById("mermaidCode").innerHTML = ``;
+          if (window._mindmap3d) { window._mindmap3d.destroy(); window._mindmap3d = null; }
+          document.getElementById("diagram3dContainer").className = "";
           let responseScript = await fetch(`/tutor/getScript`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -193,7 +209,8 @@ Sie können die Fachbegriffe Metamorphose, Holometabolie, Hemimetabolie, Larve u
           htmlOutput += `<br><button id="generateWord">📄 Word-Datei herunterladen</button>`;
           htmlOutput += `<button id="generatePdf">📑 PDF-Datei herunterladen</button>`;
           htmlOutput += `<button id="buttonPodcast">🎧 Erstelle einen Podcast</button>`;
-          htmlOutput += `<button id="generateDiagram">📝 Zeichne ein Flowchart</button>`;
+          htmlOutput += `<button id="generateDiagram">📝 Zeichne ein 2D-Flowchart</button>`;
+          htmlOutput += `<button id="generate3DDiagram">🌳 Erstelle ein 3D-Flowchart</button>`;
           document.getElementById("resultDiv").innerHTML = htmlOutput;
 
           setTimeout(() => {
@@ -220,17 +237,55 @@ Sie können die Fachbegriffe Metamorphose, Holometabolie, Hemimetabolie, Larve u
               });
 
               let diagramCode = await responseDiagram.text();
-              console.log(diagramCode);
-              openMermaidLive(diagramCode);
-              console.log(
-                `<p>Kopieren Sie den untenstehenden Code und fügen Sie ihn in die <a href="https://mermaid.live/" target="_blank">Mermaid-Website</a> ein:</p><pre>${diagramCode}</pre>`
-              );
+              await openMermaidLive(diagramCode);
+              const mermaidDiv = document.getElementById("mermaid");
+              mermaidDiv.style.position = "relative";
+              mermaidDiv.style.padding = "16px";
+              const fsBtn2d = document.createElement("button");
+              fsBtn2d.textContent = "⛶  FULLSCREEN";
+              fsBtn2d.className = "mm3d-fullscreen-btn";
+              fsBtn2d.addEventListener("click", () => {
+                if (document.fullscreenElement === mermaidDiv) {
+                  document.exitFullscreen();
+                } else {
+                  mermaidDiv.requestFullscreen();
+                }
+              });
+              mermaidDiv.appendChild(fsBtn2d);
+              mermaidDiv.scrollIntoView({ behavior: "smooth" });
               document.getElementById(
                 "mermaidCode"
               ).innerHTML = `<p>Kopieren Sie den untenstehenden Code und fügen Sie ihn in die <a href="https://mermaid.live/" target="_blank">Mermaid-Website</a> ein, um das Diagramm grösser zu sehen und anzupassen:</p><pre>${diagramCode}</pre>`;
             } catch (error) {
               console.error("Fehler beim Generieren des Diagramms:", error);
               document.getElementById("progressDiv").innerHTML = `<p>❌ Fehler beim Generieren des Diagramms.</p>`;
+            } finally {
+              document.getElementById("progressDiv").innerHTML = ``;
+            }
+          });
+
+          // 3D-Diagramm erstellen
+          document.getElementById("generate3DDiagram").addEventListener("click", async function () {
+            try {
+              window.scrollTo({ top: 0, behavior: "smooth" });
+              document.getElementById("progressDiv").innerHTML = `<p>⚙️ Erstelle 3D-Diagramm aus Skript...</p>`;
+              let response = await fetch(`/tutor/get3DDiagram`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ scriptText, language }),
+              });
+              let mindmapCode = await response.text();
+              const container = document.getElementById("diagram3dContainer");
+              container.innerHTML = "";
+              container.className = "mm3d-container";
+              container.style.display = "block";
+              if (window._mindmap3d) { window._mindmap3d.destroy(); }
+              window._mindmap3d = new MindMap3D(container);
+              window._mindmap3d.render(mindmapCode);
+              container.scrollIntoView({ behavior: "smooth" });
+            } catch (error) {
+              console.error("Fehler beim Generieren des 3D-Diagramms:", error);
+              document.getElementById("progressDiv").innerHTML = `<p>❌ Fehler beim Generieren des 3D-Diagramms.</p>`;
             } finally {
               document.getElementById("progressDiv").innerHTML = ``;
             }
