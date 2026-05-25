@@ -13,20 +13,35 @@
   <script>
     fetch('/header.html').then(r => r.text()).then(h => document.getElementById('site-header').innerHTML = h);
   </script>
-
-  <h1>Verwendbare KI-Modelle</h1>
-  <p class="page-intro">
-    Momentan bietet erst die Abstract-Zusammenfassung eine Wahl des KI-Tools, die Funktion wird aber bald überall
-    implementiert. Untenstehende Varianten stehen zur Auswahl. <br>
-    Bilder, Text zu Sprache und Sprache zu Text wird unabhängig von OpenAI generiert - die dazu notwendigen Daten werden
-    immer an deren Server übermittelt.
+  <h1>Verwendbare KI-Modelle auf dieser Website</h1>
+  <h2>KI-Modelle im Lern-Tutor</h2>
+  <p>
+  <ul>
+    <li>Die Textbearbeitung und das Erstellen des Mindmaps läuft mit Anthropic Claude</li>
+    <li>Die Textverarbeitung mit Kontext läuft bei OpenAI GPT</li>
+    <li>Die Sprachfunktionen laufen mit OpenAI GPT</li>
+  </ul>
+  </p>
+  <h2>Verwendbare Modelle in der Auswahl</h2>
+  <p>
+  <ul>
+    <li>
+      Momentan bietet erst die Abstract-Zusammenfassung eine Wahl des KI-Modells, die Funktion wird aber bald überall
+      implementiert. </li>
+    <li>Bilder, Text zu Sprache und Sprache zu Text wird unabhängig immer von OpenAI generiert - die dazu notwendigen
+      Daten werden an deren Server übermittelt.</li>
+    <li>Untenstehende Varianten stehen zur Auswahl. Cloud-Modelle sind (für den Betreiber) kostenpflichtig. Die Qualität
+      ist höher, doch Daten gelangen an deren Firmenserver. Lokale Modelle brauchen von Ihnen etwas mehr Know-How. Sie
+      sind aber
+      gratis (nur Stromkosten) und die Daten bleiben auf Ihrem Gerät.</li>
+  </ul>
   </p>
 
   <div class="model-card">
-    <h2>
+    <h3>
       <span>OpenAI</span>
       <span class="badge badge-cloud">Cloud</span>
-    </h2>
+    </h3>
     <p>
       Die Modelle von OpenAI (z.&nbsp;B. GPT-4o) laufen über die OpenAI-Server; die Daten verlassen Ihr Gerät. Diese
       API-Calls sind kostenpflichtig.
@@ -34,10 +49,10 @@
   </div>
 
   <div class="model-card">
-    <h2>
+    <h3>
       <span>Anthropic</span>
       <span class="badge badge-cloud">Cloud</span>
-    </h2>
+    </h3>
     <p>
       Die Modelle von Anthropic (z.&nbsp;B. Claude Sonnet oder Claude Haiku) laufen über die Anthropic-Server; die Daten
       verlassen Ihr Gerät. Diese API-Calls sind kostenpflichtig.
@@ -45,10 +60,10 @@
   </div>
 
   <div class="model-card">
-    <h2>
+    <h3>
       <span>Ollama via Cloudflare Tunnel</span>
       <span class="badge badge-local">Lokal (Installation)</span>
-    </h2>
+    </h3>
     <p>
       Mit Ollama können KI-Modelle lokal auf dem eigenen Gerät ausgeführt werden – ohne dass Daten an externe Server
       gesendet werden. Über einen Cloudflare-Tunnel wird das lokal laufende Ollama für die Website erreichbar gemacht.
@@ -90,10 +105,10 @@
   </div>
 
   <div class="model-card">
-    <h2>
+    <h3>
       <span>webLLM</span>
       <span class="badge badge-local">Lokal (Browser)</span>
-    </h2>
+    </h3>
     <p>
       webLLM führt KI-Modelle direkt im Browser aus, ohne dass etwas installiert werden muss. Das Modell wird einmalig
       in den Browser-Cache heruntergeladen und danach vollständig lokal ausgeführt. Voraussetzung ist ein aktueller

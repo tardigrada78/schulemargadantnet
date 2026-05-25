@@ -2,17 +2,19 @@ import { Router } from "express";
 const router = Router();
 import OpenAI from "openai";
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+import Anthropic from "@anthropic-ai/sdk";
+const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 // Funktion für LLM-Anfrage (mit und ohne Kontext)
 async function LLMtext(assistant_id, prompt) {
   // Variante ohne Kontext
   if (assistant_id == "kein") {
-    const response = await openai.chat.completions.create({
-      model: "gpt-4.1",
+    const response = await anthropic.messages.create({
+      model: "claude-sonnet-4-6",
+      max_tokens: 4096,
       messages: [{ role: "user", content: prompt }],
-      temperature: 0.6,
     });
-    return response.choices[0].message.content;
+    return response.content[0].text;
   }
   // Variante mit Kontext
   else {
@@ -179,13 +181,13 @@ async function doDiagram(scriptText, language) {
   - Gib nur den reinen Diagramm-Code zurück, ohne JSON-Struktur oder Schlüssel.
   `;
 
-  const response = await openai.chat.completions.create({
-    model: "gpt-4.1",
+  const response = await anthropic.messages.create({
+    model: "claude-sonnet-4-6",
+    max_tokens: 2048,
     messages: [{ role: "user", content: prompt }],
-    temperature: 0.6,
   });
 
-  const diagramCode = response.choices[0].message.content.trim();
+  const diagramCode = response.content[0].text.trim();
   let cleanedCode = diagramCode.replace(/```mermaid|```/g, "").trim();
   cleanedCode = cleanedCode.replace(
     /\[([^\]]*\([^\]]*\)[^\]]*)\]/g,
@@ -205,14 +207,17 @@ async function doPodcastText(scriptText, language) {
   - Der Text wird von einer Person gelesen. Schreibe keine Dialoge. 
   - Schreibe nur den Podcast-Text, vermeide Regieanweisungen oder Layoutangaben wie "Titel". 
   - Der fachliche Inhalt muss erhalten bleiben.
+  - Der Text soll lebendig, mitreißend und motivierend sein, damit die Zuhörer*innen neugierig bleiben.
+  - Achte darauf, dass der Text nicht zu trocken oder zu akademisch klingt, sondern die Themen spannend und zugänglich vermittelt.
+  - Halte den gesamten Podcast-Text kurz und prägnant. 
 `;
 
-  const response = await openai.chat.completions.create({
-    model: "gpt-4.1-nano",
+  const response = await anthropic.messages.create({
+    model: "claude-haiku-4-5-20251001",
+    max_tokens: 4096,
     messages: [{ role: "user", content: prompt }],
-    temperature: 0.6,
   });
-  return response.choices[0].message.content;
+  return response.content[0].text;
 }
 
 //  Funktion um Audio für Podcast zu erstellen

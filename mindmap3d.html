@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3D Baumkarte</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#060d06; overflow:hidden; font-family:'Courier New',monospace; }
+  canvas { display:block; }
+
+  #ui {
+    position:fixed; top:0; left:0; right:0;
+    display:flex; justify-content:space-between; align-items:flex-start;
+    padding:20px 24px; pointer-events:none; z-index:10;
+  }
+  #title {
+    font-size:11px; letter-spacing:0.3em; text-transform:uppercase;
+    color:rgba(180,230,120,0.4); line-height:1.8;
+  }
+  #controls-hint {
+    font-size:10px; letter-spacing:0.15em; color:rgba(180,230,120,0.2);
+    text-align:right; line-height:2.1;
+  }
+
+  #legend {
+    position:fixed; bottom:24px; left:24px;
+    display:flex; flex-direction:column; gap:7px;
+    pointer-events:none; z-index:10;
+  }
+  .legend-item { display:flex; align-items:center; gap:10px; font-size:10px; letter-spacing:0.2em; color:rgba(180,230,120,0.3); }
+  .legend-dot  { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+
+  #tooltip {
+    position:fixed; pointer-events:none; z-index:20;
+    background:rgba(6,13,6,0.92);
+    border:1px solid rgba(120,200,80,0.2);
+    color:rgba(200,240,160,0.9);
+    padding:8px 14px; border-radius:4px;
+    font-size:11px; letter-spacing:0.1em;
+    display:none; white-space:nowrap;
+    backdrop-filter:blur(8px);
+  }
+
+  #side-panel {
+    position:fixed; top:50%; right:24px;
+    transform:translateY(-50%);
+    z-index:20; pointer-events:auto;
+    display:flex; flex-direction:column; gap:6px; align-items:flex-end;
+  }
+  .side-btn {
+    background:rgba(120,200,60,0.07); border:1px solid rgba(120,200,60,0.18);
+    color:rgba(160,230,100,0.65); padding:8px 14px;
+    font-size:10px; letter-spacing:0.2em; cursor:pointer;
+    border-radius:3px; font-family:inherit; transition:all 0.2s; white-space:nowrap;
+  }
+  .side-btn:hover { background:rgba(120,200,60,0.15); color:rgba(200,255,140,0.9); }
+  #reset-btn { border-color:rgba(230,160,60,0.3); color:rgba(230,180,80,0.7); }
+  #reset-btn:hover { background:rgba(230,160,60,0.12); color:#e8c060; }
+
+  #input-box {
+    display:none; margin-top:2px;
+    background:rgba(6,13,6,0.96);
+    border:1px solid rgba(120,200,60,0.18);
+    border-radius:4px; padding:12px; width:260px;
+    backdrop-filter:blur(12px);
+  }
+  #input-box textarea {
+    width:100%; height:200px; background:rgba(120,200,60,0.04);
+    border:1px solid rgba(120,200,60,0.1); color:rgba(200,240,160,0.85);
+    font-size:10px; font-family:'Courier New',monospace;
+    padding:8px; border-radius:3px; resize:none; outline:none; line-height:1.5;
+  }
+  #input-box button {
+    width:100%; margin-top:8px; padding:8px;
+    background:rgba(100,180,50,0.15); border:1px solid rgba(100,180,50,0.3);
+    color:rgba(160,230,100,0.9); font-size:10px; letter-spacing:0.2em;
+    cursor:pointer; border-radius:3px; font-family:inherit; transition:all 0.2s;
+  }
+  #input-box button:hover { background:rgba(100,180,50,0.25); }
+  #input-label { font-size:9px; letter-spacing:0.2em; color:rgba(160,230,100,0.3); margin-bottom:8px; display:block; }
+
+  #breadcrumb {
+    position:fixed; bottom:24px; right:24px;
+    font-size:10px; letter-spacing:0.15em; color:rgba(180,230,120,0.3);
+    z-index:10; pointer-events:none;
+  }
+</style>
+</head>
+<body>
+
+<div id="ui">
+  <div id="title">3D BAUMKARTE<br><span style="font-size:9px;opacity:0.5;">TREE MIND GRAPH</span></div>
+  <div id="controls-hint">
+    LINKS-DRAG — Rotieren<br>
+    RECHTS-DRAG / MITTE — Verschieben<br>
+    SCROLL — Zoomen<br>
+    KLICK — Zentrieren / Pivot<br>
+    2-FINGER — Zoom + Pan<br>
+    RESET — Ursprungsansicht
+  </div>
+</div>
+
+<div id="legend"></div>
+<div id="tooltip"></div>
+<div id="breadcrumb"></div>
+
+<div id="side-panel">
+  <button class="side-btn" id="toggle-btn">MERMAID EINGABE</button>
+  <button class="side-btn" id="reset-btn">↺  RESET</button>
+  <div id="input-box">
+    <span id="input-label">MERMAID MINDMAP CODE</span>
+    <textarea id="mermaid-input"></textarea>
+    <button id="render-btn">GENERIEREN</button>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+// ─── TREE COLOUR PALETTE ─────────────────────────────────────────────────────
+// Root=bark-brown, then progressively greener / lighter toward leaves
+const DEPTH_COLORS   = ['#8B5E3C','#a0784a','#6db35a','#7dc962','#a8e06a','#cdf08a'];
+const DEPTH_EMISSIVE = ['#3a1f08','#4a2e0a','#1a4010','#1e5012','#2a5a10','#3a6a18'];
+const DEPTH_SIZES    = [2.0, 1.3, 0.9, 0.68, 0.52, 0.4];
+// Trunk/branch radii (tubes get thinner with depth)
+const BRANCH_RADII   = [0.38, 0.22, 0.13, 0.08, 0.055, 0.038];
+
+// ─── MERMAID PARSER ──────────────────────────────────────────────────────────
+function parseMermaid(text) {
+  const lines = text.split('\n');
+  let inMindmap = false;
+  const nodes = [], stack = [];
+  let idCounter = 0;
+  for (let raw of lines) {
+    const line = raw.replace(/\t/g,'  '), trimmed = line.trim();
+    if (!trimmed) continue;
+    if (trimmed.toLowerCase().startsWith('mindmap')) { inMindmap=true; continue; }
+    if (!inMindmap) continue;
+    const indent = line.search(/\S/);
+    let label = trimmed
+      .replace(/^::[^\s]+\s*/,'')
+      .replace(/^\(\((.+)\)\)$/,'$1')
+      .replace(/^\[(.+)\]$/,'$1')
+      .replace(/^\{(.+)\}$/,'$1')
+      .replace(/^\((.+)\)$/,'$1')
+      .replace(/^>(.+)\]$/,'$1')
+      .trim();
+    const id = idCounter++;
+    while (stack.length && stack[stack.length-1].indent >= indent) stack.pop();
+    const parentId = stack.length ? stack[stack.length-1].id : null;
+    const depth = stack.length;
+    nodes.push({ id, label, parentId, depth, children:[] });
+    stack.push({ indent, id });
+  }
+  const map={};
+  nodes.forEach(n=>map[n.id]=n);
+  nodes.forEach(n=>{ if(n.parentId!==null && map[n.parentId]) map[n.parentId].children.push(n.id); });
+  return nodes;
+}
+
+// ─── THREE.JS SETUP ──────────────────────────────────────────────────────────
+const scene  = new THREE.Scene();
+scene.fog    = new THREE.FogExp2(0x060d06, 0.012);
+
+const camera = new THREE.PerspectiveCamera(55, innerWidth/innerHeight, 0.1, 800);
+camera.position.set(0, 4, 30);
+
+const renderer = new THREE.WebGLRenderer({ antialias:true });
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.setSize(innerWidth, innerHeight);
+renderer.setClearColor(0x060d06, 1);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+document.body.appendChild(renderer.domElement);
+
+// ── Lighting: warm ground light + cool sky + directional sun ──
+scene.add(new THREE.AmbientLight(0x1a3310, 1.0));
+const sunLight = new THREE.DirectionalLight(0xfff4d0, 1.8);
+sunLight.position.set(15, 40, 20);
+sunLight.castShadow = true;
+sunLight.shadow.mapSize.set(1024,1024);
+scene.add(sunLight);
+const skyLight = new THREE.HemisphereLight(0x4a8830, 0x1a0d05, 0.9);
+scene.add(skyLight);
+// Subtle green underglow
+const groundGlow = new THREE.PointLight(0x2a6010, 2.0, 60);
+groundGlow.position.set(0,-8,0);
+scene.add(groundGlow);
+
+// ── Floating dust particles ──
+(function addParticles() {
+  const geo = new THREE.BufferGeometry();
+  const pos = [];
+  for (let i=0; i<600; i++)
+    pos.push((Math.random()-.5)*120, Math.random()*60-5, (Math.random()-.5)*120);
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(pos,3));
+  scene.add(new THREE.Points(geo, new THREE.PointsMaterial({
+    color:0x88cc44, size:0.18, transparent:true, opacity:0.35
+  })));
+})();
+
+// ── Ground plane (mossy) ──
+const groundGeo = new THREE.CircleGeometry(55, 64);
+const groundMat = new THREE.MeshStandardMaterial({
+  color:0x1a3a0c, roughness:0.95, metalness:0.0,
+  transparent:true, opacity:0.6
+});
+const ground = new THREE.Mesh(groundGeo, groundMat);
+ground.rotation.x = -Math.PI/2;
+ground.position.y = -10;
+ground.receiveShadow = true;
+scene.add(ground);
+
+// ─── CAMERA ORBIT STATE ──────────────────────────────────────────────────────
+const INIT_SPH = { theta:0.4, phi:1.25, radius:30 };
+let spherical       = { ...INIT_SPH };
+let targetSpherical = { ...INIT_SPH };
+let pivot       = new THREE.Vector3(0,3,0);
+let targetPivot = new THREE.Vector3(0,3,0);
+const INIT_PIVOT = new THREE.Vector3(0,3,0);
+
+function applyCameraFromSpherical() {
+  camera.position.set(
+    pivot.x + spherical.radius * Math.sin(spherical.phi) * Math.sin(spherical.theta),
+    pivot.y + spherical.radius * Math.cos(spherical.phi),
+    pivot.z + spherical.radius * Math.sin(spherical.phi) * Math.cos(spherical.theta)
+  );
+  camera.lookAt(pivot);
+}
+
+// ─── MOUSE / TOUCH ───────────────────────────────────────────────────────────
+const mouse = { x:0, y:0, btn:0, down:false, moved:false };
+
+function panPivot(dx, dy) {
+  const speed = spherical.radius * 0.0012;
+  const right = new THREE.Vector3();
+  right.crossVectors(camera.getWorldDirection(new THREE.Vector3()), camera.up).negate().normalize();
+  const up = camera.up.clone().normalize();
+  targetPivot.addScaledVector(right, -dx*speed);
+  targetPivot.addScaledVector(up,     dy*speed);
+}
+
+renderer.domElement.addEventListener('contextmenu', e=>e.preventDefault());
+renderer.domElement.addEventListener('mousedown', e=>{
+  mouse.down=true; mouse.btn=e.button; mouse.x=e.clientX; mouse.y=e.clientY; mouse.moved=false;
+});
+renderer.domElement.addEventListener('mousemove', e=>{
+  if (!mouse.down) return;
+  const dx=e.clientX-mouse.x, dy=e.clientY-mouse.y;
+  if (Math.abs(dx)>1||Math.abs(dy)>1) mouse.moved=true;
+  mouse.x=e.clientX; mouse.y=e.clientY;
+  if (mouse.btn===0) {
+    targetSpherical.theta -= dx*0.007;
+    targetSpherical.phi = Math.max(0.1, Math.min(Math.PI-0.1, targetSpherical.phi+dy*0.007));
+  } else { panPivot(dx,dy); }
+});
+renderer.domElement.addEventListener('mouseup', ()=>{ mouse.down=false; });
+renderer.domElement.addEventListener('wheel', e=>{
+  targetSpherical.radius = Math.max(4, Math.min(100, targetSpherical.radius+e.deltaY*0.04));
+},{ passive:true });
+
+let touches=[], touchMode='none';
+renderer.domElement.addEventListener('touchstart', e=>{
+  touches=[...e.touches]; mouse.moved=false;
+  touchMode=e.touches.length===1?'rotate':'pan-zoom';
+});
+renderer.domElement.addEventListener('touchmove', e=>{
+  e.preventDefault();
+  const t=e.touches;
+  if (t.length===1 && touchMode==='rotate') {
+    const dx=t[0].clientX-touches[0].clientX, dy=t[0].clientY-touches[0].clientY;
+    if (Math.abs(dx)>1||Math.abs(dy)>1) mouse.moved=true;
+    targetSpherical.theta-=dx*0.007;
+    targetSpherical.phi=Math.max(0.1,Math.min(Math.PI-0.1,targetSpherical.phi+dy*0.007));
+  } else if (t.length===2 && touches.length>=2) {
+    const pm={ x:(touches[0].clientX+touches[1].clientX)*0.5, y:(touches[0].clientY+touches[1].clientY)*0.5 };
+    const cm={ x:(t[0].clientX+t[1].clientX)*0.5,             y:(t[0].clientY+t[1].clientY)*0.5 };
+    const pd=Math.hypot(touches[0].clientX-touches[1].clientX, touches[0].clientY-touches[1].clientY);
+    const cd=Math.hypot(t[0].clientX-t[1].clientX, t[0].clientY-t[1].clientY);
+    targetSpherical.radius=Math.max(4,Math.min(100,targetSpherical.radius-(cd-pd)*0.05));
+    const mdx=cm.x-pm.x, mdy=cm.y-pm.y;
+    if (Math.abs(mdx)>0.5||Math.abs(mdy)>0.5) { mouse.moved=true; panPivot(mdx,mdy); }
+  }
+  touches=[...t];
+},{ passive:false });
+renderer.domElement.addEventListener('touchend', e=>{
+  touches=[...e.touches];
+  touchMode=touches.length===0?'none':touches.length===1?'rotate':'pan-zoom';
+});
+
+// ─── GRAPH STATE ─────────────────────────────────────────────────────────────
+const graphGroup = new THREE.Group();
+scene.add(graphGroup);
+let nodeMeshes=[], nodeDataMap={}, selectedId=null;
+// Every mesh that should dim when a node is focused
+let allFadeables = [];   // { mesh, origColor, origOpacity, origEI }
+let branchByNode = {};   // nodeId → branch tube mesh (the branch FROM parent TO this node)
+
+// ─── SPRITE LABEL ────────────────────────────────────────────────────────────
+function makeLabel(text, color) {
+  const canvas=document.createElement('canvas');
+  const ctx=canvas.getContext('2d');
+  ctx.font='26px Courier New';
+  const tw=ctx.measureText(text).width;
+  canvas.width=tw+24; canvas.height=42;
+  ctx.font='26px Courier New';
+  ctx.fillStyle=color; ctx.globalAlpha=0.92;
+  ctx.fillText(text,12,30);
+  const tex=new THREE.CanvasTexture(canvas);
+  const mat=new THREE.SpriteMaterial({ map:tex, transparent:true, depthTest:false });
+  const sp=new THREE.Sprite(mat);
+  sp.scale.set((canvas.width/canvas.height)*0.95, 0.95, 1);
+  return sp;
+}
+
+// ─── TREE BRANCH TUBE ────────────────────────────────────────────────────────
+// Natural organic branch: curves upward and slightly outward
+function makeBranch(from, to, depth) {
+  const d = Math.min(depth, BRANCH_RADII.length-1);
+  const tubeR = BRANCH_RADII[d];
+
+  // Control point: halfway but pulled upward + slightly outward for organic feel
+  const mid = from.clone().add(to).multiplyScalar(0.5);
+  const horizontal = to.clone().sub(from); horizontal.y=0; horizontal.normalize();
+  // Bow upward
+  mid.y += Math.max(0.5, (to.y - from.y) * 0.35 + 1.2 - depth*0.15);
+  // Slight outward bow
+  mid.addScaledVector(horizontal, 0.4);
+
+  const curve = new THREE.QuadraticBezierCurve3(from, mid, to);
+
+  // Color interpolates bark→branch→twig
+  const col = new THREE.Color(DEPTH_COLORS[d]);
+  // Bark texture feel: darker/rougher for thick branches
+  const roughness = d===0 ? 0.92 : d<=2 ? 0.80 : 0.65;
+  const metalness = d===0 ? 0.0  : 0.05;
+
+  const geo = new THREE.TubeGeometry(curve, 20, tubeR, 7, false);
+  const mat = new THREE.MeshStandardMaterial({
+    color: col,
+    emissive: new THREE.Color(DEPTH_EMISSIVE[d]),
+    emissiveIntensity: 0.25,
+    roughness, metalness,
+    transparent: d>=3,
+    opacity: d>=3 ? 0.88 : 1.0,
+  });
+  const mesh = new THREE.Mesh(geo, mat);
+  mesh.castShadow = true;
+  return mesh;
+}
+
+// ─── LEAF CLUSTER (for deepest nodes) ────────────────────────────────────────
+function makeLeafCluster(pos, color) {
+  const group = new THREE.Group();
+  const col = new THREE.Color(color);
+  // 5 offset leaf-ellipsoids
+  for (let i=0; i<5; i++) {
+    const angle = (i/5)*Math.PI*2;
+    const r = 0.55 + Math.random()*0.35;
+    const ox = Math.cos(angle)*r*0.7;
+    const oy = Math.random()*0.4;
+    const oz = Math.sin(angle)*r*0.7;
+    const geo = new THREE.SphereGeometry(0.28+Math.random()*0.18, 8, 6);
+    // Flatten slightly into leaf shape
+    geo.applyMatrix4(new THREE.Matrix4().makeScale(1.1, 0.6, 1.1));
+    const mat = new THREE.MeshStandardMaterial({
+      color: col,
+      emissive: new THREE.Color(DEPTH_EMISSIVE[5]),
+      emissiveIntensity: 0.5,
+      roughness: 0.7, metalness: 0.0,
+      transparent: true, opacity: 0.85,
+      side: THREE.DoubleSide,
+    });
+    const m = new THREE.Mesh(geo, mat);
+    m.position.set(ox, oy, oz);
+    m.castShadow = true;
+    group.add(m);
+  }
+  group.position.copy(pos);
+  return group;
+}
+
+// ─── BUILD GRAPH ─────────────────────────────────────────────────────────────
+function buildGraph(nodes) {
+  graphGroup.clear();
+  nodeMeshes=[]; nodeDataMap={}; selectedId=null;
+  allFadeables=[]; branchByNode={};
+  if (!nodes.length) return;
+
+  const map={};
+  nodes.forEach(n=>map[n.id]=n);
+  const root = nodes.find(n=>n.parentId===null)||nodes[0];
+
+  // ── Tree layout: root at bottom, branches spread UP and outward ──
+  // Each level gets progressively higher Y and wider horizontal spread
+  const positions = {};
+
+  // For root: place at origin (base of trunk)
+  // For each subtree of root children: assign a horizontal sector
+  // Then recurse upward with fibonacci half-sphere (upper hemisphere only)
+
+  const LEVEL_HEIGHT = [0, 7, 5, 3.5, 2.5, 1.8]; // vertical rise per level
+  const SPREAD       = [0, 1.0, 0.85, 0.7, 0.6, 0.5]; // horizontal spread factor
+
+  // Upper-hemisphere fibonacci: y always >= 0 (points go UP)
+  function fibUpperHemi(n, radius, spreadFactor) {
+    if (n===1) return [new THREE.Vector3(0, radius, 0)];
+    const pts=[], golden=Math.PI*(3-Math.sqrt(5));
+    // Only upper half: y from 0..1 mapped to slight-upward cone
+    for (let i=0; i<n; i++) {
+      // y in [0.05, 1] — all points go upward
+      const y = 0.05 + (i/(n-1>0?n-1:1)) * 0.95;
+      const r = Math.sqrt(Math.max(0,1-y*y));
+      const theta = golden*i;
+      pts.push(new THREE.Vector3(
+        Math.cos(theta)*r*radius*spreadFactor,
+        y*radius,
+        Math.sin(theta)*r*radius*spreadFactor
+      ));
+    }
+    return pts;
+  }
+
+  // BFS: assign positions
+  const queue=[{ node:root, pos:new THREE.Vector3(0,0,0) }];
+  while (queue.length) {
+    const { node, pos } = queue.shift();
+    positions[node.id] = pos.clone();
+    const children = node.children.map(cid=>map[cid]).filter(Boolean);
+    if (!children.length) continue;
+    const lvl    = Math.min(node.depth+1, LEVEL_HEIGHT.length-1);
+    const radius = LEVEL_HEIGHT[lvl];
+    const spread = SPREAD[lvl];
+    const pts    = fibUpperHemi(children.length, radius, spread);
+
+    // Align the "up" direction to the parent's outgoing direction
+    // (so branches don't fold back downward)
+    const parentUp = pos.clone().normalize();
+    if (parentUp.length() < 0.001) parentUp.set(0,1,0);
+    // Only tilt slightly — don't fully align, keeps tree more upright
+    const tiltAxis = new THREE.Vector3(0,1,0);
+    const quat = new THREE.Quaternion().setFromUnitVectors(
+      new THREE.Vector3(0,1,0),
+      parentUp.clone().lerp(new THREE.Vector3(0,1,0), 0.55).normalize()
+    );
+
+    children.forEach((child,i) => {
+      const childPos = pos.clone().add(pts[i].clone().applyQuaternion(quat));
+      // Enforce minimum upward movement so no branch goes below parent
+      if (childPos.y < pos.y + 0.6) childPos.y = pos.y + 0.6 + Math.random()*0.4;
+      queue.push({ node:child, pos:childPos });
+    });
+  }
+
+  // ── Trunk base cylinder ──
+  const trunkGeo = new THREE.CylinderGeometry(0.55, 0.85, 2.2, 12);
+  const trunkMat = new THREE.MeshStandardMaterial({
+    color:0x5c3318, emissive:0x1a0a04, emissiveIntensity:0.2,
+    roughness:0.95, metalness:0.0
+  });
+  const trunk = new THREE.Mesh(trunkGeo, trunkMat);
+  trunk.position.set(0,-1.1,0);
+  trunk.castShadow=true; trunk.receiveShadow=true;
+  graphGroup.add(trunk);
+  allFadeables.push({ mesh:trunk, origColor:new THREE.Color(0x5c3318), origOpacity:1.0, origEI:0.2 });
+
+  // ── Node meshes ──
+  nodes.forEach(node => {
+    const pos   = positions[node.id] || new THREE.Vector3();
+    const depth = Math.min(node.depth, DEPTH_COLORS.length-1);
+    const col   = new THREE.Color(DEPTH_COLORS[depth]);
+    const size  = DEPTH_SIZES[depth];
+    const isLeaf = !node.children.length || depth >= 4;
+
+    let mesh;
+    if (depth===0) {
+      const geo = new THREE.SphereGeometry(size, 18, 14);
+      mesh = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({
+        color:col, emissive:new THREE.Color(DEPTH_EMISSIVE[0]),
+        emissiveIntensity:0.3, roughness:0.88, metalness:0.0
+      }));
+    } else if (isLeaf) {
+      const cluster = makeLeafCluster(pos, DEPTH_COLORS[depth]);
+      // track each leaf sub-mesh
+      cluster.children.forEach(m => {
+        allFadeables.push({ mesh:m, origColor:col.clone(), origOpacity:0.85, origEI:0.5, nodeId:node.id });
+      });
+      graphGroup.add(cluster);
+      mesh = new THREE.Mesh(
+        new THREE.SphereGeometry(0.55, 8, 6),
+        new THREE.MeshStandardMaterial({ color:col, transparent:true, opacity:0.0 })
+      );
+    } else {
+      const geo = new THREE.SphereGeometry(size, 16, 12);
+      mesh = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({
+        color:col, emissive:new THREE.Color(DEPTH_EMISSIVE[depth]),
+        emissiveIntensity:0.3, roughness:0.75, metalness:0.05
+      }));
+    }
+    mesh.position.copy(pos);
+    mesh.castShadow=true;
+    mesh.userData={ nodeId:node.id, depth };
+    graphGroup.add(mesh);
+
+    // register for fading (skip invisible raycasting sphere)
+    if (!(isLeaf && depth!==0)) {
+      allFadeables.push({ mesh, origColor:col.clone(), origOpacity:1.0, origEI:mesh.material.emissiveIntensity||0.3, nodeId:node.id });
+    }
+
+    const label = makeLabel(node.label, DEPTH_COLORS[depth]);
+    label.position.copy(pos);
+    label.position.y += size + 0.65;
+    graphGroup.add(label);
+
+    nodeDataMap[node.id] = { mesh, label, node, pos:pos.clone() };
+    nodeMeshes.push({ mesh, label, node });
+  });
+
+  // ── Branches (tubes) ──
+  nodes.forEach(node => {
+    if (node.parentId===null) return;
+    const fromData = nodeDataMap[node.parentId];
+    const toData   = nodeDataMap[node.id];
+    if (!fromData||!toData) return;
+    const branch = makeBranch(fromData.pos, toData.pos, node.depth);
+    branch.userData.branchNodeId = node.id;
+    graphGroup.add(branch);
+    branchByNode[node.id] = branch;
+    const d = Math.min(node.depth, DEPTH_COLORS.length-1);
+    allFadeables.push({ mesh:branch, origColor:new THREE.Color(DEPTH_COLORS[d]), origOpacity:branch.material.opacity||1.0, origEI:0.25, nodeId:node.id, isBranch:true, parentId:node.parentId });
+  });
+
+  buildLegend(nodes);
+}
+
+// ─── LEGEND ──────────────────────────────────────────────────────────────────
+function buildLegend(nodes) {
+  const maxDepth = Math.max(...nodes.map(n=>n.depth));
+  const labels   = ['Stamm','Ast 1','Ast 2','Zweig','Blatt','Knospe'];
+  const el = document.getElementById('legend');
+  el.innerHTML='';
+  for (let d=0; d<=Math.min(maxDepth,5); d++) {
+    el.innerHTML+=`<div class="legend-item">
+      <div class="legend-dot" style="background:${DEPTH_COLORS[d]}"></div>
+      <span>${labels[d]}</span>
+    </div>`;
+  }
+}
+
+// ─── HIGHLIGHT / DIM ─────────────────────────────────────────────────────────
+// Build ancestor set for a node (path from root to node)
+function getAncestors(nodeId) {
+  const ancestors = new Set();
+  let cur = nodeDataMap[nodeId];
+  while (cur) {
+    ancestors.add(cur.node.id);
+    cur = cur.node.parentId !== null ? nodeDataMap[cur.node.parentId] : null;
+  }
+  return ancestors;
+}
+// Build descendant set for a node (full subtree)
+function getDescendants(nodeId) {
+  const desc = new Set();
+  const q = [nodeId];
+  while (q.length) {
+    const id = q.shift();
+    desc.add(id);
+    const nd = nodeDataMap[id];
+    if (nd) nd.node.children.forEach(cid => q.push(cid));
+  }
+  return desc;
+}
+
+function highlightNode(nodeId) {
+  if (nodeId === null) {
+    // ── RESET: restore everything ──
+    allFadeables.forEach(({ mesh, origColor, origOpacity, origEI }) => {
+      mesh.material.color.copy(origColor);
+      mesh.material.transparent = mesh.material.transparent; // keep as-is
+      mesh.material.opacity = origOpacity;
+      mesh.material.emissiveIntensity = origEI;
+      mesh.material.needsUpdate = true;
+    });
+    nodeMeshes.forEach(({ mesh, label }) => {
+      mesh.scale.setScalar(1);
+      label.material.opacity = 1.0;
+    });
+    return;
+  }
+
+  // Collect the "lit" set: selected node + all ancestors + all descendants
+  const ancestors  = getAncestors(nodeId);   // path up to root
+  const descendants = getDescendants(nodeId); // full subtree below
+  const litNodes   = new Set([...ancestors, ...descendants]);
+
+  // Dim everything
+  allFadeables.forEach(({ mesh, origColor, origOpacity, origEI, nodeId: nid, isBranch, parentId }) => {
+    // For branches: lit if BOTH endpoints are in litNodes
+    const isLit = isBranch
+      ? (litNodes.has(nid) && litNodes.has(parentId))
+      : (nid === undefined || litNodes.has(nid)); // trunk = always slightly lit
+
+    if (isLit) {
+      mesh.material.color.copy(origColor);
+      mesh.material.opacity = origOpacity;
+      mesh.material.emissiveIntensity = origEI;
+      mesh.material.transparent = mesh.material.transparent;
+    } else {
+      // Desaturate + darken color
+      const dimCol = origColor.clone().multiplyScalar(0.18);
+      mesh.material.color.copy(dimCol);
+      mesh.material.emissiveIntensity = 0.0;
+      mesh.material.transparent = true;
+      mesh.material.opacity = 0.13;
+    }
+    mesh.material.needsUpdate = true;
+  });
+
+  // Labels: hide unrelated, show related
+  nodeMeshes.forEach(({ mesh, label, node }) => {
+    mesh.scale.setScalar(1);
+    if (litNodes.has(node.id)) {
+      label.material.opacity = 1.0;
+    } else {
+      label.material.opacity = 0.07;
+    }
+  });
+
+  // Selected node itself: glow + scale up
+  const sel = nodeDataMap[nodeId];
+  if (sel && sel.mesh.material.opacity !== 0) {
+    sel.mesh.material.emissiveIntensity = 1.5;
+    sel.mesh.scale.setScalar(1.45);
+  }
+}
+
+// ─── CENTRE ON NODE ──────────────────────────────────────────────────────────
+function centreOn(nodeId) {
+  const data=nodeDataMap[nodeId];
+  if (!data) return;
+  selectedId=nodeId;
+  highlightNode(nodeId);
+  targetPivot.copy(data.pos);
+  const zoomDist = Math.max(5, 22-data.node.depth*2.8);
+  targetSpherical.radius=Math.min(targetSpherical.radius, zoomDist);
+  document.getElementById('breadcrumb').textContent=
+    '● '+data.node.label.toUpperCase()+'  ['+['Stamm','Ast 1','Ast 2','Zweig','Blatt','Knospe'][Math.min(data.node.depth,5)]+']';
+}
+
+// ─── RESET ───────────────────────────────────────────────────────────────────
+function resetView() {
+  targetSpherical={ ...INIT_SPH };
+  targetPivot.copy(INIT_PIVOT);
+  selectedId=null; highlightNode(null);
+  document.getElementById('breadcrumb').textContent='';
+}
+
+// ─── RAYCASTER ───────────────────────────────────────────────────────────────
+const raycaster=new THREE.Raycaster(), mouseNDC=new THREE.Vector2();
+renderer.domElement.addEventListener('click', e=>{
+  if (mouse.moved) return;
+  mouseNDC.x=(e.clientX/innerWidth)*2-1;
+  mouseNDC.y=-(e.clientY/innerHeight)*2+1;
+  raycaster.setFromCamera(mouseNDC, camera);
+  const hits=raycaster.intersectObjects(nodeMeshes.map(n=>n.mesh));
+  if (!hits.length) return;
+  centreOn(hits[0].object.userData.nodeId);
+});
+
+const tooltip=document.getElementById('tooltip');
+renderer.domElement.addEventListener('mousemove', e=>{
+  if (mouse.down) return;
+  mouseNDC.x=(e.clientX/innerWidth)*2-1;
+  mouseNDC.y=-(e.clientY/innerHeight)*2+1;
+  raycaster.setFromCamera(mouseNDC, camera);
+  const hits=raycaster.intersectObjects(nodeMeshes.map(n=>n.mesh));
+  if (hits.length) {
+    const nd=nodeDataMap[hits[0].object.userData.nodeId];
+    tooltip.style.display='block';
+    tooltip.style.left=(e.clientX+14)+'px';
+    tooltip.style.top=(e.clientY-10)+'px';
+    const lvl=['Stamm','Ast 1','Ast 2','Zweig','Blatt','Knospe'][Math.min(nd.node.depth,5)];
+    tooltip.textContent=nd.node.label+'  ['+lvl+']';
+    renderer.domElement.style.cursor='pointer';
+  } else {
+    tooltip.style.display='none';
+    renderer.domElement.style.cursor='default';
+  }
+});
+
+// ─── RESIZE ──────────────────────────────────────────────────────────────────
+window.addEventListener('resize', ()=>{
+  camera.aspect=innerWidth/innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth,innerHeight);
+});
+
+// ─── ANIMATE ─────────────────────────────────────────────────────────────────
+const clock=new THREE.Clock();
+function animate() {
+  requestAnimationFrame(animate);
+  const t=clock.getElapsedTime();
+  spherical.theta  += (targetSpherical.theta  - spherical.theta)  * 0.08;
+  spherical.phi    += (targetSpherical.phi    - spherical.phi)    * 0.08;
+  spherical.radius += (targetSpherical.radius - spherical.radius) * 0.08;
+  pivot.lerp(targetPivot, 0.07);
+  applyCameraFromSpherical();
+
+  // Gentle sway — tiny wind effect on the whole tree
+  graphGroup.rotation.z = Math.sin(t*0.18)*0.018;
+  graphGroup.rotation.x = Math.sin(t*0.13)*0.010;
+
+  // Pulse root knot
+  const rd=nodeDataMap[0];
+  if (rd && selectedId!==0) rd.mesh.scale.setScalar(1+0.04*Math.sin(t*1.3));
+
+  // Labels face camera
+  nodeMeshes.forEach(({label})=>label.quaternion.copy(camera.quaternion));
+
+  renderer.render(scene,camera);
+}
+animate();
+
+// ─── UI ──────────────────────────────────────────────────────────────────────
+document.getElementById('toggle-btn').addEventListener('click', ()=>{
+  const b=document.getElementById('input-box');
+  b.style.display=(b.style.display==='block')?'none':'block';
+});
+document.getElementById('reset-btn').addEventListener('click', resetView);
+document.getElementById('render-btn').addEventListener('click', ()=>{
+  const text=document.getElementById('mermaid-input').value;
+  if (!text.trim()) return;
+  buildGraph(parseMermaid(text));
+  document.getElementById('input-box').style.display='none';
+  resetView();
+});
+
+// ─── DEMO ────────────────────────────────────────────────────────────────────
+const DEMO=`mindmap
+  root((Erde))
+    Geographie
+      Kontinente
+        Europa
+          Deutschland
+            Berlin
+            München
+          Frankreich
+            Paris
+            Lyon
+          Italien
+            Rom
+            Mailand
+        Asien
+          China
+            Peking
+            Shanghai
+          Japan
+            Tokio
+            Osaka
+          Indien
+            Delhi
+            Mumbai
+        Amerika
+          USA
+            New York
+            Los Angeles
+          Brasilien
+            São Paulo
+            Rio
+          Kanada
+            Toronto
+            Vancouver
+      Ozeane
+        Pazifik
+          Korallenmeer
+          Beringmeer
+        Atlantik
+          Karibik
+          Nordsee
+        Indik
+          Arabisches Meer
+    Natur
+      Ökosysteme
+        Tropisch
+          Regenwald
+            Amazonas
+            Borneo
+          Korallenriff
+            Great Barrier
+            Malediven
+        Gemäßigt
+          Laubwald
+          Prärie
+        Polar
+          Tundra
+          Eiskappe
+      Artenvielfalt
+        Säugetiere
+          Meeressäuger
+          Landtiere
+        Vögel
+          Zugvögel
+          Meeresvögel
+        Reptilien
+          Schildkröten
+          Krokodile
+    Gesellschaft
+      Kulturen
+        Sprachen
+          Indoeuropäisch
+            Germanisch
+            Romanisch
+          Sino-Tibetisch
+            Mandarin
+            Kantonesisch
+          Semitisch
+            Arabisch
+            Hebräisch
+        Religion
+          Christentum
+            Katholisch
+            Evangelisch
+          Islam
+            Sunnitisch
+            Schiitisch
+          Buddhismus
+            Theravada
+            Mahayana
+      Wirtschaft
+        Industrie
+          Energie
+            Erneuerbar
+            Fossil
+          Produktion
+            Automobil
+            Elektronik
+        Handel
+          Exporte
+          Importe
+    Wissenschaft
+      Physik
+        Quantenmechanik
+          Verschränkung
+          Superposition
+        Kosmologie
+          Dunkle Materie
+          Schwarze Löcher
+      Biologie
+        Genetik
+          CRISPR
+          Genomik
+        Neurologie
+          Kognition
+          Bewusstsein
+      Technologie
+        KI
+          Maschinelles Lernen
+          Neuronale Netze
+        Raumfahrt
+          Mondmission
+          Marsforschung`;
+
+document.getElementById('mermaid-input').value=DEMO;
+buildGraph(parseMermaid(DEMO));
+</script>
+</body>
+</html>
