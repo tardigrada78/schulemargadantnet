@@ -2,36 +2,35 @@ import { Router } from "express";
 const router = Router();
 import OpenAI from "openai";
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+import Anthropic from "@anthropic-ai/sdk";
+const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 import NewsAPI from "newsapi"; // https://newsapi.org/
 const newsapi = new NewsAPI(process.env.NEWS_API_KEY);
 import moment from "moment";
 
 // Erstellt KI-Wochenschau
 async function doSummary(data) {
-  const prompt = `Du erhältst eine Sammlung von aktuellen News-Artikeln. 
-  Erstelle eine kompakte Wochenschau für das Radio, die die wichtigsten Highlights der letzten Tage zusammenfasst. 
-  Die Übersicht soll prägnant und leicht lesbar sein, ohne dass wichtige Themen ausgelassen werden. 
+  const prompt = `Du erhältst aktuelle News-Artikel. Erstelle einen packenden Radio-Podcast-Beitrag von maximal 180 Wörtern.
 
-  Fokus:
-  - Der Text soll ungefähr 300 Wörter umfassen
-  - Gliedere den Text thematisch.
-  - Beschränke dich auf Hauptthemen, Entdeckungen, Ereignisse oder relevante Entwicklungen.
-  - Fasse alles zu einem flüssigen Text zusammen, der als Übersicht dient.
-  - Schreibe keine eigenen Einschätzungen und Kommentare wie "Diese Entwicklungen zeigen...". 
-  - Erkläre nicht, wie du den Text gegliedert hast, sondern beginne direkt mit einer freundlichen Begrüssung.
-  - Füge keine Titel oder andere Formatierungen hinzu. Schreibe auf Deutsch in einer präzisen, aber lebendigen Sprache. 
-  - Schreibe den Text so, dass er als Podcast vorgetragen werden kann. 
+Anforderungen:
+- Beginne direkt mit dem überraschendsten oder wichtigsten konkreten Fakt als Einstieg – kein "Willkommen" oder ähnliches
+- Nenne konkrete Zahlen, Namen und Entdeckungen – keine vagen Formulierungen
+- Kurze, aktive Sätze – kein akademischer Stil
+- Keine Füllsätze ("Diese Entwicklungen zeigen...", "Es bleibt abzuwarten...")
+- Kein Titel, keine Formatierung, kein Abschlusssatz mit Metakommentar
+- Nur fliessender Text, der direkt vorgetragen werden kann
+- Schreibe auf Deutsch
 
-  Artikel:
-  ${data}
-  `;
+Artikel:
+${data}`;
 
-  const response = await openai.chat.completions.create({
-    model: "gpt-5-nano",
+  const response = await anthropic.messages.create({
+    model: "claude-haiku-4-5-20251001",
+    max_tokens: 1024,
     messages: [{ role: "user", content: prompt }],
   });
 
-  return response.choices[0].message.content.trim();
+  return response.content[0].text.trim();
 }
 
 // Erstellt Podcast
