@@ -10,10 +10,10 @@ import moment from "moment";
 
 // Erstellt KI-Wochenschau
 async function doSummary(data) {
-  const prompt = `Du erhältst aktuelle News-Artikel. Erstelle einen packenden Radio-Podcast-Beitrag von maximal 180 Wörtern.
+  const prompt = `Du erhältst aktuelle News-Artikel. Erstelle einen packenden Radio-Podcast-Beitrag von maximal 250 Wörtern.
 
 Anforderungen:
-- Beginne direkt mit dem überraschendsten oder wichtigsten konkreten Fakt als Einstieg – kein "Willkommen" oder ähnliches
+- Fokussiere dich auf die wichtigsten und bedeutendsten News
 - Nenne konkrete Zahlen, Namen und Entdeckungen – keine vagen Formulierungen
 - Kurze, aktive Sätze – kein akademischer Stil
 - Keine Füllsätze ("Diese Entwicklungen zeigen...", "Es bleibt abzuwarten...")
