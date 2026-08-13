@@ -47,8 +47,8 @@
     </details>
 
     <!-- PROJEKT-HEADER -->
-    <section class="card" id="projectHeader">
-      <h2 id="displayTitle">Mein Projekt</h2>
+    <details class="card" id="projectHeader">
+      <summary id="displayTitle">Mein Projekt</summary>
       <div class="project-fields">
         <label>Projekttitel
           <input type="text" id="projectTitle" placeholder="Projekttitel" />
@@ -62,7 +62,7 @@
         <button class="btn-primary" onclick="saveProject()">Speichern</button>
         <span id="saveMsg" class="save-msg"></span>
       </div>
-    </section>
+    </details>
 
     <!-- JOURNAL -->
     <section class="card" id="journalSection">
@@ -94,26 +94,13 @@
           </tbody>
         </table>
         <div class="form-actions">
-          <button class="btn-primary" onclick="submitEntry()">Eintrag speichern</button>
+          <button class="btn-primary" onclick="finishEntry()">Eintrag abschliessen</button>
           <button class="btn-secondary" onclick="toggleNewEntryForm()">Abbrechen</button>
         </div>
       </div>
 
-      <!-- Eintrags-Tabelle -->
-      <div id="journalTableWrapper">
-        <table class="journal-table" id="journalTable">
-          <thead>
-            <tr>
-              <th>Datum</th>
-              <th>Bearbeitete Inhalte / Resultate</th>
-              <th>Stolpersteine &amp; Lösungsansätze</th>
-              <th>Detailplanung</th>
-              <th>Rückmeldung KI</th>
-            </tr>
-          </thead>
-          <tbody id="journalBody"></tbody>
-        </table>
-      </div>
+      <!-- Eintrags-Liste -->
+      <div id="journalBody" class="entry-list"></div>
 
       <div class="ai-actions" style="margin-top:1rem;">
         <button class="btn-ai" onclick="getAIJournal()">Rückmeldung KI zu Journal</button>
@@ -155,6 +142,13 @@
       <div class="gantt-toolbar">
         <button class="btn-secondary btn-icon" id="btnFullwidth" onclick="toggleFullwidth()">↗ Seitenbreit</button>
         <button class="btn-secondary btn-icon" onclick="openNewWindow()">🗗 Neues Fenster</button>
+        <div class="gantt-zoom-controls">
+          <button class="btn-secondary btn-icon" onclick="zoomOut()">−</button>
+          <span id="ganttZoomLabel" class="gantt-zoom-label">100%</span>
+          <button class="btn-secondary btn-icon" onclick="zoomIn()">+</button>
+          <button class="btn-secondary btn-icon" onclick="zoomFit()">Einpassen</button>
+          <button class="btn-secondary btn-icon" onclick="zoomReset()">Reset</button>
+        </div>
       </div>
 
       <!-- Gantt-Kalender -->
@@ -275,7 +269,9 @@
         project = data.project;
         document.getElementById("loginSection").style.display = "none";
         document.getElementById("mainContent").style.display = "block";
+        document.getElementById("projectHeader").open = !project.title;
         renderAll();
+        startPolling();
       } catch (e) {
         document.getElementById("loginError").textContent = "Verbindungsfehler.";
       }
@@ -324,28 +320,82 @@
 
     // ── JOURNAL ────────────────────────────────────────────────────────────
     function renderJournal() {
-      const tbody = document.getElementById("journalBody");
-      tbody.innerHTML = "";
+      const container = document.getElementById("journalBody");
+      const openIds = new Set(
+        [...container.querySelectorAll(".entry-card[open]")].map(el => el.dataset.id)
+      );
+      const knownIds = new Set(
+        [...container.querySelectorAll(".entry-card")].map(el => el.dataset.id)
+      );
+      container.innerHTML = "";
       if (project.journalEntries.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" class="empty-msg">Noch keine Einträge. Klicken Sie auf \"+ Neuer Eintrag\".</td></tr>';
+        container.innerHTML = '<p class="empty-msg">Noch keine Einträge. Klicken Sie auf "+ Neuer Eintrag".</p>';
         return;
       }
-      const sortedEntries = [...project.journalEntries].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-      for (const entry of sortedEntries) {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td>${formatDate(entry.date)}</td>
-          <td>${renderContents(entry.contents)}</td>
-          <td>${escHtml(entry.obstacles)}</td>
-          <td>${renderPlanning(entry.planning)}</td>
-          <td class="feedback-cell">
-            ${entry.aiFeedback
-            ? `<div class="ai-feedback-text">${escHtml(entry.aiFeedback)}</div>`
-            : `<button class="btn-ai-small" onclick="getEntryFeedback('${entry.id}', this)">Rückmeldung KI</button>`
-          }
-          </td>`;
-        tbody.appendChild(tr);
-      }
+      const sortedEntries = [...project.journalEntries]
+        .filter(e => e.id !== draftEntryId)
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      sortedEntries.forEach((entry, idx) => {
+        const tc = entry.teacherComment || { status: null, text: "" };
+        const badge = tc.status === "ok" ? '<span class="lp-badge lp-badge-ok">🟢</span>'
+          : tc.status === "improve" ? '<span class="lp-badge lp-badge-improve">🟡</span>'
+          : "";
+        const preview = Object.values(entry.contents).filter(Boolean).join(" · ") || entry.obstacles || "";
+        const details = document.createElement("details");
+        details.className = "entry-card";
+        details.dataset.id = entry.id;
+        const isNew = !knownIds.has(entry.id);
+        details.open = openIds.has(entry.id) || (isNew && idx === 0);
+        details.innerHTML = `
+          <summary>
+            <span class="entry-summary-date">${formatDate(entry.date)}</span>
+            <span class="entry-summary-preview">${escHtml(preview)}</span>
+            ${badge}
+          </summary>
+          <div class="entry-card-body">
+            <div class="entry-block"><h4>Bearbeitete Inhalte / Resultate</h4>${renderContents(entry.contents)}</div>
+            <div class="entry-block"><h4>Stolpersteine &amp; Lösungsansätze</h4>${escHtml(entry.obstacles)}</div>
+            <div class="entry-block"><h4>Detailplanung</h4>${renderPlanning(entry.planning)}</div>
+            <div class="entry-block feedback-cell"><h4>Rückmeldung KI</h4>
+              ${entry.aiFeedback
+                ? `<div class="ai-feedback-text">${escHtml(entry.aiFeedback)}</div>`
+                : `<button class="btn-ai-small" onclick="getEntryFeedback('${entry.id}', this)">Rückmeldung KI</button>`
+              }
+            </div>
+            <div class="entry-block lp-comment-block">
+              <h4>LP-Kommentar</h4>
+              <div class="lp-status-row">
+                <button class="lp-status-btn ${tc.status === "ok" ? "active lp-status-ok" : ""}" onclick="setLpStatus('${entry.id}','ok')">🟢 weiter so</button>
+                <button class="lp-status-btn ${tc.status === "improve" ? "active lp-status-improve" : ""}" onclick="setLpStatus('${entry.id}','improve')">🟡 Verbesserung notwendig</button>
+                <button class="lp-status-btn ${!tc.status ? "active" : ""}" onclick="setLpStatus('${entry.id}','')">– kein Status</button>
+              </div>
+              <textarea class="lp-comment-text" rows="2" placeholder="Kommentar der Lehrperson…" onchange="setLpText('${entry.id}', this.value)">${escTextarea(tc.text)}</textarea>
+            </div>
+          </div>`;
+        container.appendChild(details);
+      });
+    }
+
+    async function setLpStatus(entryId, status) {
+      const res = await fetch("/journal/setTeacherComment", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: project.code, entryId, status }),
+      });
+      const data = await res.json();
+      const entry = project.journalEntries.find(e => e.id === entryId);
+      if (entry) entry.teacherComment = data.teacherComment;
+      renderJournal();
+    }
+
+    async function setLpText(entryId, text) {
+      const res = await fetch("/journal/setTeacherComment", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: project.code, entryId, text }),
+      });
+      const data = await res.json();
+      const entry = project.journalEntries.find(e => e.id === entryId);
+      if (entry) entry.teacherComment = data.teacherComment;
+      renderJournal();
     }
 
     function renderContents(contents) {
@@ -364,11 +414,25 @@
       return String(str || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "<br>");
     }
 
+    function escTextarea(str) {
+      return String(str || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    let draftEntryId = null;
+    let draftAutosaveTimer = null;
+
     function toggleNewEntryForm() {
       const form = document.getElementById("newEntryForm");
       const isHidden = form.style.display === "none";
       form.style.display = isHidden ? "block" : "none";
-      if (isHidden) buildEntryForm();
+      if (isHidden) {
+        buildEntryForm();
+        startDraftAutosave();
+      } else {
+        stopDraftAutosave();
+        draftEntryId = null;
+        renderJournal();
+      }
     }
 
     function buildEntryForm() {
@@ -396,7 +460,7 @@
       document.getElementById("formPlanning").innerHTML = planningHtml;
     }
 
-    async function submitEntry() {
+    function gatherEntryFormData() {
       const members = project.members.length ? project.members : ["Mitglied 1"];
       const contents = {};
       const planning = {};
@@ -407,12 +471,48 @@
         planning[m] = { text, dueDate };
       }
       const obstacles = document.getElementById("formObstacles").value.trim();
-      const res = await fetch("/journal/addEntry", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: project.code, entry: { contents, obstacles, planning } }),
-      });
-      const data = await res.json();
-      project.journalEntries.unshift(data.entry);
+      return { contents, obstacles, planning };
+    }
+
+    async function saveDraft(data) {
+      if (!draftEntryId) {
+        const res = await fetch("/journal/addEntry", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ code: project.code, entry: data }),
+        });
+        const json = await res.json();
+        draftEntryId = json.entry.id;
+        project.journalEntries.unshift(json.entry);
+      } else {
+        const res = await fetch("/journal/updateEntry", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ code: project.code, entryId: draftEntryId, entry: data }),
+        });
+        const json = await res.json();
+        const idx = project.journalEntries.findIndex(e => e.id === draftEntryId);
+        if (idx !== -1) project.journalEntries[idx] = json.entry;
+      }
+    }
+
+    async function autosaveDraft() {
+      await saveDraft(gatherEntryFormData());
+      renderJournal();
+    }
+
+    function startDraftAutosave() {
+      stopDraftAutosave();
+      draftAutosaveTimer = setInterval(autosaveDraft, POLL_INTERVAL_MS);
+    }
+
+    function stopDraftAutosave() {
+      if (draftAutosaveTimer) clearInterval(draftAutosaveTimer);
+      draftAutosaveTimer = null;
+    }
+
+    async function finishEntry() {
+      await saveDraft(gatherEntryFormData());
+      stopDraftAutosave();
+      draftEntryId = null;
       document.getElementById("formObstacles").value = "";
       document.getElementById("newEntryForm").style.display = "none";
       renderJournal();
@@ -540,6 +640,24 @@
 
       html += '</tbody></table></div>';
       container.innerHTML = html;
+      applyGanttZoom();
+    }
+
+    // ── GANTT-ZOOM ──────────────────────────────────────────────────────────
+    let ganttZoom = 1;
+    function applyGanttZoom() {
+      document.getElementById("timelineCalendar").style.zoom = ganttZoom;
+      document.getElementById("ganttZoomLabel").textContent = Math.round(ganttZoom * 100) + "%";
+    }
+    function zoomIn() { ganttZoom = Math.min(2.5, +(ganttZoom + 0.1).toFixed(2)); applyGanttZoom(); }
+    function zoomOut() { ganttZoom = Math.max(0.3, +(ganttZoom - 0.1).toFixed(2)); applyGanttZoom(); }
+    function zoomReset() { ganttZoom = 1; applyGanttZoom(); }
+    function zoomFit() {
+      const wrapper = document.getElementById("timelineCalendar");
+      const table = wrapper.querySelector("table");
+      if (!table) return;
+      ganttZoom = Math.max(0.3, Math.min(1, wrapper.parentElement.clientWidth / table.scrollWidth));
+      applyGanttZoom();
     }
 
     async function addTimelineEntry() {
@@ -596,11 +714,17 @@
         .gantt-holiday-cell{background:#c6f6d5}
         .gantt-marker{font-size:.82rem}
         .btn-delete{display:none}
+        .print-btn{background:#2b6cb0;color:#fff;border:none;border-radius:6px;padding:.5rem 1.1rem;font-size:.9rem;cursor:pointer;margin-bottom:.8rem}
+        @page{size:landscape;margin:1cm}
+        @media print{.print-btn{display:none}}
+        table{page-break-inside:auto}
+        tr{page-break-inside:avoid}
       `;
       const win = window.open("", "_blank", "width=1500,height=750,scrollbars=yes,resizable=yes");
       win.document.write(`<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8">
         <title>${title} – Zeitplan</title><style>${css}</style></head>
         <body><h2>${title} – Projekt-Zeitplan</h2>
+        <button class="print-btn" onclick="window.print()">🖨 Drucken</button>
         <p class="legend">📅 Heute &nbsp;|&nbsp; 📦 Projektabgabe &nbsp;|&nbsp; 🎤 Präsentation &nbsp;|&nbsp; 🏖 Ferien</p>
         ${ganttHtml}</body></html>`);
       win.document.close();
@@ -721,6 +845,54 @@
 
       html += '</div>';
       container.innerHTML = html;
+    }
+
+    // ── AUTO-REFRESH (Polling) ────────────────────────────────────────────
+    const POLL_INTERVAL_MS = 8000;
+    let pollTimer = null;
+
+    function isEditingWithin(sel) {
+      const ae = document.activeElement;
+      return !!(ae && ae.closest && ae.closest(sel) && (ae.tagName === "INPUT" || ae.tagName === "TEXTAREA"));
+    }
+
+    async function pollTick() {
+      if (!project) return;
+      try {
+        const res = await fetch("/journal/load", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ code: project.code }),
+        });
+        if (!res.ok) return;
+        const { project: incoming } = await res.json();
+
+        if (!isEditingWithin("#journalSection")) {
+          project.journalEntries = incoming.journalEntries;
+          renderJournal();
+        }
+        if (!isEditingWithin("#timelineSection")) {
+          project.timelineEntries = incoming.timelineEntries;
+          project.timeline = incoming.timeline;
+          renderTimeline();
+        }
+        if (incoming.chatHistory.length !== project.chatHistory.length) {
+          project.chatHistory = incoming.chatHistory;
+          renderChat();
+        }
+        if (!isEditingWithin("#projectHeader")) {
+          project.title = incoming.title;
+          project.description = incoming.description;
+          project.members = incoming.members;
+          renderProjectHeader();
+        }
+      } catch (e) {
+        // Netzwerkfehler ignorieren, nächster Tick versucht es erneut
+      }
+    }
+
+    function startPolling() {
+      if (pollTimer) clearInterval(pollTimer);
+      pollTimer = setInterval(pollTick, POLL_INTERVAL_MS);
     }
   </script>
 </body>

@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SimpL - Text in leichte Sprache umwandeln</title>
+    <link rel="stylesheet" href="styles_synthwave.css">
+    <style>
+        .container {
+            display: flex;
+            gap: 20px;
+            width: 95%;
+            max-width: 1400px;
+            justify-content: center;
+        }
+
+        .box {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+         textarea {
+            height: 500px;
+            background-color: #1a012e;
+            color: #00ffff;
+            border: 2px solid #ff00ff;
+            border-radius: 10px;
+            padding: 15px;
+            font-size: 1.1rem;
+            /* box-shadow: 0 0 10px #ff00ff; */
+            resize: none;
+        }
+
+        /* label {
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: #00ffff;
+        }  */
+
+        /* button {
+            margin: 20px 0;
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            background-color: #ff00ff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-transform: uppercase;
+            font-weight: bold;
+            box-shadow: 0 0 15px #ff00ff;
+            transition: transform 0.2s, box-shadow 0.2s;
+        } */
+
+        /* button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 25px #ff00ff;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        } */
+
+        #resultText {
+            white-space: pre-wrap;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>SimpL - Text in leichte Sprache umwandeln</h1>
+
+    <div class="container">
+        <div class="box">
+            <label for="inputText">Komplizierter Text:</label>
+            <textarea id="inputText" placeholder="Schreiben Sie hier Ihren Text hinein. Sie können auch Text via Zwischenablage einfügen."></textarea>
+        </div>
+        <div class="box">
+            <label for="resultText">Leichte Sprache:</label>
+            <textarea id="resultText" readonly placeholder="Das Resultat erscheint hier..."></textarea>
+        </div>
+    </div>
+
+    <button onclick="simplifyText()">Umwandeln</button>
+
+    <script>
+        async function simplifyText() {
+            const inputText = document.getElementById('inputText').value;
+            const resultArea = document.getElementById('resultText');
+            const btn = document.querySelector('button');
+
+            if (!inputText) {
+                alert("Bitte geben Sie zuerst einen Text ein.");
+                return;
+            }
+
+            resultArea.value = "Verarbeite...";
+            btn.disabled = true;
+
+            try {
+                const response = await fetch('/simpl/simplify', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ text: inputText })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    resultArea.value = data.simplifiedText;
+                } else {
+                    resultArea.value = "Fehler: " + (data.error || "Etwas ist schief gelaufen.");
+                }
+            } catch (error) {
+                console.error("Error:", error);
+                resultArea.value = "Fehler bei der Verbindung zum Server.";
+            } finally {
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+
+</html>

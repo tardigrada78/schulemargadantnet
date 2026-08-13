@@ -32,6 +32,66 @@
   ],
   "journalEntries": [
     {
+      "id": "msrui0mlpf8m7",
+      "date": "2026-08-13",
+      "contents": {
+        "Kunigunde": "hallo",
+        "Hugo": "wenig",
+        "Fritz": ""
+      },
+      "obstacles": "",
+      "planning": {
+        "Kunigunde": {
+          "text": "",
+          "dueDate": ""
+        },
+        "Hugo": {
+          "text": "",
+          "dueDate": ""
+        },
+        "Fritz": {
+          "text": "",
+          "dueDate": ""
+        }
+      },
+      "aiFeedback": null,
+      "teacherComment": {
+        "status": "improve",
+        "text": ""
+      },
+      "createdAt": "2026-08-13T18:22:11.373Z"
+    },
+    {
+      "id": "msrttyexodv3z",
+      "date": "2026-08-13",
+      "contents": {
+        "Kunigunde": "ziemlich wenig, keine Zeit",
+        "Hugo": "",
+        "Fritz": ""
+      },
+      "obstacles": "Gruppe ist sich nicht immer einig",
+      "planning": {
+        "Kunigunde": {
+          "text": "",
+          "dueDate": ""
+        },
+        "Hugo": {
+          "text": "",
+          "dueDate": ""
+        },
+        "Fritz": {
+          "text": "",
+          "dueDate": ""
+        }
+      },
+      "aiFeedback": null,
+      "teacherComment": {
+        "status": null,
+        "text": ""
+      },
+      "createdAt": "2026-08-13T18:03:28.761Z"
+    },
+    {
       "id": "mo2s7qow01aml",
       "date": "2026-04-12",
       "contents": {
@@ -55,7 +115,11 @@
         }
       },
       "aiFeedback": "# Analyse Arbeitsjournal Kochbuch-Projekt\n\n**Teil 1 – Journaleintrag:**\nDer Eintrag ist unvollständig und vage. Konkrete Erkenntnisse aus Recherche fehlen. „Sehr viele Bücher gelesen\" und „im Internet recherchiert\" sind zu unspezifisch. Welche Inhalte wurden erarbeitet? Warum wurde ein zweites Schulhaus gesucht? Der Detailgrad ist unzureichend.\n\n**Teil 2 – Projekt:**\nKritische Mängel: Kunigunde und Hugo planen Pausen statt Arbeit. Nur Fritz hat konkrete Aufgaben. Keine Abstimmung zwischen Recherche und Interview erkennbar. Fehlende Zwischenziele für Kochbuch-Erstellung. Ohne klare Arbeitsteilung und Motivation droht Projektscheitern.",
-      "createdAt": "2026-04-12T10:45:08.960Z"
+      "createdAt": "2026-04-12T10:45:08.960Z",
+      "teacherComment": {
+        "status": "improve",
+        "text": "viel zu wenig umfangreich"
+      }
     },
     {
       "id": "mo2pxmzf212yg",
@@ -81,7 +145,11 @@
         }
       },
       "aiFeedback": null,
-      "createdAt": "2026-04-17T09:41:18.363Z"
+      "createdAt": "2026-04-17T09:41:18.363Z",
+      "teacherComment": {
+        "status": null,
+        "text": ""
+      }
     }
   ],
   "chatHistory": [

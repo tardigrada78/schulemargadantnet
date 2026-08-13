@@ -37,6 +37,7 @@ function loadProject(code) {
   };
 }
 
+// Ungeschütztes Read-Modify-Write: gleichzeitige Speicherungen können sich überschreiben (kein Locking).
 function saveProject(project) {
   fs.writeFileSync(getFilePath(project.code), JSON.stringify(project, null, 2), "utf-8");
 }
@@ -98,6 +99,7 @@ router.post("/addEntry", (req, res) => {
       obstacles: entry.obstacles || "",
       planning: entry.planning || {},
       aiFeedback: null,
+      teacherComment: { status: null, text: "" },
       createdAt: new Date().toISOString(),
     };
     project.journalEntries.unshift(newEntry);
@@ -106,6 +108,24 @@ router.post("/addEntry", (req, res) => {
   } catch (error) {
     console.error("Fehler beim Hinzufügen:", error);
     res.status(500).json({ error: "Fehler beim Hinzufügen des Eintrags." });
+  }
+});
+
+// Journaleintrag aktualisieren (Autosave während der Bearbeitung)
+router.post("/updateEntry", (req, res) => {
+  try {
+    const { code, entryId, entry } = req.body;
+    const project = loadProject(code);
+    const existing = project.journalEntries.find((e) => e.id === entryId);
+    if (!existing) return res.status(404).json({ error: "Eintrag nicht gefunden." });
+    if (entry.contents !== undefined) existing.contents = entry.contents;
+    if (entry.obstacles !== undefined) existing.obstacles = entry.obstacles;
+    if (entry.planning !== undefined) existing.planning = entry.planning;
+    saveProject(project);
+    res.json({ entry: existing });
+  } catch (error) {
+    console.error("Fehler beim Aktualisieren:", error);
+    res.status(500).json({ error: "Fehler beim Aktualisieren des Eintrags." });
   }
 });
 
@@ -182,6 +202,26 @@ ${planningStr || "(keine)"}`;
   } catch (error) {
     console.error("Fehler beim KI-Feedback:", error);
     res.status(500).json({ error: "Fehler beim Generieren der Rückmeldung." });
+  }
+});
+
+// LP-Kommentar zu einem Journaleintrag setzen
+router.post("/setTeacherComment", (req, res) => {
+  try {
+    const { code, entryId, status, text } = req.body;
+    const project = loadProject(code);
+    const entry = project.journalEntries.find((e) => e.id === entryId);
+    if (!entry) return res.status(404).json({ error: "Eintrag nicht gefunden." });
+    const current = entry.teacherComment || { status: null, text: "" };
+    entry.teacherComment = {
+      status: status !== undefined ? (status || null) : current.status,
+      text: text !== undefined ? text : current.text,
+    };
+    saveProject(project);
+    res.json({ teacherComment: entry.teacherComment });
+  } catch (error) {
+    console.error("Fehler beim LP-Kommentar:", error);
+    res.status(500).json({ error: "Fehler beim Speichern des Kommentars." });
   }
 });
 

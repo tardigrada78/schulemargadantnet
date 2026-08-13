@@ -1,0 +1,35 @@
+Erstelle einen Plan um folgendes Programm zu implementieren
+
+Umgebung:
+- es ist bereits in das bestehende Projekt eingebunden: server.mjs, .js Dateien im Ordner routes, .html Dateien im Ordner public
+- styles_synthwave.css für Design
+
+Projektdateien
+- füge neue css nur im styles_synthwave.css dazu, und nur falls unbedingt notwendig
+- bearbeite die Datei simpl.html in public
+- bearbeite die Datei simpl.js in routes
+
+Funktionen des Programms
+- der Screen besteht aus zwei Textfeldern. Links kann der User Text reinschreiben. Rechts erscheint das Resultat.
+- wenn der User einen Button anlickk, wird der Text in leichter Sprache umgewandelt und erscheint rechts.
+- orientiere dich an den Richtlinien für leichte Sprache (siehe unten) 
+- verwende die Anthropic API mit 
+import Anthropic from "@anthropic-ai/sdk";
+const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+
+
+
+Richtlinien für leichte Sprache:
+Verwenden Sie vorzugsweise aktive Formulierungen. Schreiben Sie möglichst positiv, vermeiden Sie vor allem doppelte Verneinungen.
+Schliessen Sie alle Menschen mit ein und verwenden Sie gendergerechte Sprache. Am
+Vermeiden Sie Formulierungen, die kulturelles oder sprachliches Wissen voraussetzen oder die Fähigkeit erfordern, «zwischen den Zeilen zu lesen».
+Verwenden Sie keine langen, komplizierten Sätze mit vielen Einschüben und Nebensätzen.
+Nutzen Sie einfache Worte, die möglichst geläufig, konkret und bekannt sind. Vermeiden Sie Akronyme, Abkürzungen, Fremd- und Fachbegriffe. Wenn das nicht möglich ist, erklären Sie diese.
+Unterteilen Sie lange zusammengesetzte Wörter für eine bessere Lesbarkeit mit Bindestrichen.
+Verwenden Sie das gleiche Wort oder Bild für die gleiche Sache.
+Ordnen Sie die Informationen in einer logischen Reihenfolge an. Vermeiden Sie Wiederholungen. Gliedern Sie Ihren Text mit Überschriften (oder auch Unterschriften),
+Absätzen und Aufzählungen. Schreiben Sie jeden Satz in eine neue Zeile.
+Verwenden Sie das geläufige Format. Unterteilen Sie Telefon- und andere lange Nummern
+Schreiben Sie Ziffern statt Zahlwörter. 
+Stellen Sie sicher, dass jeder Satz auf einer neuen Zeile beginnt. Vermeiden Sie am Ende einer Zeile Worttrennungen

@@ -19,11 +19,11 @@ import overview from "./routes/overview.js";
 import ideas from "./routes/ideas.js";
 import languagestory from "./routes/languagestory.js";
 import journal from "./routes/journal.js";
+import simpl from "./routes/simpl.js";
 // add new routes here
 
 
 const app = express();
-// app.use(express.json());
 app.use(express.static("public")); // 💡 Statische Dateien aus "public" freigeben
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
@@ -47,7 +47,7 @@ app.use("/overview", overview);
 app.use("/ideas", ideas);
 app.use("/languagestory", languagestory);
 app.use("/journal", journal);
-
+app.use("/simpl", simpl);
 // add new routes here
 
 
