@@ -3,6 +3,7 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { callAI } from "../aiCall.js";
+import { getReferenceDocuments } from "../referenceDocs.js";
 
 const router = Router();
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -49,8 +50,8 @@ function generateId() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 }
 
-function callClaude(prompt, maxTokens = 400) {
-  return callAI(prompt, "anthropic/claude-haiku-4-5-20251001", 0.5, maxTokens);
+function callClaude(prompt, maxTokens = 400, documents = []) {
+  return callAI(prompt, "anthropic/claude-haiku-4-5-20251001", 0.5, maxTokens, null, documents);
 }
 
 // Liste bestehender Abteilungen (für das Dropdown/Datalist beim Login)
@@ -292,7 +293,6 @@ router.post("/aiJournal", async (req, res) => {
     const project = loadProject(department, code);
 
     const journalSummary = project.journalEntries
-      .slice(0, 8)
       .map((e) => {
         const c = Object.entries(e.contents).map(([n, t]) => `${n}: ${t}`).join("; ");
         const p = Object.entries(e.planning).map(([n, pl]) => `${n}: ${pl.text} (bis ${pl.dueDate})`).join("; ");
@@ -300,15 +300,24 @@ router.post("/aiJournal", async (req, res) => {
       })
       .join("\n\n");
 
+    const timelineSummary = project.timelineEntries
+      .map((e) => `KW ${e.weekFrom}–${e.weekTo}: ${e.process}`)
+      .join(", ");
+
     const prompt = `Du bist ein hilfreicher Schulberater. Analysiere die Arbeitsjournal-Einträge dieser Schülergruppe. Antworte auf Deutsch in maximal 150 Wörtern. Beurteile: Verständlichkeit, Detailgrad, Vollständigkeit, Regelmässigkeit, Arbeitsteilung.
+
+Nutze primär die folgenden Quellen: das Arbeitsjournal, den Projekt-Zeitplan sowie die beigefügten Referenzdokumente (schulische Leitfäden). Belege deine Aussagen mit der jeweiligen Quelle (z.B. Journaleintrag-Datum oder Dokumentname). Weiche nur auf Allgemeinwissen aus, wenn die Antwort in diesen Quellen nicht enthalten ist.
 
 Projekt: ${project.title || "(kein Titel)"}
 Mitglieder: ${project.members.join(", ") || "(keine)"}
+Zeitrahmen: ${project.timeline.start} bis ${project.timeline.end}, Präsentation: ${project.timeline.presentation}
 
-Journaleinträge:
+Zeitplan: ${timelineSummary || "Keine Einträge"}
+
+Journaleinträge (gesamter bisheriger Verlauf):
 ${journalSummary || "Keine Einträge vorhanden."}`;
 
-    const feedback = await callClaude(prompt, 600);
+    const feedback = await callClaude(prompt, 600, getReferenceDocuments());
     res.json({ feedback });
   } catch (error) {
     console.error("Fehler beim KI-Journal:", error);
@@ -354,17 +363,37 @@ router.post("/chat", async (req, res) => {
       .map((h) => `${h.role === "user" ? "Schüler*in" : "KI"}: ${h.content}`)
       .join("\n");
 
+    const journalSummary = project.journalEntries
+      .map((e) => {
+        const c = Object.entries(e.contents).map(([n, t]) => `${n}: ${t}`).join("; ");
+        const p = Object.entries(e.planning).map(([n, pl]) => `${n}: ${pl.text} (bis ${pl.dueDate})`).join("; ");
+        return `Datum ${e.date}:\n  Inhalte: ${c || "(leer)"}\n  Stolpersteine: ${e.obstacles || "(keine)"}\n  Planung: ${p || "(keine)"}`;
+      })
+      .join("\n\n");
+
+    const timelineSummary = project.timelineEntries
+      .map((e) => `KW ${e.weekFrom}–${e.weekTo}: ${e.process}`)
+      .join(", ");
+
     const prompt = `Du bist ein hilfreicher Schulberater für eine Schüler-Projektarbeit. Fokussiere auf die nächsten konkreten Arbeitsschritte. Antworte auf Deutsch in 2–4 kurzen Sätzen.
+
+Nutze primär die folgenden Quellen: das Arbeitsjournal, den Projekt-Zeitplan sowie die beigefügten Referenzdokumente (schulische Leitfäden). Belege deine Aussagen mit der jeweiligen Quelle (z.B. Journaleintrag-Datum oder Dokumentname). Weiche nur auf Allgemeinwissen aus, wenn die Antwort in diesen Quellen nicht enthalten ist.
 
 Projekt: ${project.title || "(kein Titel)"}
 Mitglieder: ${project.members.join(", ") || "(keine)"}
+Zeitrahmen: ${project.timeline.start} bis ${project.timeline.end}, Präsentation: ${project.timeline.presentation}
+
+Zeitplan: ${timelineSummary || "Keine Einträge"}
+
+Journaleinträge (gesamter bisheriger Verlauf):
+${journalSummary || "Keine Einträge vorhanden."}
 
 Chatverlauf:
 ${historyStr || "(noch kein Verlauf)"}
 
 Neue Nachricht: ${message}`;
 
-    const answer = await callClaude(prompt, 400);
+    const answer = await callClaude(prompt, 400, getReferenceDocuments());
 
     project.chatHistory.push({ role: "user", content: message });
     project.chatHistory.push({ role: "assistant", content: answer });
