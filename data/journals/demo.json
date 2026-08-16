@@ -35,7 +35,7 @@
       "id": "msrui0mlpf8m7",
       "date": "2026-08-13",
       "contents": {
-        "Kunigunde": "hallo",
+        "Kunigunde": "hallo wie gehts",
         "Hugo": "wenig",
         "Fritz": ""
       },
@@ -66,7 +66,7 @@
       "date": "2026-08-13",
       "contents": {
         "Kunigunde": "ziemlich wenig, keine Zeit",
-        "Hugo": "",
+        "Hugo": "nichts",
         "Fritz": ""
       },
       "obstacles": "Gruppe ist sich nicht immer einig",
@@ -84,9 +84,9 @@
           "dueDate": ""
         }
       },
-      "aiFeedback": null,
+      "aiFeedback": "**Teil 1 – Journaleintrag:**\nDer Eintrag ist unvollständig und wenig aussagekräftig. Konkrete Arbeitsleistungen fehlen (Hugo: nichts, Fritz: leer). Die Begründung „keine Zeit\" ist zu vaga. Detailplanung ist nicht ausgefüllt. Der Detailgrad reicht nicht für Nachverfolgung.\n\n**Teil 2 – Projekt:**\nKritische Situation: Unklare Arbeitsteilung, fehlende Deadlines und mangelnde Verbindlichkeit. Kunigunde trägt minimal bei, Hugo gar nicht. Uneinigkeit gefährdet Zusammenarbeit. Ohne sofortige Klärung der Rollen und Meilensteine droht Projektscheitern. Dringende Intervention empfohlen.",
       "teacherComment": {
-        "status": null,
+        "status": "improve",
         "text": ""
       },
       "createdAt": "2026-08-13T18:03:28.761Z"

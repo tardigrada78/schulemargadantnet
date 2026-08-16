@@ -200,30 +200,9 @@ label > input, label > textarea { margin-top: .25rem; }
 .lp-badge-ok { color: #276749; }
 .lp-badge-improve { color: #92400e; }
 
-/* ── ENTRY FORM ──────────────────────────────────────────────────────────── */
-.entry-form {
-  background: #f0f9ff;
-  border: 1px solid #bee3f8;
-  border-radius: 8px;
-  padding: 1rem 1.2rem;
-  margin-bottom: 1rem;
-}
-.form-table { width: 100%; border-collapse: collapse; }
-.form-table th {
-  background: #dbeafe;
-  color: #1e40af;
-  padding: .5rem .8rem;
-  border: 1px solid #bfdbfe;
-  font-size: .9rem;
-  text-align: left;
-}
-.form-table td {
-  border: 1px solid #bfdbfe;
-  padding: .5rem .8rem;
-  vertical-align: top;
-}
+/* ── ENTRY EDIT FIELDS ───────────────────────────────────────────────────── */
 .member-field { margin-bottom: .5rem; }
-.form-actions { display: flex; gap: .6rem; margin-top: .8rem; }
+.entry-save-block { grid-column: 1 / -1; }
 
 /* ── TIMELINE DATES ──────────────────────────────────────────────────────── */
 .timeline-dates {
@@ -458,7 +437,6 @@ label > input, label > textarea { margin-top: .25rem; }
 @media (max-width: 700px) {
   .timeline-dates { flex-direction: column; }
   .section-header { flex-direction: column; align-items: flex-start; gap: .5rem; }
-  .form-table { font-size: .82rem; }
   .chat-user, .chat-ai { max-width: 96%; }
   .year-calendar-grid { grid-template-columns: 1fr 1fr; }
 }
