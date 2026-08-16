@@ -332,13 +332,13 @@
                 ${members.map(m => `
                   <div class="member-row">
                     <span class="member-label">${escHtml(m)}:</span>
-                    <textarea data-field="contents" data-member="${escHtml(m)}" rows="2" placeholder="Was wurde erarbeitet?">${escTextarea(entry.contents[m] || "")}</textarea>
+                    <textarea data-field="contents" data-member="${escHtml(m)}" rows="2" placeholder="Was wurde erarbeitet?" oninput="autoResizeTextarea(this)">${escTextarea(entry.contents[m] || "")}</textarea>
                   </div>`).join("")}
               </div>
               <div class="entry-col">
                 <div class="entry-col-header">Stolpersteine / Ursachen / Lösungen</div>
                 <div class="entry-col-hint">Schwierigkeiten → Begründung → Erkenntnisse / Massnahmen</div>
-                <textarea data-field="obstacles" rows="6" placeholder="Was hat nicht funktioniert? Wie haben Sie es gelöst?">${escTextarea(entry.obstacles)}</textarea>
+                <textarea data-field="obstacles" rows="6" placeholder="Was hat nicht funktioniert? Wie haben Sie es gelöst?" oninput="autoResizeTextarea(this)">${escTextarea(entry.obstacles)}</textarea>
               </div>
               <div class="entry-col">
                 <div class="entry-col-header">Planung: was? / wann? / wer?</div>
@@ -347,7 +347,7 @@
                   <div class="member-row">
                     <span class="member-label">${escHtml(m)}:</span>
                     <div class="member-fields">
-                      <textarea data-field="planning_text" data-member="${escHtml(m)}" rows="2" placeholder="Geplante Aufgaben">${escTextarea((entry.planning[m] || {}).text || "")}</textarea>
+                      <textarea data-field="planning_text" data-member="${escHtml(m)}" rows="2" placeholder="Geplante Aufgaben" oninput="autoResizeTextarea(this)">${escTextarea((entry.planning[m] || {}).text || "")}</textarea>
                       <input type="date" class="member-due" data-field="planning_due" data-member="${escHtml(m)}" value="${(entry.planning[m] || {}).dueDate || ""}" />
                     </div>
                   </div>`).join("")}
@@ -367,7 +367,7 @@
                   <button class="lp-status-btn ${tc.status === "improve" ? "active lp-status-improve" : ""}" onclick="setLpStatus('${entry.id}','improve')">🟡 Verbesserung notwendig</button>
                   <button class="lp-status-btn ${!tc.status ? "active" : ""}" onclick="setLpStatus('${entry.id}','')">– kein Status</button>
                 </div>
-                <textarea class="lp-comment-text" rows="2" placeholder="Kommentar der Lehrperson…" onchange="setLpText('${entry.id}', this.value)">${escTextarea(tc.text)}</textarea>
+                <textarea class="lp-comment-text" rows="2" placeholder="Kommentar der Lehrperson…" oninput="autoResizeTextarea(this)" onchange="setLpText('${entry.id}', this.value)">${escTextarea(tc.text)}</textarea>
               </div>
             </div>
             <div class="entry-save-block">
@@ -375,7 +375,21 @@
             </div>
           </div>`;
         container.appendChild(details);
+        if (details.open) {
+          details.querySelectorAll("textarea").forEach(autoResizeTextarea);
+        }
+        details.addEventListener("toggle", () => {
+          if (details.open) {
+            details.querySelectorAll("textarea").forEach(autoResizeTextarea);
+          }
+        });
       });
+    }
+
+    function autoResizeTextarea(el) {
+      el.style.height = "auto";
+      const borderY = el.offsetHeight - el.clientHeight;
+      el.style.height = (el.scrollHeight + borderY) + "px";
     }
 
     function entryMembers(entry) {
