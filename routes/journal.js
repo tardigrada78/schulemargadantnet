@@ -395,12 +395,17 @@ Neue Nachricht: ${message}`;
 
     const answer = await callClaude(prompt, 400, getReferenceDocuments());
 
-    project.chatHistory.push({ role: "user", content: message });
-    project.chatHistory.push({ role: "assistant", content: answer });
-    if (project.chatHistory.length > 20) {
-      project.chatHistory = project.chatHistory.slice(-20);
+    // Projekt kurz vor dem Speichern nochmals frisch laden: der KI-Aufruf oben dauert
+    // mehrere Sekunden, in denen z.B. ein anderes Gruppenmitglied ebenfalls chatten
+    // oder das Journal bearbeiten könnte. Ohne diesen Re-Read würde unser Save den
+    // zwischenzeitlichen Stand überschreiben und Nachrichten gingen verloren.
+    const freshProject = loadProject(department, code);
+    freshProject.chatHistory.push({ role: "user", content: message });
+    freshProject.chatHistory.push({ role: "assistant", content: answer });
+    if (freshProject.chatHistory.length > 20) {
+      freshProject.chatHistory = freshProject.chatHistory.slice(-20);
     }
-    saveProject(project);
+    saveProject(freshProject);
 
     res.json({ answer });
   } catch (error) {

@@ -712,22 +712,41 @@
       container.scrollTop = container.scrollHeight;
     }
 
+    let chatSending = false;
+
     async function sendChat() {
+      if (chatSending) return;
       const input = document.getElementById("chatInput");
+      const sendBtn = document.querySelector("#chatSection .btn-primary");
       const message = input.value.trim();
       if (!message) return;
+
+      chatSending = true;
+      input.disabled = true;
+      sendBtn.disabled = true;
       input.value = "";
       project.chatHistory.push({ role: "user", content: message });
       renderChat();
 
-      const res = await fetch("/journal/chat", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: project.code, department: project.department, message }),
-      });
-      const data = await res.json();
-      project.chatHistory.push({ role: "assistant", content: data.answer });
-      if (project.chatHistory.length > 20) project.chatHistory = project.chatHistory.slice(-20);
-      renderChat();
+      try {
+        const res = await fetch("/journal/chat", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ code: project.code, department: project.department, message }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Fehler beim Chat.");
+        project.chatHistory.push({ role: "assistant", content: data.answer });
+        if (project.chatHistory.length > 20) project.chatHistory = project.chatHistory.slice(-20);
+        renderChat();
+      } catch (e) {
+        project.chatHistory.push({ role: "assistant", content: "⚠️ Fehler beim Abrufen der Antwort. Bitte erneut versuchen." });
+        renderChat();
+      } finally {
+        chatSending = false;
+        input.disabled = false;
+        sendBtn.disabled = false;
+        input.focus();
+      }
     }
 
     // ── JAHRESÜBERSICHT ────────────────────────────────────────────────────
