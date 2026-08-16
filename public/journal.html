@@ -325,45 +325,52 @@
             ${badge}
           </summary>
           <div class="entry-card-body">
-            <div class="entry-block">
-              <h4>Bearbeitete Inhalte / Resultate</h4>
-              ${members.map(m => `
-                <div class="member-field">
-                  <label>${escHtml(m)}
-                    <textarea data-field="contents" data-member="${escHtml(m)}" rows="2" placeholder="Was hat ${escHtml(m)} erarbeitet?">${escTextarea(entry.contents[m] || "")}</textarea>
-                  </label>
-                </div>`).join("")}
-            </div>
-            <div class="entry-block">
-              <h4>Stolpersteine &amp; Lösungsansätze</h4>
-              <textarea data-field="obstacles" rows="3" placeholder="Was hat nicht funktioniert? Wie haben Sie es gelöst?">${escTextarea(entry.obstacles)}</textarea>
-            </div>
-            <div class="entry-block">
-              <h4>Detailplanung</h4>
-              ${members.map(m => `
-                <div class="member-field">
-                  <label>${escHtml(m)}
-                    <textarea data-field="planning_text" data-member="${escHtml(m)}" rows="2" placeholder="Geplante Aufgaben">${escTextarea((entry.planning[m] || {}).text || "")}</textarea>
-                    <input type="date" data-field="planning_due" data-member="${escHtml(m)}" value="${(entry.planning[m] || {}).dueDate || ""}" />
-                  </label>
-                </div>`).join("")}
-            </div>
-            <div class="entry-block feedback-cell"><h4>Rückmeldung KI</h4>
-              ${entry.aiFeedback
-                ? `<div class="ai-feedback-text">${escHtml(entry.aiFeedback)}</div>`
-                : `<button class="btn-ai-small" onclick="getEntryFeedback('${entry.id}', this)">Rückmeldung KI</button>`
-              }
-            </div>
-            <div class="entry-block lp-comment-block">
-              <h4>LP-Kommentar</h4>
-              <div class="lp-status-row">
-                <button class="lp-status-btn ${tc.status === "ok" ? "active lp-status-ok" : ""}" onclick="setLpStatus('${entry.id}','ok')">🟢 weiter so</button>
-                <button class="lp-status-btn ${tc.status === "improve" ? "active lp-status-improve" : ""}" onclick="setLpStatus('${entry.id}','improve')">🟡 Verbesserung notwendig</button>
-                <button class="lp-status-btn ${!tc.status ? "active" : ""}" onclick="setLpStatus('${entry.id}','')">– kein Status</button>
+            <div class="entry-columns">
+              <div class="entry-col">
+                <div class="entry-col-header">Bearbeitete Inhalte / Resultate</div>
+                <div class="entry-col-hint">Themen/Inhalte, Arbeitsschritte, konkrete Ergebnisse</div>
+                ${members.map(m => `
+                  <div class="member-row">
+                    <span class="member-label">${escHtml(m)}:</span>
+                    <textarea data-field="contents" data-member="${escHtml(m)}" rows="2" placeholder="Was wurde erarbeitet?">${escTextarea(entry.contents[m] || "")}</textarea>
+                  </div>`).join("")}
               </div>
-              <textarea class="lp-comment-text" rows="2" placeholder="Kommentar der Lehrperson…" onchange="setLpText('${entry.id}', this.value)">${escTextarea(tc.text)}</textarea>
+              <div class="entry-col">
+                <div class="entry-col-header">Stolpersteine / Ursachen / Lösungen</div>
+                <div class="entry-col-hint">Schwierigkeiten → Begründung → Erkenntnisse / Massnahmen</div>
+                <textarea data-field="obstacles" rows="6" placeholder="Was hat nicht funktioniert? Wie haben Sie es gelöst?">${escTextarea(entry.obstacles)}</textarea>
+              </div>
+              <div class="entry-col">
+                <div class="entry-col-header">Planung: was? / wann? / wer?</div>
+                <div class="entry-col-hint">Was ist bis wann zu erledigen und wer dafür verantwortlich ist</div>
+                ${members.map(m => `
+                  <div class="member-row">
+                    <span class="member-label">${escHtml(m)}:</span>
+                    <div class="member-fields">
+                      <textarea data-field="planning_text" data-member="${escHtml(m)}" rows="2" placeholder="Geplante Aufgaben">${escTextarea((entry.planning[m] || {}).text || "")}</textarea>
+                      <input type="date" class="member-due" data-field="planning_due" data-member="${escHtml(m)}" value="${(entry.planning[m] || {}).dueDate || ""}" />
+                    </div>
+                  </div>`).join("")}
+              </div>
             </div>
-            <div class="entry-block entry-save-block">
+            <div class="entry-extra">
+              <div class="entry-block feedback-cell"><h4>Rückmeldung KI</h4>
+                ${entry.aiFeedback
+                  ? `<div class="ai-feedback-text">${escHtml(entry.aiFeedback)}</div>`
+                  : `<button class="btn-ai-small" onclick="getEntryFeedback('${entry.id}', this)">Rückmeldung KI</button>`
+                }
+              </div>
+              <div class="entry-block lp-comment-block">
+                <h4>LP-Kommentar</h4>
+                <div class="lp-status-row">
+                  <button class="lp-status-btn ${tc.status === "ok" ? "active lp-status-ok" : ""}" onclick="setLpStatus('${entry.id}','ok')">🟢 weiter so</button>
+                  <button class="lp-status-btn ${tc.status === "improve" ? "active lp-status-improve" : ""}" onclick="setLpStatus('${entry.id}','improve')">🟡 Verbesserung notwendig</button>
+                  <button class="lp-status-btn ${!tc.status ? "active" : ""}" onclick="setLpStatus('${entry.id}','')">– kein Status</button>
+                </div>
+                <textarea class="lp-comment-text" rows="2" placeholder="Kommentar der Lehrperson…" onchange="setLpText('${entry.id}', this.value)">${escTextarea(tc.text)}</textarea>
+              </div>
+            </div>
+            <div class="entry-save-block">
               <button class="btn-primary" onclick="saveEntryCard('${entry.id}', this)">Speichern</button>
             </div>
           </div>`;
