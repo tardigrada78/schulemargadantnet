@@ -14,8 +14,10 @@
   <!-- LOGIN -->
   <div id="loginSection" class="card center-card">
     <h1>Gruppen-Arbeitsjournal</h1>
-    <p>Geben Sie den Gruppencode ein, um Ihr Projekt zu laden oder neu zu erstellen.</p>
+    <p>Geben Sie Abteilung und Gruppencode ein, um Ihr Projekt zu laden oder neu zu erstellen.</p>
     <div class="input-row">
+      <input type="text" id="department" list="departmentOptions" placeholder="Abteilung" maxlength="50" />
+      <datalist id="departmentOptions"></datalist>
       <input type="text" id="groupCode" placeholder="Gruppencode" maxlength="50" />
       <button class="btn-primary" onclick="loadProject()">Laden / Erstellen</button>
     </div>
@@ -228,13 +230,20 @@
     fetch("/header.html").then(r => r.text()).then(h => document.getElementById("site-header").innerHTML = h);
 
     // ── LOGIN ──────────────────────────────────────────────────────────────
+    fetch("/journal/departments").then(r => r.json()).then(data => {
+      const list = document.getElementById("departmentOptions");
+      list.innerHTML = (data.departments || []).map(d => `<option value="${d}"></option>`).join("");
+    });
+
     async function loadProject() {
+      const department = document.getElementById("department").value.trim();
       const code = document.getElementById("groupCode").value.trim();
+      if (!department) { document.getElementById("loginError").textContent = "Bitte eine Abteilung eingeben."; return; }
       if (!code) { document.getElementById("loginError").textContent = "Bitte einen Gruppencode eingeben."; return; }
       try {
         const res = await fetch("/journal/load", {
           method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ code }),
+          body: JSON.stringify({ code, department }),
         });
         const data = await res.json();
         if (!res.ok) { document.getElementById("loginError").textContent = data.error; return; }
@@ -278,7 +287,7 @@
       };
       const res = await fetch("/journal/saveProject", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: project.code, title, description, members, timeline }),
+        body: JSON.stringify({ code: project.code, department: project.department, title, description, members, timeline }),
       });
       const data = await res.json();
       project = data.project;
@@ -400,7 +409,7 @@
     async function addNewEntry() {
       const res = await fetch("/journal/addEntry", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: project.code, entry: { contents: {}, obstacles: "", planning: {} } }),
+        body: JSON.stringify({ code: project.code, department: project.department, entry: { contents: {}, obstacles: "", planning: {} } }),
       });
       const data = await res.json();
       project.journalEntries.unshift(data.entry);
@@ -420,7 +429,7 @@
       const obstacles = card.querySelector('[data-field="obstacles"]').value.trim();
       const res = await fetch("/journal/updateEntry", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: project.code, entryId, entry: { contents, obstacles, planning } }),
+        body: JSON.stringify({ code: project.code, department: project.department, entryId, entry: { contents, obstacles, planning } }),
       });
       const data = await res.json();
       const idx = project.journalEntries.findIndex(e => e.id === entryId);
@@ -431,7 +440,7 @@
     async function setLpStatus(entryId, status) {
       const res = await fetch("/journal/setTeacherComment", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: project.code, entryId, status }),
+        body: JSON.stringify({ code: project.code, department: project.department, entryId, status }),
       });
       const data = await res.json();
       const entry = project.journalEntries.find(e => e.id === entryId);
@@ -442,7 +451,7 @@
     async function setLpText(entryId, text) {
       const res = await fetch("/journal/setTeacherComment", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: project.code, entryId, text }),
+        body: JSON.stringify({ code: project.code, department: project.department, entryId, text }),
       });
       const data = await res.json();
       const entry = project.journalEntries.find(e => e.id === entryId);
@@ -463,7 +472,7 @@
       btn.disabled = true;
       const res = await fetch("/journal/aiFeedback", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: project.code, entryId }),
+        body: JSON.stringify({ code: project.code, department: project.department, entryId }),
       });
       const data = await res.json();
       const entry = project.journalEntries.find(e => e.id === entryId);
@@ -478,7 +487,7 @@
       btn.disabled = true;
       const res = await fetch("/journal/aiJournal", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: project.code }),
+        body: JSON.stringify({ code: project.code, department: project.department }),
       });
       const data = await res.json();
       result.style.display = "block";
@@ -513,7 +522,7 @@
       };
       const res = await fetch("/journal/saveProject", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: project.code, timeline }),
+        body: JSON.stringify({ code: project.code, department: project.department, timeline }),
       });
       const data = await res.json();
       project = data.project;
@@ -610,7 +619,7 @@
       }
       const res = await fetch("/journal/addTimelineEntry", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: project.code, entry: { process, weekFrom, weekTo, color } }),
+        body: JSON.stringify({ code: project.code, department: project.department, entry: { process, weekFrom, weekTo, color } }),
       });
       const data = await res.json();
       project.timelineEntries.push(data.entry);
@@ -621,7 +630,7 @@
     async function deleteTimelineEntry(id) {
       await fetch("/journal/deleteTimelineEntry", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: project.code, id }),
+        body: JSON.stringify({ code: project.code, department: project.department, id }),
       });
       project.timelineEntries = project.timelineEntries.filter(e => e.id !== id);
       renderCalendar();
@@ -677,7 +686,7 @@
       btn.disabled = true;
       const res = await fetch("/journal/aiTimeline", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: project.code }),
+        body: JSON.stringify({ code: project.code, department: project.department }),
       });
       const data = await res.json();
       result.style.display = "block";
@@ -713,7 +722,7 @@
 
       const res = await fetch("/journal/chat", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: project.code, message }),
+        body: JSON.stringify({ code: project.code, department: project.department, message }),
       });
       const data = await res.json();
       project.chatHistory.push({ role: "assistant", content: data.answer });
@@ -801,7 +810,7 @@
       try {
         const res = await fetch("/journal/load", {
           method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ code: project.code }),
+          body: JSON.stringify({ code: project.code, department: project.department }),
         });
         if (!res.ok) return;
         const { project: incoming } = await res.json();
