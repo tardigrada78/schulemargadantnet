@@ -313,8 +313,19 @@
         container.innerHTML = '<p class="empty-msg">Noch keine Einträge. Klicken Sie auf "+ Neuer Eintrag".</p>';
         return;
       }
-      const sortedEntries = [...project.journalEntries]
+      const allSorted = [...project.journalEntries]
         .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      // Leere Alteinträge (z.B. Duplikate durch Mehrfachklick auf "+ Neuer Eintrag") ausblenden -
+      // ausser es ist der neueste Eintrag (gerade erst angelegt, wird noch befüllt) oder gerade
+      // aufgeklappt.
+      const newestId = allSorted[0]?.id;
+      const sortedEntries = allSorted.filter(entry =>
+        !isEmptyEntry(entry) || entry.id === newestId || openIds.has(entry.id)
+      );
+      if (sortedEntries.length === 0) {
+        container.innerHTML = '<p class="empty-msg">Noch keine Einträge. Klicken Sie auf "+ Neuer Eintrag".</p>';
+        return;
+      }
       sortedEntries.forEach((entry, idx) => {
         const tc = entry.teacherComment || { status: null, text: "" };
         const badge = tc.status === "ok" ? '<span class="lp-badge lp-badge-ok">🟢</span>'
@@ -406,14 +417,31 @@
       return Array.from(new Set([...base, ...Object.keys(entry.contents || {}), ...Object.keys(entry.planning || {})]));
     }
 
+    function isEmptyEntry(entry) {
+      const hasContent = Object.values(entry.contents || {}).some(v => v && v.trim());
+      const hasObstacles = !!(entry.obstacles && entry.obstacles.trim());
+      const hasPlanning = Object.values(entry.planning || {}).some(p => p && (p.text || "").trim());
+      return !hasContent && !hasObstacles && !hasPlanning;
+    }
+
     async function addNewEntry() {
       const res = await fetch("/journal/addEntry", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ code: project.code, department: project.department, entry: { contents: {}, obstacles: "", planning: {} } }),
       });
       const data = await res.json();
-      project.journalEntries.unshift(data.entry);
+      // Server gibt ggf. den bereits bestehenden Eintrag von heute zurück (ein Eintrag pro Tag) -
+      // dann nicht nochmals lokal hinzufügen, sondern die vorhandene Karte öffnen.
+      const alreadyExists = project.journalEntries.some(e => e.id === data.entry.id);
+      if (!alreadyExists) {
+        project.journalEntries.unshift(data.entry);
+      }
       renderJournal();
+      const card = document.querySelector(`.entry-card[data-id="${data.entry.id}"]`);
+      if (card) {
+        card.open = true;
+        card.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
     }
 
     async function saveEntryCard(entryId, btnEl) {

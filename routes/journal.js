@@ -108,14 +108,22 @@ router.post("/saveProject", (req, res) => {
   }
 });
 
-// Journaleintrag hinzufügen
+// Journaleintrag hinzufügen (pro Tag nur einer — bei Mehrfachklick oder gleichzeitigem
+// Anlegen durch mehrere Gruppenmitglieder wird der bereits bestehende Eintrag von heute
+// zurückgegeben statt ein Duplikat zu erzeugen; kein await zwischen Lesen und Schreiben,
+// daher pro Request atomar)
 router.post("/addEntry", (req, res) => {
   try {
     const { code, department, entry } = req.body;
     const project = loadProject(department, code);
+    const today = new Date().toISOString().slice(0, 10);
+    const existingToday = project.journalEntries.find((e) => e.date === today);
+    if (existingToday) {
+      return res.json({ entry: existingToday });
+    }
     const newEntry = {
       id: generateId(),
-      date: new Date().toISOString().slice(0, 10),
+      date: today,
       contents: entry.contents || {},
       obstacles: entry.obstacles || "",
       planning: entry.planning || {},
