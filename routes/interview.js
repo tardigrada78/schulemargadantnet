@@ -3,6 +3,9 @@ const router = express.Router();
 import OpenAI from "openai";
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
+// Realtime-Modell für das Live-Gespräch (Alias; bei Ablehnung "gpt-realtime-2.1" verwenden)
+const REALTIME_MODEL = "gpt-realtime";
+
 // Erstellt Interview-Person
 async function generatePerson(properties) {
   const prompt = `Gib eine präzise Personenbeschreibung mit Fokus auf Charaktereigenschaften an.\n
@@ -146,6 +149,60 @@ router.post("/getSpeech", async (req, res) => {
   } catch (error) {
     console.error("Fehler beim Generieren der Sprachdatei:", error);
     res.status(500).json({ error: "Fehler beim Generieren der Sprachdatei." });
+  }
+});
+
+// Route für Realtime-Live-Gespräch: erzeugt einen kurzlebigen Client-Key
+router.post("/realtimeSession", async (req, res) => {
+  try {
+    const { personDescription, voice, voiceProfile } = req.body;
+    if (!personDescription || personDescription.trim() === "") {
+      return res.status(400).json({ error: "Personenbeschreibung fehlt!" });
+    }
+
+    const instructions = `Du bist die folgende Person und wirst in einem mündlichen Interview befragt.
+Sprich natürlich, gesprochen und auf Hochdeutsch. Antworte nicht zu lang.
+Du darfst jederzeit unterbrochen werden – hör dann sofort auf zu sprechen und geh auf den Einwurf ein.
+Wenn eine Frage unklar ist oder du einen Punkt vertiefen möchtest, stelle der interviewenden Person auch mal selbst eine kurze Rückfrage.
+Bleib durchgehend in der Rolle und brich sie nicht.
+
+Person:
+${personDescription}
+
+Sprechweise: ${voiceProfile || "natürlich und der Person angemessen"}`;
+
+    const response = await fetch("https://api.openai.com/v1/realtime/client_secrets", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        session: {
+          type: "realtime",
+          model: REALTIME_MODEL,
+          instructions,
+          audio: {
+            output: { voice: voice || "ash" },
+            input: {
+              transcription: { model: "gpt-4o-mini-transcribe", language: "de" },
+              turn_detection: { type: "semantic_vad", interrupt_response: true, create_response: true },
+            },
+          },
+        },
+      }),
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      console.error("Fehler bei der Realtime-Session:", data);
+      return res.status(500).json({ error: "Fehler beim Erstellen der Realtime-Session." });
+    }
+
+    res.json({ value: data.value, model: REALTIME_MODEL });
+  } catch (error) {
+    console.error("Fehler bei der Realtime-Session:", error);
+    res.status(500).json({ error: "Fehler beim Erstellen der Realtime-Session." });
   }
 });
 

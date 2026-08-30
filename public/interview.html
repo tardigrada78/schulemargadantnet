@@ -21,53 +21,36 @@
     <p>Geben Sie Eigenschaften der zu interviewenden Person ein, wie Beruf, Ausbildung, Charakter, ...</p>
     <textarea id="interviewProperties" name="interviewProperties" cols="70" rows="8">
 60 Jahre alt, schrulliger Professor, langjähriger Dozent, Fachgebiet Botanik, gibt ausschweifende Antworten</textarea>
-    <p>
-      Geben Sie hier Ihre Fragen ein, wobei jede Frage auf einer neuen Zeile beginnen muss (automatischer
-      Zeilenumbruch des Formularfeldes ignorieren).
-    </p>
-    <textarea id="interviewQuestions" name="interviewQuestions" cols="70" rows="8">
-Welches Ereignis in Ihrem Leben prägte Ihre Berufswahl am stärksten?
-Haben Medikamente, die rein aus Pflanzen hergestellt werden, weniger Nebenwirkungen?
-        </textarea><br />
-    <label for="voice1">Stimme für Fragen:</label>
-    <select id="voice1" name="voice1">
-      <option value="alloy">Alloy (f)</option>
-      <option value="ash">Ash (m)</option>
-      <option value="ballad">Ballad</option>
-      <option value="coral">Coral (f)</option>
-      <option value="echo">Echo (m)</option>
-      <option value="fable">Fable (m)</option>
-      <option value="nova" selected>Nova (f)</option>
-      <option value="onyx">Onyx (m)</option>
-      <option value="sage">Sage (f)</option>
-      <option value="shimmer">Shimmer (f)</option>
-      <option value="verse">Verse (m)</option>
-    </select>
-    <label for="voice2">Stimme für Antworten:</label>
+    <br />
+    <label for="voice2">Stimme der interviewten Person:</label>
     <select id="voice2" name="voice2">
       <option value="alloy">Alloy (f)</option>
-      <option value="ash">Ash (m)</option>
+      <option value="ash" selected>Ash (m)</option>
       <option value="ballad">Ballad</option>
       <option value="coral">Coral (f)</option>
       <option value="echo">Echo (m)</option>
-      <option value="fable">Fable (m)</option>
-      <option value="nova">Nova (f)</option>
-      <option value="onyx" selected>Onyx (m)</option>
       <option value="sage">Sage (f)</option>
       <option value="shimmer">Shimmer (f)</option>
       <option value="verse">Verse (m)</option>
+      <option value="marin">Marin (f)</option>
+      <option value="cedar">Cedar (m)</option>
     </select>
-    <p>Die Stimmen können <a href="https://www.openai.fm/">hier</a> probegehört werden.</p>
+    <p>Die Stimmen können teilweise <a href="https://www.openai.fm/">hier</a> probegehört werden.</p>
     <input type="checkbox" id="selectPicture" name="selectPicture" value="Portraitbild" /><label>
       Erstelle Portrait-Foto</label><br />
   </form>
   <br />
-  <button id="generateInterview">Interview durchführen</button>
-  <p>ℹ️ Scrollen Sie ganz nach unten für das Word-File, das PDF-File, das Foto und die Sprachdatei.</p>
+  <button id="generateInterview">Interview vorbereiten</button>
+  <button id="startConversation" style="display: none">🎙️ Gespräch starten</button>
+  <button id="stopConversation" style="display: none">⏹️ Gespräch beenden</button>
+  <p>ℹ️ Nach der Vorbereitung sprechen Sie das Interview live über Ihr Mikrofon. Die
+    virtuelle Person antwortet in Echtzeit, kann unterbrochen werden und stellt auch mal
+    Rückfragen. Transkript, Foto und Sprachdatei erscheinen anschliessend weiter unten.</p>
   <div id="interviewProgress"></div>
   <br />
   <div id="interviewOutput"></div>
   <br />
+  <div id="imageStatus"></div>
   <div id="imageOutput">
     <img id="generatedImage" alt="" style="max-width: 100%; height: auto" />
   </div>
@@ -79,8 +62,10 @@ Haben Medikamente, die rein aus Pflanzen hergestellt werden, weniger Nebenwirkun
   <script>
     let imageUrl = null;
 
-    // Funktion um Bild zu erstellen
+    // Funktion um Bild zu erstellen (läuft im Hintergrund, blockiert den Ablauf nicht)
     async function generatePicture(properties) {
+      const status = document.getElementById("imageStatus");
+      status.innerHTML = `<p>⚙️ Porträt-Foto wird im Hintergrund erstellt …</p>`;
       try {
         const response = await fetch(`/interview/generatePicture`, {
           method: "POST",
@@ -95,9 +80,10 @@ Haben Medikamente, die rein aus Pflanzen hergestellt werden, weniger Nebenwirkun
         const imgElem = document.getElementById("generatedImage");
         imgElem.src = dataUrl;
         imageUrl = dataUrl;
+        status.innerHTML = "";
       } catch (error) {
         console.error("Fehler beim Generieren des Bildes:", error);
-        document.getElementById("interviewProgress").innerHTML = `❌ Fehler beim Erstellen des Bildes.`;
+        status.innerHTML = `❌ Foto konnte nicht erstellt werden.`;
       }
     }
 
@@ -110,7 +96,7 @@ Haben Medikamente, die rein aus Pflanzen hergestellt werden, weniger Nebenwirkun
     }
 
     // Funktion zum Generieren der Word-Datei direkt im Browser
-    async function generateWord(interviewData, interviewPerson) {
+    async function generateWord(turns, interviewPerson) {
       const doc = new docx.Document({
         sections: [
           {
@@ -142,18 +128,13 @@ Haben Medikamente, die rein aus Pflanzen hergestellt werden, weniger Nebenwirkun
                   " online statt. Es wurde auf Hochdeutsch geführt, wobei der Text möglichst nahe beim gesprochenen Wort belassen wurde.",
                 spacing: { after: 300 },
               }),
-              ...interviewData
-                .map(([question, answer]) => [
+              ...turns.map(
+                ({ role, text }) =>
                   new docx.Paragraph({
-                    text: "I: " + question,
-                    spacing: { after: 100 },
-                  }),
-                  new docx.Paragraph({
-                    text: "B: " + answer,
-                    spacing: { after: 200 },
-                  }),
-                ])
-                .flat(),
+                    text: (role === "interviewer" ? "I: " : "B: ") + text,
+                    spacing: { after: 150 },
+                  })
+              ),
             ],
           },
         ],
@@ -171,7 +152,7 @@ Haben Medikamente, die rein aus Pflanzen hergestellt werden, weniger Nebenwirkun
       const styleElement = document.createElement("style");
       styleElement.textContent = `
     body { background: white; color: black; }
-    h1, h2, h3, h4, h5, h6 { color: orange; }
+    h1, h2, h3, h4, h5, h6 { color: black; }
     p, ul, ol, li { color: black; }
   `;
       contentDiv.appendChild(styleElement);
@@ -188,154 +169,278 @@ Haben Medikamente, die rein aus Pflanzen hergestellt werden, weniger Nebenwirkun
       await html2pdf().from(contentDiv).set(options).save();
     }
 
-    // Funktion zum Generieren der Audio.Ausgabe
-    async function generateSpeech(story, voice, voiceProfile) {
-      let response = await fetch("/interview/getSpeech", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ story, voice, voiceProfile }),
-      });
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Fehler beim Generieren der Sprachdatei: ${errorText}`);
-      }
-      let data = await response.json();
-      return data.speech;
+    // ---- Live-Gespräch (OpenAI Realtime API / WebRTC) ----
+
+    let personDescription = "";
+    let voiceProfile = "";
+    let transcript = []; // [{ role: "interviewer" | "person", text }]
+
+    let pc = null;
+    let dc = null;
+    let micStream = null;
+    let remoteStream = null;
+    let audioEl = null;
+    let audioCtx = null;
+    let mixDest = null;
+    let mediaRecorder = null;
+    let recordedChunks = [];
+
+    const btnPrepare = document.getElementById("generateInterview");
+    const btnStart = document.getElementById("startConversation");
+    const btnStop = document.getElementById("stopConversation");
+    const progress = document.getElementById("interviewProgress");
+    const output = document.getElementById("interviewOutput");
+
+    function escapeHtml(str) {
+      const div = document.createElement("div");
+      div.textContent = str;
+      return div.innerHTML;
     }
 
-    // Hauptprogramm
-    document.getElementById("generateInterview").addEventListener("click", async () => {
-      const properties = document.getElementById("interviewProperties").value;
-      let outputHtml = "";
-      let interviewData = [];
-      let interviewPerson;
-
-      // Generiert Person
-      try {
-        document.getElementById("interviewProgress").innerHTML =
-          "<p>⚙️ Die zu interviewende Person wird generiert...</p>";
-        let responsePerson = await fetch(`/interview/startInterview`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ properties }),
-        });
-        interviewPerson = await responsePerson.json();
-        outputHtml += `<h2>Interview</h2><strong>Personenbeschreibung:</strong><p>${interviewPerson.person}</p>`;
-      } catch (error) {
-        console.error("Fehler beim Generieren der Person:", error);
-        document.getElementById("interviewProgress").innerHTML = "❌ Fehler beim Generieren der Person:";
+    // Transkript als HTML (Personenbeschreibung + Gesprächsverlauf)
+    function transcriptHtml(withButtons) {
+      let html = `<h2>Interview</h2><strong>Personenbeschreibung:</strong><p>${escapeHtml(personDescription)}</p>`;
+      if (transcript.length) html += `<h3>Transkript</h3>`;
+      for (const { role, text } of transcript) {
+        const speaker = role === "interviewer" ? "I" : "B";
+        html += `<p><strong>${speaker}:</strong> ${escapeHtml(text)}</p>`;
       }
-
-      // Erstellt Stimmenprofil für Person
-      try {
-        document.getElementById("interviewProgress").innerHTML =
-          "<p>⚙️ Für die Person wird ein Stimmenprofil erstellt...</p>";
-        let response = await fetch(`/interview/getVoiceProfile`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ interviewPerson: interviewPerson }),
-        });
-        let responseData = await response.json();
-        voiceProfile = responseData.voiceProfile;
-      } catch (error) {
-        console.error("Fehler beim Generieren des Stimmenprofils:", error);
-        document.getElementById("interviewProgress").innerHTML = "❌ Fehler beim Generieren des Stimmenprofils:";
+      if (withButtons) {
+        html += `<br><button id="buttonWord">📄 Word-Datei herunterladen</button>`;
+        html += `<br><button id="buttonPDF">📑 PDF-Datei herunterladen</button>`;
       }
+      return html;
+    }
 
-      // Befragt Person
-      try {
-        let questionsText = document.getElementById("interviewQuestions").value;
-        let questionsArray = questionsText
-          .split("\n")
-          .map((q) => q.trim())
-          .filter((q) => q !== "");
-        let i = 0;
-
-        // Befragt die Person für jede Frage nacheinander
-        for (const question of questionsArray) {
-          i++;
-          document.getElementById(
-            "interviewProgress"
-          ).innerHTML = `<p>⚙️ Die Person anwortet auf Frage ${i} von ${questionsArray.length}...</p>`;
-          let responsePerson = await fetch(`/interview/askPerson`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ properties, question }),
-          });
-          let answerPerson = await responsePerson.json();
-          outputHtml += `<strong>${question}</strong><p>${answerPerson.person}</p>`;
-          interviewData.push([question, answerPerson.person]);
-        }
-        document.getElementById("interviewOutput").innerHTML = outputHtml;
-        htmlString = outputHtml;
-
-        // Erstellt Bild
-        let isChecked = document.getElementById("selectPicture").checked;
-        if (isChecked) {
-          document.getElementById("interviewProgress").innerHTML = `<p>⚙️ Erstelle Bild ...</p>`;
-          await generatePicture(interviewPerson.person);
-        }
-
-        // Erstellt Word- und PDF-Button
-        outputHtml += `<br><button id="buttonWord">📄 Word-Datei herunterladen</button>`;
-        outputHtml += `<br><button id="buttonPDF">📑 PDF-Datei herunterladen</button>`;
-
-        document.getElementById("interviewOutput").innerHTML = outputHtml;
+    function renderTranscript(withButtons) {
+      output.innerHTML = transcriptHtml(withButtons);
+      if (withButtons) {
+        const htmlString = transcriptHtml(false);
         setTimeout(() => {
           document.getElementById("buttonWord").addEventListener("click", () => {
-            generateWord(interviewData, interviewPerson.person);
+            generateWord(transcript, personDescription);
           });
           document.getElementById("buttonPDF").addEventListener("click", () => {
             generatePDF(htmlString);
           });
         }, 100);
+      }
+    }
 
-        // Erstellt Audio-Ausgabe
-        document.getElementById("interviewProgress").innerHTML = `<p>⚙️ Sprachdatei wird erstellt...</p>`;
-        document.getElementById("speechOutput").innerHTML = "";
-        let audioBlobs = [];
-        let voice1 = document.getElementById("voice1").value;
-        let voice2 = document.getElementById("voice2").value;
-        let voiceProfileQuestion =
-          "Sprich mit einer hellen, klaren Stimme, in einem lebhaften und leicht beschleunigten Tempo, mit einem fröhlichen, neugierigen Unterton und gelegentlichen, leicht atemlosen Momenten, die Aufregung und echtes Interesse widerspiegeln.";
-        console.log("voiceProfile Interviewperson:", voiceProfile);
-        const audioPromises = interviewData.flatMap(([question, answer]) => [
-          generateSpeech(question, voice1, voiceProfileQuestion).then(async (speechURLQuestion) => {
-            const frageBlob = await fetch(speechURLQuestion).then((res) => res.blob());
-            return frageBlob;
-          }),
-          generateSpeech(answer, voice2, voiceProfile).then(async (speechURLAnswer) => {
-            const antwortBlob = await fetch(speechURLAnswer).then((res) => res.blob());
-            return antwortBlob;
-          }),
-        ]);
-        Promise.all(audioPromises)
-          .then((results) => {
-            audioBlobs = results;
-            const combinedBlob = new Blob(audioBlobs, { type: "audio/mp3" });
-            const combinedUrl = URL.createObjectURL(combinedBlob);
-            const combinedAudioHTML = `
-        <h3>Audioaufnahme des gesamten Interviews</h3>
-        <audio controls src="${combinedUrl}"></audio>
-    `;
-            document.getElementById("speechOutput").innerHTML = combinedAudioHTML;
-            document.getElementById("interviewProgress").innerHTML = ``;
-          })
-          .catch((error) => {
-            console.error("Fehler beim Generieren der Sprachdatei:", error);
-            document.getElementById("interviewProgress").innerHTML = `❌ Fehler beim Erstellen der Sprachdatei.`;
-          });
+    // Schritt 1: Person (und optional Foto) vorbereiten
+    btnPrepare.addEventListener("click", async () => {
+      btnPrepare.disabled = true;
+      transcript = [];
+      try {
+        const properties = document.getElementById("interviewProperties").value;
+
+        progress.innerHTML = "<p>⚙️ Die zu interviewende Person wird generiert...</p>";
+        const responsePerson = await fetch(`/interview/startInterview`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ properties }),
+        });
+        const interviewPerson = await responsePerson.json();
+        personDescription = interviewPerson.person;
+        renderTranscript(false);
+
+        progress.innerHTML = "<p>⚙️ Für die Person wird ein Stimmenprofil erstellt...</p>";
+        const responseProfile = await fetch(`/interview/getVoiceProfile`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ interviewPerson: { person: personDescription } }),
+        });
+        voiceProfile = (await responseProfile.json()).voiceProfile;
+
+        if (document.getElementById("selectPicture").checked) {
+          generatePicture(personDescription); // läuft im Hintergrund weiter
+        }
+
+        progress.innerHTML = `<p>✅ Vorbereitung abgeschlossen. Klicken Sie auf „Gespräch starten".</p>`;
+        btnStart.style.display = "";
       } catch (error) {
-        console.error("Fehler beim Beantworten der Fragen:", error);
-        document.getElementById("interviewProgress").innerHTML = "❌ Fehler beim Beantworten der Fragen";
+        console.error("Fehler bei der Vorbereitung:", error);
+        progress.innerHTML = "❌ Fehler bei der Vorbereitung des Interviews.";
+      } finally {
+        btnPrepare.disabled = false;
       }
     });
+
+    // Schritt 2: Live-Gespräch starten
+    btnStart.addEventListener("click", async () => {
+      btnStart.disabled = true;
+      try {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          throw new Error(
+            "Mikrofon-Zugriff nicht verfügbar. Die Seite muss über HTTPS oder http://localhost geöffnet werden – " +
+              "eine LAN-IP oder ein Hostname über http:// funktioniert aus Sicherheitsgründen nicht."
+          );
+        }
+
+        progress.innerHTML = "<p>⚙️ Verbindung wird aufgebaut...</p>";
+
+        const sessionRes = await fetch(`/interview/realtimeSession`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            personDescription,
+            voice: document.getElementById("voice2").value,
+            voiceProfile,
+          }),
+        });
+        const session = await sessionRes.json();
+        if (!sessionRes.ok) throw new Error(session.error || "Session-Fehler");
+        const { value: ephemeralKey, model } = session;
+
+        micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+        pc = new RTCPeerConnection();
+        pc.addTrack(micStream.getAudioTracks()[0], micStream);
+
+        audioEl = document.createElement("audio");
+        audioEl.autoplay = true;
+        document.body.appendChild(audioEl);
+
+        pc.ontrack = (e) => {
+          remoteStream = e.streams[0];
+          audioEl.srcObject = remoteStream;
+          startRecording();
+        };
+
+        dc = pc.createDataChannel("oai-events");
+        dc.onmessage = handleRealtimeEvent;
+
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+
+        const sdpRes = await fetch(`https://api.openai.com/v1/realtime/calls?model=${encodeURIComponent(model)}`, {
+          method: "POST",
+          body: offer.sdp,
+          headers: {
+            Authorization: `Bearer ${ephemeralKey}`,
+            "Content-Type": "application/sdp",
+          },
+        });
+        if (!sdpRes.ok) throw new Error("WebRTC-Handshake fehlgeschlagen");
+        const answerSdp = await sdpRes.text();
+        await pc.setRemoteDescription({ type: "answer", sdp: answerSdp });
+
+        progress.innerHTML = `<p>🔴 Verbindung aktiv – sprechen Sie jetzt.</p>`;
+        btnStart.style.display = "none";
+        btnStop.style.display = "";
+        btnPrepare.disabled = true;
+      } catch (error) {
+        console.error("Fehler beim Gesprächsstart:", error);
+        progress.innerHTML = `❌ Fehler beim Aufbau des Gesprächs: ${escapeHtml(error.message || String(error))}`;
+        cleanupConnection();
+        btnStart.disabled = false;
+      }
+    });
+
+    // Schritt 3: Gespräch beenden
+    btnStop.addEventListener("click", () => {
+      btnStop.disabled = true;
+      progress.innerHTML = `<p>⚙️ Gespräch wird beendet...</p>`;
+      stopRecording(); // baut den Audio-Download; danach Aufräumen
+      cleanupConnection();
+      renderTranscript(true);
+      progress.innerHTML = `<p>✅ Interview beendet.</p>`;
+      btnStop.style.display = "none";
+      btnStop.disabled = false;
+      btnStart.style.display = "";
+      btnStart.disabled = false;
+      btnPrepare.disabled = false;
+    });
+
+    function handleRealtimeEvent(e) {
+      let msg;
+      try {
+        msg = JSON.parse(e.data);
+      } catch {
+        return;
+      }
+      switch (msg.type) {
+        case "conversation.item.input_audio_transcription.completed":
+          if (msg.transcript && msg.transcript.trim()) {
+            transcript.push({ role: "interviewer", text: msg.transcript.trim() });
+            renderTranscript(false);
+          }
+          break;
+        case "response.output_audio_transcript.done":
+        case "response.audio_transcript.done":
+          if (msg.transcript && msg.transcript.trim()) {
+            transcript.push({ role: "person", text: msg.transcript.trim() });
+            renderTranscript(false);
+          }
+          break;
+        case "error":
+        case "response.error":
+          console.error("Realtime-Fehler:", msg);
+          progress.innerHTML = `❌ Fehler in der Verbindung: ${escapeHtml((msg.error && msg.error.message) || "unbekannt")}`;
+          break;
+      }
+    }
+
+    function startRecording() {
+      if (mediaRecorder || !remoteStream) return;
+      try {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        mixDest = audioCtx.createMediaStreamDestination();
+        audioCtx.createMediaStreamSource(micStream).connect(mixDest);
+        audioCtx.createMediaStreamSource(remoteStream).connect(mixDest);
+        recordedChunks = [];
+        mediaRecorder = new MediaRecorder(mixDest.stream);
+        mediaRecorder.ondataavailable = (ev) => {
+          if (ev.data.size > 0) recordedChunks.push(ev.data);
+        };
+        mediaRecorder.onstop = () => {
+          const blob = new Blob(recordedChunks, { type: "audio/webm" });
+          const url = URL.createObjectURL(blob);
+          document.getElementById("speechOutput").innerHTML = `
+            <h3>Audioaufnahme des gesamten Interviews</h3>
+            <audio controls src="${url}"></audio><br />
+            <a href="${url}" download="Interview.webm">⬇️ Audioaufnahme herunterladen</a>
+          `;
+          if (audioCtx) {
+            audioCtx.close();
+            audioCtx = null;
+          }
+          mixDest = null;
+        };
+        mediaRecorder.start();
+      } catch (error) {
+        console.error("Fehler beim Starten der Aufnahme:", error);
+      }
+    }
+
+    function stopRecording() {
+      if (mediaRecorder && mediaRecorder.state !== "inactive") {
+        mediaRecorder.stop(); // onstop baut den Download und schliesst den AudioContext
+      }
+      mediaRecorder = null;
+    }
+
+    function cleanupConnection() {
+      try {
+        if (dc) dc.close();
+      } catch {}
+      try {
+        if (pc) {
+          pc.getSenders().forEach((s) => s.track && s.track.stop());
+          pc.close();
+        }
+      } catch {}
+      if (micStream) micStream.getTracks().forEach((t) => t.stop());
+      if (audioEl) {
+        audioEl.srcObject = null;
+        audioEl.remove();
+        audioEl = null;
+      }
+      dc = null;
+      pc = null;
+      micStream = null;
+      remoteStream = null;
+    }
   </script>
 </body>
 
