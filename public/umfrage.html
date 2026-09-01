@@ -8,13 +8,80 @@
     <link rel="stylesheet" href="styles_synthwave.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <style>
+        .person-card {
+            margin: 0.5em 0 1.5em;
+        }
+        .person-card table {
+            border-collapse: collapse;
+            width: 100%;
+            max-width: 640px;
+            font-size: 0.9em;
+        }
+        .person-card th {
+            text-align: left;
+            padding: 0.5em 0.6em 0.2em;
+            border-bottom: 1px solid currentColor;
+            font-size: 0.95em;
+            letter-spacing: 0.03em;
+        }
+        .person-card th:not(:first-of-type) {
+            padding-top: 1em;
+        }
+        .person-card td {
+            padding: 0.25em 0.6em;
+            vertical-align: top;
+            border-bottom: 1px solid rgba(128, 128, 128, 0.3);
+        }
+        .person-card td.feld {
+            font-weight: bold;
+            white-space: nowrap;
+            width: 1%;
+            opacity: 0.75;
+        }
+        .qa-table-wrap {
+            max-width: 900px;
+            max-height: 34em;
+            overflow-y: auto;
+            margin: 0.5em 0 1.5em;
+        }
+        .qa-table {
+            border-collapse: collapse;
+            width: 100%;
+            font-size: 0.9em;
+        }
+        .qa-table th,
+        .qa-table td {
+            text-align: left;
+            padding: 0.35em 0.6em;
+            vertical-align: top;
+            border-bottom: 1px solid rgba(128, 128, 128, 0.3);
+        }
+        .qa-table th {
+            position: sticky;
+            top: 0;
+            background: #0a0a14;
+            border-bottom: 1px solid currentColor;
+        }
+        .qa-table td.nr {
+            white-space: nowrap;
+            opacity: 0.75;
+        }
+        .excel-download {
+            margin: 1.5em 0;
+        }
+        .excel-download button {
+            font-size: 1.05em;
+            padding: 0.7em 1.4em;
+        }
+    </style>
 </head>
 
 <body>
-  <div id="site-header"></div>
-  <script>
-    fetch('/header.html').then(r => r.text()).then(h => document.getElementById('site-header').innerHTML = h);
-  </script>
+    <div id="site-header"></div>
+    <script>
+        fetch('/header.html').then(r => r.text()).then(h => document.getElementById('site-header').innerHTML = h);
+    </script>
     <h1>virtuelle Umfrage</h1>
     <form id="surveyForm">
         <h2>Daten der Teilnehmenden</h2>
@@ -45,8 +112,9 @@
         </div>
 
         <h2>Umfragefragen</h2>
-        <p>Geben Sie Ihre Fragen in diesem Format ein:<br>- Jede Frage beginnt in einer neuen Zeile.<br>- Falls
-            geschlossen: Antworten mit Komma getrennt direkt darunter.<br>- Falls offen: Leere Zeile darunter.</p>
+        <p>Geben Sie Ihre Fragen in diesem Format ein:<br>- Jede Frage beginnt in einer neuen Zeile.<br>- Falls offen:
+            Leere Zeile darunter.<br>- Falls
+            geschlossen: Antworten mit Komma getrennt direkt darunter.</p>
         <textarea id="surveyInput" name="surveyInput" cols="70" rows="8">Wie oft essen Sie Fleisch?
 täglich, mehrmals in der Woche, selten
 
@@ -77,6 +145,50 @@ Welches Gemüse essen Sie am liebsten?</textarea><br>
                 }
             }
             return survey;
+        }
+
+        // HTML-Escaping für Ausgaben
+        function escapeHtml(text) {
+            const div = document.createElement("div");
+            div.textContent = text ?? "";
+            return div.innerHTML;
+        }
+
+        // Personenbeschreibung (Klartext, "Label: Wert"-Zeilen) als Kontaktblatt-Tabelle rendern
+        function renderPersonTable(text) {
+            let rows = "";
+            (text || "").split("\n").map(l => l.trim()).filter(l => l !== "").forEach(line => {
+                const colon = line.indexOf(":");
+                const label = colon === -1 ? line : line.slice(0, colon).trim();
+                const value = colon === -1 ? "" : line.slice(colon + 1).trim();
+                if (value === "") {
+                    // Abschnittsüberschrift
+                    rows += `<tr><th colspan="2">${escapeHtml(label.replace(/:$/, ""))}</th></tr>`;
+                } else {
+                    rows += `<tr><td class="feld">${escapeHtml(label)}</td><td>${escapeHtml(value)}</td></tr>`;
+                }
+            });
+            return `<div class="person-card"><table>${rows}</table></div>`;
+        }
+
+        // Report als Fliesstext rendern, evtl. vorhandenes Markdown neutralisieren
+        function renderReport(text) {
+            return escapeHtml(text || "")
+                .replace(/^\s*#{1,6}\s*/gm, "")
+                .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+                .replace(/\n{2,}/g, "</p><p>")
+                .replace(/\n/g, "<br>");
+        }
+
+        // Fragen/Antworten aus den Umfrage-Ergebnissen als scrollbare Tabelle
+        function renderQaTable(results) {
+            let rows = "";
+            results.forEach(row => {
+                rows += `<tr><td class="nr">${row[0] + 1}</td><td>${escapeHtml(row[3])}</td><td>${escapeHtml(row[4])}</td></tr>`;
+            });
+            return `<div class="qa-table-wrap"><table class="qa-table">`
+                + `<thead><tr><th>Person</th><th>Frage</th><th>Antwort</th></tr></thead>`
+                + `<tbody>${rows}</tbody></table></div>`;
         }
 
         // Funktion für Excel-Datenblatt zu erstellen
@@ -163,31 +275,44 @@ Welches Gemüse essen Sie am liebsten?</textarea><br>
 
             // Umfrage bearbeiten
             try {
+                const progress = document.getElementById('surveyProgress');
                 let surveyResults = [];
-                // Erstelle Teilnehmer
-                for (let i = 0; i < formData.participants_number; i++) {
-                    document.getElementById('surveyProgress').innerHTML = `<p>⚙️ Erstelle Person ${i + 1}...</p>`;
-                    let response = await fetch('/umfrage/person', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(formData)
-                    });
-                    let data = await response.json();
-                    let person = data.person;
-                    for (let j = 0; j < formData.survey.length; j++) {
-                        let [question, isOpen, options] = formData.survey[j];
-                        document.getElementById('surveyProgress').innerHTML = `<p>⚙️ Person ${i + 1} beantwortet Frage ${j + 1}...</p>`;
-                        let response = await fetch('/umfrage/answer', {
+
+                // Alle Teilnehmenden parallel erstellen
+                progress.innerHTML = `<p>⚙️ Erstelle ${formData.participants_number} Personen...</p>`;
+                const persons = await Promise.all(
+                    Array.from({ length: formData.participants_number }, async () => {
+                        const response = await fetch('/umfrage/person', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ person, question, isOpen, options })
+                            body: JSON.stringify(formData)
                         });
-                        let answerData = await response.json();
-                        let answer = answerData.answer;
-                        surveyResults.push([i, person, j, question, answer]);
-                    }
-                }
-                document.getElementById('surveyProgress').innerHTML = `<p>⚙️ Der Report wird geschrieben...</p>`;
+                        return (await response.json()).person;
+                    })
+                );
+
+                // Alle Antworten (Person × Frage) parallel erstellen
+                const answerTasks = [];
+                persons.forEach((person, i) => {
+                    formData.survey.forEach(([question, isOpen, options], j) => {
+                        answerTasks.push((async () => {
+                            const response = await fetch('/umfrage/answer', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ person, question, isOpen, options })
+                            });
+                            const answer = (await response.json()).answer;
+                            surveyResults.push([i, person, j, question, answer]);
+                            progress.innerHTML = `<p>⚙️ Antworten werden erstellt... (${surveyResults.length}/${answerTasks.length})</p>`;
+                        })());
+                    });
+                });
+                await Promise.all(answerTasks);
+
+                // Deterministische Reihenfolge (Person, dann Frage)
+                surveyResults.sort((a, b) => a[0] - b[0] || a[2] - b[2]);
+
+                progress.innerHTML = `<p>⚙️ Der Report wird geschrieben...</p>`;
                 let responseReport = await fetch('/umfrage/report', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -196,23 +321,24 @@ Welches Gemüse essen Sie am liebsten?</textarea><br>
                 let dataReport = await responseReport.json();
 
                 let html = "<h2>Kurzer Report</h2>";
-                html += `<p>${dataReport.report}</p>`;
+                html += `<p>${renderReport(dataReport.report)}</p>`;
+                html += `<div class="excel-download"><button id="generateExcel">📊 Excel-Datei herunterladen</button></div>`;
+                html += "<h2>Fragen und Antworten</h2>";
+                html += renderQaTable(surveyResults);
                 html += "<h2>Personenbeschreibungen</h2>";
                 let h = ""
                 surveyResults.forEach((row) => {
                     if (h != row[1]) {
                         h = row[1];
-                        html += `<b>${row[0] + 1}. Person:</b><br><span class="small">${row[1]}</span><br><br>`;
+                        html += `<b>${row[0] + 1}. Person:</b>${renderPersonTable(row[1])}`;
                     }
                 });
-                setTimeout(() => {
-                    document.getElementById('surveyFeatures').innerHTML = '<button id="generateExcel">📊 Excel-Datei herunterladen</button>'
-                    document.getElementById("generateExcel").addEventListener("click", () => {
-                        generateExcelFile(surveyResults);
-                    });
-                }, 100);
                 document.getElementById('surveyProgress').innerHTML = ``;
+                document.getElementById('surveyFeatures').innerHTML = ``;
                 document.getElementById('surveyOutput').innerHTML = html;
+                document.getElementById("generateExcel").addEventListener("click", () => {
+                    generateExcelFile(surveyResults);
+                });
             } catch (error) {
                 console.error('Fehler bei der Umfrage:', error);
                 document.getElementById('surveyProgress').innerHTML = '❌ Fehler beim Erstellen der Umfrage';

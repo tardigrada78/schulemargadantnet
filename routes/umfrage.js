@@ -1,8 +1,8 @@
 import { Router } from 'express';
-import OpenAI from "openai";
+import Anthropic from "@anthropic-ai/sdk";
 
 const router = Router();
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 // Erstellt Personen
 async function generatePerson(participants_women, participants_men, participants_age_min, participants_age_max) {
@@ -10,50 +10,52 @@ async function generatePerson(participants_women, participants_men, participants
     const geschlecht = genderRand < participants_women ? "Frau" :
         genderRand < (participants_women + participants_men) ? "Mann" : "unbestimmt";
     const alter = Math.floor(Math.random() * (participants_age_max - participants_age_min)) + participants_age_min;
-    console.log(alter)
     const prompt = `
-    Erstelle eine realistische virtuelle Person mit einer einzigartigen, vielfältigen und glaubwürdigen Persönlichkeit. 
+    Erstelle eine realistische virtuelle Person mit einer einzigartigen, vielfältigen und glaubwürdigen Persönlichkeit.
     Diese Person soll eine Umfrage ausfüllen und repräsentiert ein breites Spektrum der Gesellschaft – von konservativ bis progressiv, von wohlhabend bis prekär, von freundlich bis problematisch.
-    
-    ---
-    ### 🔹 Grunddaten:
-    - Geschlecht: ${geschlecht} - Berücksichtige das Geschlecht bei der Beschreibung der Person.
-    - Alter: ${alter} - Verwende genau dieses Alter für die Beschreibung der Person, auch wenn die Person atypisch jung oder alt ist.
-    - Name: Ein realistischer Vorname passend zum Geschlecht, Alter und sozialem Hintergrund.
-    - Wohnort: Eine plausible Region in der Schweiz (z. B. Großstadt, Vorort, Land, finanzstarker oder ärmerer Kanton).
-    
-    ---
-    ### 🔹 Sozialer Hintergrund:
-    - Bildungsstand: Variiere stark – von Schulabbrecher bis Hochschulabschluss.
-    - Beruf oder Ausbildung: Falls in Ausbildung, gib eine realistische Schul-/Studienrichtung an. Falls berufstätig, wähle einen passenden Beruf (z. B. Akademiker, Handwerker, Dienstleister, Arbeitsloser).
-    - Einkommen: Sehr niedrig / niedrig / mittel / hoch / sehr hoch – passend zur Lebenssituation.
-    - Wohnsituation: Eigenheim, Mietwohnung, WG, betreutes Wohnen, prekäres Umfeld.
-    - Familienstand: Ledig, verheiratet, geschieden, verwitwet, in einer toxischen Beziehung, alleinerziehend.
-    
-    ---
-    ### 🔹 Persönliche Eigenschaften:
-    - Interessen und Hobbys: Variiere stark – von Sport, Gaming, Technik, Kunst, Politik, Reisen bis hin zu eher problematischen Hobbys (z. B. Glücksspiel, Verschwörungstheorien, Exzessives Feiern).
-    - Charakter: Keine idealisierten Personen! Berücksichtige auch negative Eigenschaften (z. B. impulsiv, egoistisch, misstrauisch, nachtragend, kontrollierend, pessimistisch).
-    - Psychische & körperliche Gesundheit: Gesund, aber auch mögliche Herausforderungen (z. B. Angststörungen, Burnout, körperliche Einschränkungen, Suchtprobleme, Schulden).
-    - Soziale Kontakte: Große Freundesgruppe, Einzelgänger, sozial unsicher, vereinsamt, in toxischem Umfeld.
-    
-    ---
-    ### 🔹 Weltanschauung & Meinung:
-    - Politische & gesellschaftliche Ansichten: Variiere stark – von extrem konservativ bis links-progressiv, von unpolitisch bis radikal. Berücksichtige auch mögliche Vorurteile oder Verschwörungsglauben.
-    - Einstellung zu typischen Umfragethemen (z. B. Umwelt, Digitalisierung, soziale Gerechtigkeit, Konsumverhalten, Migration, Impfungen): Beziehe klare Positionen und vermeide stereotype Antworten.
-    - Umgang mit Konflikten & Meinungsverschiedenheiten: Sachlich, emotional, aggressiv, defensiv, ignorant?
-    
-    ---
-    💡 Erstelle eine abwechslungsreiche, glaubwürdige Beschreibung, die sich deutlich von anderen unterscheidet.  
-    Die Person soll authentisch klingen, als wäre sie eine echte Umfrageteilnehmerin mit realistischen Widersprüchen und Ecken & Kanten.
+    Erstelle eine abwechslungsreiche Beschreibung, die sich deutlich von anderen unterscheidet, mit realistischen Widersprüchen und Ecken & Kanten – keine idealisierten Personen.
+
+    Gib die Antwort AUSSCHLIESSLICH als Klartext im folgenden Zeilenformat zurück:
+    - Jede Abschnittsüberschrift steht auf einer eigenen Zeile und endet mit einem Doppelpunkt, ohne weiteren Text.
+    - Jedes Merkmal steht auf einer eigenen Zeile im Format "Label: Wert".
+    - Keine Markdown-Formatierung, keine Sternchen, keine Emojis, kein Einleitungs- oder Schlusstext.
+
+    Verwende genau diese Struktur und Labels:
+
+    Grunddaten:
+    Name: ein realistischer Vorname und Nachname passend zu Geschlecht, Alter und sozialem Hintergrund
+    Geschlecht: ${geschlecht}
+    Alter: ${alter}
+    Wohnort: eine plausible Region in der Schweiz (z. B. Grossstadt, Vorort, Land, finanzstarker oder ärmerer Kanton)
+
+    Sozialer Hintergrund:
+    Bildungsstand: variiere stark – von Schulabbrecher bis Hochschulabschluss
+    Beruf oder Ausbildung: falls in Ausbildung eine realistische Schul-/Studienrichtung, falls berufstätig ein passender Beruf
+    Einkommen: sehr niedrig / niedrig / mittel / hoch / sehr hoch – passend zur Lebenssituation
+    Wohnsituation: Eigenheim, Mietwohnung, WG, betreutes Wohnen oder prekäres Umfeld
+    Familienstand: ledig, verheiratet, geschieden, verwitwet, in einer toxischen Beziehung oder alleinerziehend
+
+    Persönliche Eigenschaften:
+    Interessen und Hobbys: variiere stark – von Sport, Gaming, Technik, Kunst, Politik, Reisen bis zu problematischen Hobbys (z. B. Glücksspiel, Verschwörungstheorien, exzessives Feiern)
+    Charakter: berücksichtige auch negative Eigenschaften (z. B. impulsiv, egoistisch, misstrauisch, nachtragend, kontrollierend, pessimistisch)
+    Gesundheit: gesund, aber auch mögliche Herausforderungen (z. B. Angststörungen, Burnout, körperliche Einschränkungen, Suchtprobleme, Schulden)
+    Soziale Kontakte: grosse Freundesgruppe, Einzelgänger, sozial unsicher, vereinsamt oder in toxischem Umfeld
+
+    Weltanschauung & Meinung:
+    Politische & gesellschaftliche Ansichten: variiere stark – von extrem konservativ bis links-progressiv, von unpolitisch bis radikal, auch mögliche Vorurteile oder Verschwörungsglauben
+    Einstellung zu Umfragethemen: klare Positionen zu Umwelt, Digitalisierung, sozialer Gerechtigkeit, Konsumverhalten, Migration, Impfungen – vermeide stereotype Antworten
+    Umgang mit Konflikten: sachlich, emotional, aggressiv, defensiv oder ignorant
+
+    Verwende genau das vorgegebene Geschlecht und Alter, auch wenn die Person atypisch jung oder alt ist.
     `;
-    
-    const response = await openai.chat.completions.create({
-        model: "gpt-4o",
+
+    const response = await anthropic.messages.create({
+        model: "claude-sonnet-4-6",
+        max_tokens: 1200,
+        temperature: 1.0, // Höhere Temperatur für mehr Vielfalt
         messages: [{ role: 'user', content: prompt }],
-        temperature: 1.0 // Höhere Temperatur für mehr Vielfalt
     });
-        return response.choices[0].message.content;
+    return response.content[0].text.trim();
 }
 
 // Lässt Personen Umfrage beantworten
@@ -68,10 +70,8 @@ async function answerSurvey(person, question, isOpen, options) {
 
         Frage: ${question}
 
-        Antwort:
-        Gib eine prägnante, aber realistische Antwort, die zu den Eigenschaften, Interessen und der Persönlichkeit der Person passt.
-        Die Antwort umfasst maximal 50 Wörter.
-        Schreibe nur die Antwort, ohne einleitende Worte wie "Antwort:".
+        Dies simuliert eine schriftliche Umfrage. Antworte knapp und sachlich in maximal einem Satz.
+        Kein Plauderton, keine Anrede, keine Einleitung, keine Gedankenstriche oder Lacher – nur die reine Antwort, passend zur Persönlichkeit der Person.
         `;
     } else {
         prompt = `Basierend auf der folgenden virtuellen Person:
@@ -88,13 +88,14 @@ async function answerSurvey(person, question, isOpen, options) {
         `;
     }
 
-    const response = await openai.chat.completions.create({
-        model: "gpt-4o",
+    const response = await anthropic.messages.create({
+        model: "claude-haiku-4-5",
+        max_tokens: 150,
+        temperature: 0.7,
         messages: [{ role: "user", content: prompt }],
-        temperature: 0.7
     });
 
-    return response.choices[0].message.content.trim();
+    return response.content[0].text.trim();
 }
 
 // Schreibt Report
@@ -108,7 +109,6 @@ async function generateSurveyReport(surveyResults) {
         reportText += `- ${answer}\n`;
     }
 
-    // OpenAI-Prompt für eine Zusammenfassung
     const prompt = `
     Erstelle eine verständliche Zusammenfassung der folgenden Umfrageergebnisse:
 
@@ -116,14 +116,16 @@ async function generateSurveyReport(surveyResults) {
 
     Fasse die Haupttendenzen und auffälligen Unterschiede zusammen, ohne Antworten zu wiederholen.
     Nutze klare Sprache und fasse es in 5-7 Sätzen zusammen.
+    Antworte in reinem Fliesstext ohne jede Formatierung: keine Überschriften, keine Rauten (#), keine Sternchen (**), keine Aufzählungszeichen.
     `;
 
-    const response = await openai.chat.completions.create({
-        model: "gpt-4o",
+    const response = await anthropic.messages.create({
+        model: "claude-haiku-4-5",
+        max_tokens: 600,
+        temperature: 0.7,
         messages: [{ role: 'user', content: prompt }],
-        temperature: 0.7
     });
-    return response.choices[0].message.content;
+    return response.content[0].text.trim();
 }
 
 // Route für das Generieren einer Person

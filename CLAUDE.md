@@ -23,3 +23,7 @@ Eine Webplattform mit einzelnen aber logisch verbundenen Tools für KI im Schulu
 # Repositories
 
 - **Kein Git**: Ich verwende git selbst, uploade keine Änderungen. Beachte aber, dass es eine .gitignore gibt.
+
+# Administratives
+- API Keys für Google Gemini, OpenAI und Anthropic sind vorhanden und liegen in ENV Systemvariablen
+- Der lokale Server (für Tests) läuft auf localhost:3001, nicht 3000
