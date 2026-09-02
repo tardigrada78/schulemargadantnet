@@ -1,150 +1,62 @@
-import { Router } from "express";
-import multer from "multer";
-import fs from "fs";
-import OpenAI from "openai";
+import express from "express";
+const router = express.Router();
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-const router = Router();
-const upload = multer({ dest: 'uploads/', limits: { fileSize: 25 * 1024 * 1024 } });
+// Realtime-Modell für das Live-Gespräch (Alias; bei Ablehnung "gpt-realtime-2.1" verwenden)
+const REALTIME_MODEL = "gpt-realtime";
 
-
-// Erstellt Prüfungsfrage als Text
-async function doQuestion(questionContent) {
-  const prompt = `Erstelle eine Prüfungsfrage zu diesem Lernstoff:
-    ${questionContent}
-
-    WICHTIG:
-    - Schreibe eine klare Frage in einem Satz
-    - Die Frage muss klar zum Thema passen. Falls das Thema sehr gross ist, wähle einen Bereich aus
-    - Die Frage muss von einem Schüler des Gymnasiums Grundlagenfach beantwortbar sein
-    - Die Frage sollte in maximal 5 Minuten beantwortbar sein
-    - Die Frage wird für eine mündliche Prüfung verwendet. Schreibe also prägnant und vermeide komplizierte Satzstrukturen.
-    `;
-  const response = await openai.chat.completions.create({
-    model: "gpt-4.1-nano",
-    messages: [{ role: "user", content: prompt }],
-    temperature: 0.6,
-  });
-  return response.choices[0].message.content;
-}
-
-// Erstellt Antwort als Text
-async function doChat(chatContent, questionAI, profileText) {
-  const prompt = `Antworte auf diese Prüfungsantwort:
-    ${chatContent}
-
-    wobei dies die Prüfungsfrage war:
-    ${questionAI}
-
-    dein Charakter ist der folgende. Berücksichtige ihn in einem realistischen Ausmass.
-    ${profileText}
-
-    WICHTIG:
-    - Die Antwort sollte die Anforderungen eines Gymnasialschülers im Grundlagenfach erfüllen
-    - Gib eine prägnante fachliche Rückmeldung
-    - Verliere dich nicht in Details
-    - Schweife nicht ab mit allgemein Ratschlägen und Kommentaren
-    - Beginne mit einer Gesamteinschätzung, erzähle dann das Positive und am Ende was verbessert werden kann
-    `;
-  const response = await openai.chat.completions.create({
-    model: "gpt-4.1-nano",
-    messages: [{ role: "user", content: prompt }],
-    temperature: 0.6,
-  });
-  return response.choices[0].message.content;
-}
-
-
-// Generiert Audio aus Text
-async function doAudio(content, voice, voiceProfile) {
+// Route für Realtime-Live-Gespräch: erzeugt einen kurzlebigen Client-Key
+router.post("/realtimeSession", async (req, res) => {
   try {
-    const mp3 = await openai.audio.speech.create({
-      model: "gpt-4o-mini-tts",
-      voice: voice,
-      instructions: voiceProfile,
-      input: content,
-    });
-    const buffer = Buffer.from(await mp3.arrayBuffer());
-    const base64Audio = buffer.toString("base64");
-    return `data:audio/mpeg;base64,${base64Audio}`;
-  } catch (error) {
-    console.error("Fehler bei der Sprachsynthese:", error);
-    throw new Error("Fehler beim Generieren der Sprachdatei.");
-  }
-}
-
-
-// Route für Textchat
-router.post("/getQuestion", async (req, res) => {
-  try {
-    const { questionContent } = req.body;
-    const result = await doQuestion(questionContent);
-    res.json({ chatAnswer: result });
-  } catch (error) {
-    console.error("Fehler beim Schreiben der Frage", error);
-    res.status(500).send("Fehler beim Schreiben der Frage.");
-  }
-});
-
-// Route für Textchat
-router.post("/getChat", async (req, res) => {
-  try {
-    const { chatContent, questionAI, profileText } = req.body;
-    const result = await doChat(chatContent, questionAI, profileText);
-    res.json({ chatAnswer: result });
-  } catch (error) {
-    console.error("Fehler beim Schreiben des Chats", error);
-    res.status(500).send("Fehler beim Schreiben des Chats.");
-  }
-});
-
-// Route für Audio
-router.post("/getAudio", async (req, res) => {
-  const { content, voice, voiceProfile } = req.body;
-  try {
-    const dataAudio = await doAudio(content, voice, voiceProfile);
-    res.json({ audio: dataAudio });
-  } catch (error) {
-    console.error("Fehler beim Generieren der Sprachdatei:", error);
-    res.status(500).json({ error: "Fehler beim Generieren der Sprachdatei." });
-  }
-});
-
-// Route für Sprachtranskription
-router.post("/transcribe", upload.single('audio'), async (req, res) => {
-  let tempFilePath = null;
-  try {
-    if (!req.file) {
-      return res.status(400).json({ error: "Keine Audio-Datei empfangen" });
+    const { examContent, voice, voiceProfile, profileText } = req.body;
+    if (!examContent || examContent.trim() === "") {
+      return res.status(400).json({ error: "Prüfungsstoff fehlt!" });
     }
-    tempFilePath = req.file.path;
-    const extension = req.file.originalname.split('.').pop() || 'webm';
-    const renamedPath = tempFilePath + '.' + extension;
-    try {
-      fs.copyFileSync(tempFilePath, renamedPath);
-      tempFilePath = renamedPath;
-    } catch (copyError) {
-      console.error("Fehler beim Kopieren:", copyError);
+
+    const instructions = `Du bist Prüferin in einer mündlichen Prüfung (Gymnasium, Grundlagenfach) und führst ein Prüfungsgespräch auf Hochdeutsch.
+Ablauf: Begrüsse den Prüfling kurz und stelle dann sofort die erste Frage zum Prüfungsstoff. Stelle immer nur eine Frage auf einmal, höre die Antwort an, gehe darauf ein, hake bei Lücken oder Fehlern nach und korrigiere sachlich. Frage nach und nach weitere Aspekte des Stoffs ab.
+Sprich natürlich und gesprochen, halte deine Redebeiträge kurz.
+Du darfst jederzeit unterbrochen werden – hör dann sofort auf zu sprechen und geh auf den Einwurf ein.
+Die Prüfung dauert rund 5 Minuten. Wenn die Zeit ungefähr um ist oder der Stoff abgedeckt ist, beende das Gespräch mit einer kurzen mündlichen Gesamtrückmeldung (was war gut, wo sind Lücken).
+Bleib durchgehend in der Rolle und brich sie nicht.
+
+Prüfungsstoff:
+${examContent}
+
+Charakter der Prüferin: ${profileText || "sachlich und fair"}
+Sprechweise: ${voiceProfile || "natürlich und der Situation angemessen"}`;
+
+    const response = await fetch("https://api.openai.com/v1/realtime/client_secrets", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        session: {
+          type: "realtime",
+          model: REALTIME_MODEL,
+          instructions,
+          audio: {
+            output: { voice: voice || "ash" },
+            input: {
+              transcription: { model: "gpt-4o-mini-transcribe", language: "de" },
+              turn_detection: { type: "semantic_vad", interrupt_response: true, create_response: true },
+            },
+          },
+        },
+      }),
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      console.error("Fehler bei der Realtime-Session:", data);
+      return res.status(500).json({ error: "Fehler beim Erstellen der Realtime-Session." });
     }
-    const transcription = await openai.audio.transcriptions.create({
-      file: fs.createReadStream(tempFilePath),
-      model: "whisper-1"
-    });
-    res.json({ transcript: transcription.text });
+
+    res.json({ value: data.value, model: REALTIME_MODEL });
   } catch (error) {
-    console.error("❌ Transkription-Fehler:", error.message);
-    res.status(500).json({ error: `Transkription fehlgeschlagen: ${error.message}` });
-  } finally {
-    // Cleanup - beide möglichen Dateien löschen
-    [req.file?.path, tempFilePath].forEach(path => {
-      if (path && fs.existsSync(path)) {
-        try {
-          fs.unlinkSync(path);
-        } catch (deleteError) {
-          console.error("Fehler beim Löschen:", deleteError);
-        }
-      }
-    });
+    console.error("Fehler bei der Realtime-Session:", error);
+    res.status(500).json({ error: "Fehler beim Erstellen der Realtime-Session." });
   }
 });
 
