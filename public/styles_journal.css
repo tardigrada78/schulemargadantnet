@@ -65,6 +65,9 @@ h4 { font-size: .95rem; color: #4a5568; margin-bottom: .5rem; }
 .info-box summary { font-weight: 600; color: #2b6cb0; font-size: 1rem; }
 .info-box ul { margin-top: .6rem; padding-left: 1.4rem; color: #2c5282; }
 .info-box li { margin-bottom: .4rem; }
+.info-box table { border-collapse: collapse; width: 100%; margin-top: .6rem; font-size: .9rem; }
+.info-box th, .info-box td { text-align: left; padding: .35rem .6rem; vertical-align: top; border-bottom: 1px solid #bee3f8; color: #2c5282; }
+.info-box th { color: #1a3a5c; font-weight: 600; }
 
 /* ── BUTTONS ─────────────────────────────────────────────────────────────── */
 .btn-primary {

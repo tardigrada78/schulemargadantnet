@@ -14,6 +14,36 @@
     fetch('/header.html').then(r => r.text()).then(h => document.getElementById('site-header').innerHTML = h);
   </script>
   <h1>Satz zu übersetzen</h1>
+  <p>Letzte Aktualisierung: 23.3.2026</p>
+  <details class="info-box">
+    <summary>Info zu den verwendeten KI-Modellen</summary>
+    <table class="model-table">
+      <thead>
+        <tr>
+          <th>Firma</th>
+          <th>Modellbezeichnung</th>
+          <th>Verwendung auf dieser Seite</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>OpenAI</td>
+          <td>GPT-4.1 nano</td>
+          <td>Erstellen des chinesischen Satzes</td>
+        </tr>
+        <tr>
+          <td>OpenAI</td>
+          <td>gpt-4o-mini-tts</td>
+          <td>Vorlesen des Satzes</td>
+        </tr>
+        <tr>
+          <td>OpenAI</td>
+          <td>GPT-5 nano</td>
+          <td>Wort-für-Wort-Übersetzung des Satzes als Hilfestellung</td>
+        </tr>
+      </tbody>
+    </table>
+  </details>
   <p>
     Klicken Sie auf den Button, um einen chinesischen Satz mit dem Wortschatz HSK-1 zu generieren. Die Übersetzung
     wird wortgetreu und nicht grammatikalisch korrekt gemacht.

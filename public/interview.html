@@ -17,6 +17,51 @@
     fetch('/header.html').then(r => r.text()).then(h => document.getElementById('site-header').innerHTML = h);
   </script>
   <h1>virtuelles Interview</h1>
+  <p>Letzte Aktualisierung: 1.9.2026</p>
+  <details class="info-box">
+    <summary>Info zu den verwendeten KI-Modellen</summary>
+    <table class="model-table">
+      <thead>
+        <tr>
+          <th>Firma</th>
+          <th>Modellbezeichnung</th>
+          <th>Verwendung auf dieser Seite</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>OpenAI</td>
+          <td>GPT-4.1 mini</td>
+          <td>Erstellen der Interview-Person und Beantworten der Fragen im Textmodus</td>
+        </tr>
+        <tr>
+          <td>OpenAI</td>
+          <td>gpt-image-1</td>
+          <td>Erstellen des Portraitfotos der Interview-Person</td>
+        </tr>
+        <tr>
+          <td>OpenAI</td>
+          <td>gpt-4o-mini-tts</td>
+          <td>Sprachausgabe der Antworten im Textmodus</td>
+        </tr>
+        <tr>
+          <td>OpenAI</td>
+          <td>gpt-4o-mini</td>
+          <td>Erstellen des Stimmenprofils der Interview-Person</td>
+        </tr>
+        <tr>
+          <td>OpenAI</td>
+          <td>gpt-realtime</td>
+          <td>Live-Gespräch (Sprache zu Sprache) mit der Interview-Person</td>
+        </tr>
+        <tr>
+          <td>OpenAI</td>
+          <td>gpt-4o-mini-transcribe</td>
+          <td>Transkription der eigenen Stimme im Live-Gespräch</td>
+        </tr>
+      </tbody>
+    </table>
+  </details>
   <form id="surveyForm">
     <p>Geben Sie Eigenschaften der zu interviewenden Person ein, wie Beruf, Ausbildung, Charakter, ...</p>
     <textarea id="interviewProperties" name="interviewProperties" cols="70" rows="8">

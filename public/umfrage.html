@@ -12,12 +12,14 @@
         .person-card {
             margin: 0.5em 0 1.5em;
         }
+
         .person-card table {
             border-collapse: collapse;
             width: 100%;
             max-width: 640px;
             font-size: 0.9em;
         }
+
         .person-card th {
             text-align: left;
             padding: 0.5em 0.6em 0.2em;
@@ -25,31 +27,37 @@
             font-size: 0.95em;
             letter-spacing: 0.03em;
         }
+
         .person-card th:not(:first-of-type) {
             padding-top: 1em;
         }
+
         .person-card td {
             padding: 0.25em 0.6em;
             vertical-align: top;
             border-bottom: 1px solid rgba(128, 128, 128, 0.3);
         }
+
         .person-card td.feld {
             font-weight: bold;
             white-space: nowrap;
             width: 1%;
             opacity: 0.75;
         }
+
         .qa-table-wrap {
             max-width: 900px;
             max-height: 34em;
             overflow-y: auto;
             margin: 0.5em 0 1.5em;
         }
+
         .qa-table {
             border-collapse: collapse;
             width: 100%;
             font-size: 0.9em;
         }
+
         .qa-table th,
         .qa-table td {
             text-align: left;
@@ -57,19 +65,23 @@
             vertical-align: top;
             border-bottom: 1px solid rgba(128, 128, 128, 0.3);
         }
+
         .qa-table th {
             position: sticky;
             top: 0;
             background: #0a0a14;
             border-bottom: 1px solid currentColor;
         }
+
         .qa-table td.nr {
             white-space: nowrap;
             opacity: 0.75;
         }
+
         .excel-download {
             margin: 1.5em 0;
         }
+
         .excel-download button {
             font-size: 1.05em;
             padding: 0.7em 1.4em;
@@ -83,6 +95,31 @@
         fetch('/header.html').then(r => r.text()).then(h => document.getElementById('site-header').innerHTML = h);
     </script>
     <h1>virtuelle Umfrage</h1>
+    <p>Letzte Aktualisierung: 2.9.2026</p>
+    <details class="info-box">
+        <summary>Info zu den verwendeten KI-Modellen</summary>
+        <table class="model-table">
+            <thead>
+                <tr>
+                    <th>Firma</th>
+                    <th>Modellbezeichnung</th>
+                    <th>Verwendung auf dieser Seite</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Anthropic</td>
+                    <td>Claude Sonnet 4.6</td>
+                    <td>Erstellen der virtuellen Personen</td>
+                </tr>
+                <tr>
+                    <td>Anthropic</td>
+                    <td>Claude Haiku 4.5</td>
+                    <td>Beantworten der Umfragefragen und Zusammenfassung der Ergebnisse</td>
+                </tr>
+            </tbody>
+        </table>
+    </details>
     <form id="surveyForm">
         <h2>Daten der Teilnehmenden</h2>
         <p>Geschlecht "andere" = 100% - Frauenanteil - Männeranteil</p>

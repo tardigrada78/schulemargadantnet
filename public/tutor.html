@@ -21,6 +21,41 @@
     fetch('/header.html').then(r => r.text()).then(h => document.getElementById('site-header').innerHTML = h);
   </script>
   <h1>KI-Lern-Tutor</h1>
+  <p>Letzte Aktualisierung: 25.5.2026</p>
+  <details class="info-box">
+    <summary>Info zu den verwendeten KI-Modellen</summary>
+    <table class="model-table">
+      <thead>
+        <tr>
+          <th>Firma</th>
+          <th>Modellbezeichnung</th>
+          <th>Verwendung auf dieser Seite</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Anthropic</td>
+          <td>Claude Sonnet 4.6</td>
+          <td>Lernfragen erstellen, eigene Antworten überprüfen, Skript-Text und Mindmap-Diagramme erstellen</td>
+        </tr>
+        <tr>
+          <td>OpenAI</td>
+          <td>GPT (Assistants API)</td>
+          <td>Dieselben Aufgaben, wenn Kursmaterial als Kontext ausgewählt wird</td>
+        </tr>
+        <tr>
+          <td>Anthropic</td>
+          <td>Claude Haiku 4.5</td>
+          <td>Podcast-Text schreiben</td>
+        </tr>
+        <tr>
+          <td>OpenAI</td>
+          <td>gpt-4o-mini-tts</td>
+          <td>Podcast als Audio vorlesen</td>
+        </tr>
+      </tbody>
+    </table>
+  </details>
   <div id="progressDiv">
     Neue Inhalte erscheinen hier, zuoberst auf der Site. Sie können aber stets nach unten scrollen und bei
     <strong>Lernziele und Einstellungen</strong> andere Lernziele auswählen. Möchten Sie eine neue Lernzielliste

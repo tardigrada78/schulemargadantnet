@@ -947,6 +947,50 @@ audio {
   color: #f87171;
 }
 
+.info-box {
+  background: #1a1a2e;
+  border-left: 3px solid #6432ff;
+  border-radius: 6px;
+  padding: 0.6em 1em;
+  margin: 0.8em 0 1.4em;
+  max-width: 640px;
+}
+
+.info-box summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: #00c8ff;
+  font-size: 0.95em;
+}
+
+.info-box summary::marker {
+  color: #6432ff;
+}
+
+.info-box[open] summary {
+  margin-bottom: 0.6em;
+}
+
+.info-box table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.9em;
+}
+
+.info-box th,
+.info-box td {
+  text-align: left;
+  padding: 0.35em 0.6em;
+  vertical-align: top;
+  border-bottom: 1px solid rgba(128, 128, 128, 0.3);
+}
+
+.info-box th {
+  color: #aac;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+
 #produkt1Input,
 #produkt2Input {
   width: 300px;

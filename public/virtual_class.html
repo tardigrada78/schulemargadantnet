@@ -23,6 +23,26 @@
     fetch('/header.html').then(r => r.text()).then(h => document.getElementById('site-header').innerHTML = h);
   </script>
   <h1>virtuelle Schulklasse</h1>
+  <p>Letzte Aktualisierung: 23.3.2026</p>
+  <details class="info-box">
+    <summary>Info zu den verwendeten KI-Modellen</summary>
+    <table class="model-table">
+      <thead>
+        <tr>
+          <th>Firma</th>
+          <th>Modellbezeichnung</th>
+          <th>Verwendung auf dieser Seite</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>OpenAI</td>
+          <td>GPT-4o</td>
+          <td>Bildbasiertes Feedback (Vision) zur hochgeladenen Schülerarbeit</td>
+        </tr>
+      </tbody>
+    </table>
+  </details>
   <p>Lassen Sie Ihre Schulunterlagen von einer Schulklasse mit 8 speziellen KI-simulierten Schüler*innen kritisch
     beurteilen. </p>
   <button id="buttonPersons">Charakterprofile der virtuellen Klasse lesen</button>

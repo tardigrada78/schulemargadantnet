@@ -14,6 +14,36 @@
     fetch('/header.html').then(r => r.text()).then(h => document.getElementById('site-header').innerHTML = h);
   </script>
     <h1>Chinesisch plaudern</h1>
+    <p>Letzte Aktualisierung: 23.3.2026</p>
+    <details class="info-box">
+        <summary>Info zu den verwendeten KI-Modellen</summary>
+        <table class="model-table">
+            <thead>
+                <tr>
+                    <th>Firma</th>
+                    <th>Modellbezeichnung</th>
+                    <th>Verwendung auf dieser Seite</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>OpenAI</td>
+                    <td>GPT-4.1 nano</td>
+                    <td>Beantworten im Chinesisch-Chat</td>
+                </tr>
+                <tr>
+                    <td>OpenAI</td>
+                    <td>gpt-4o-mini-tts</td>
+                    <td>Sprachausgabe der Antworten</td>
+                </tr>
+                <tr>
+                    <td>OpenAI</td>
+                    <td>whisper-1</td>
+                    <td>Transkription der eigenen Stimme</td>
+                </tr>
+            </tbody>
+        </table>
+    </details>
     <h3>Ich</h3>
     <textarea id="chatUser" name="chatUser" cols="70" rows="2">你叫什么名字?</textarea><br>
     <audio id="recordedAudio" controls style="display: none; margin: 10px 0;"></audio><br>

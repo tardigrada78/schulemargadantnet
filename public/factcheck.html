@@ -14,6 +14,26 @@
     fetch('/header.html').then(r => r.text()).then(h => document.getElementById('site-header').innerHTML = h);
   </script>
   <h1>KI-Fakten-Überprüfer</h1>
+  <p>Letzte Aktualisierung: 25.5.2026</p>
+  <details class="info-box">
+    <summary>Info zu den verwendeten KI-Modellen</summary>
+    <table class="model-table">
+      <thead>
+        <tr>
+          <th>Firma</th>
+          <th>Modellbezeichnung</th>
+          <th>Verwendung auf dieser Seite</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Anthropic</td>
+          <td>Claude Sonnet 4.6</td>
+          <td>Bewertung, ob eine gefundene Webseite die eingegebene Aussage stützt (Faktencheck)</td>
+        </tr>
+      </tbody>
+    </table>
+  </details>
   <p>
     Geben Sie eine Aussage ein, welche Sie mit einer KI-gestützten Websuche überprüfen lassen möchten. Die Überprüfung
     funktioniert besser bei kurzen Aussagen. Vermeiden Sie Textabschnitte mit vielen unterschiedlichen Aussagen.

@@ -16,6 +16,41 @@
     fetch('/header.html').then(r => r.text()).then(h => document.getElementById('site-header').innerHTML = h);
   </script>
     <h1>KI-Geschichten-Generator</h1>
+    <p>Letzte Aktualisierung: 23.3.2026</p>
+    <details class="info-box">
+        <summary>Info zu den verwendeten KI-Modellen</summary>
+        <table class="model-table">
+            <thead>
+                <tr>
+                    <th>Firma</th>
+                    <th>Modellbezeichnung</th>
+                    <th>Verwendung auf dieser Seite</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>OpenAI</td>
+                    <td>GPT-4.1</td>
+                    <td>Erstellen der Geschichte</td>
+                </tr>
+                <tr>
+                    <td>OpenAI</td>
+                    <td>GPT-5 nano</td>
+                    <td>Erstellen des Geschichtentitels</td>
+                </tr>
+                <tr>
+                    <td>OpenAI</td>
+                    <td>gpt-image-1</td>
+                    <td>Erstellen eines Bilds zur Geschichte</td>
+                </tr>
+                <tr>
+                    <td>OpenAI</td>
+                    <td>gpt-4o-mini-tts</td>
+                    <td>Vorlesen der Geschichte</td>
+                </tr>
+            </tbody>
+        </table>
+    </details>
     <button id="generateStory">Erfinde eine Geschichte !</button>
     <p>Bewegen Sie den Mauszeiger über ein Wort, um die Übersetzung zu sehen.</p>
     <div id="storyOutput"></div>

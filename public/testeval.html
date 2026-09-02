@@ -14,6 +14,26 @@
     fetch('/header.html').then(r => r.text()).then(h => document.getElementById('site-header').innerHTML = h);
   </script>
   <h1>Prüfungsfrage evaluieren</h1>
+  <p>Letzte Aktualisierung: 23.3.2026</p>
+  <details class="info-box">
+    <summary>Info zu den verwendeten KI-Modellen</summary>
+    <table class="model-table">
+      <thead>
+        <tr>
+          <th>Firma</th>
+          <th>Modellbezeichnung</th>
+          <th>Verwendung auf dieser Seite</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>OpenAI</td>
+          <td>GPT-4.1 nano</td>
+          <td>Bewertung der eingegebenen Prüfungsfrage</td>
+        </tr>
+      </tbody>
+    </table>
+  </details>
   <p>
     Auf den Button klicken um die Prüfungsfrage zu klassifizieren und mit virtuellen Schüler*innen zu evaluieren. Die
     Frage kann auch auf Englisch (oder wohl in vielen anderen Sprachen) gestellt werden.

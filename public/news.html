@@ -16,6 +16,31 @@
     fetch('/header.html').then(r => r.text()).then(h => document.getElementById('site-header').innerHTML = h);
   </script>
   <h1>News-Zusammenfassung</h1>
+  <p>Letzte Aktualisierung: 23.3.2026</p>
+  <details class="info-box">
+    <summary>Info zu den verwendeten KI-Modellen</summary>
+    <table class="model-table">
+      <thead>
+        <tr>
+          <th>Firma</th>
+          <th>Modellbezeichnung</th>
+          <th>Verwendung auf dieser Seite</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Anthropic</td>
+          <td>Claude Haiku 4.5</td>
+          <td>Erstellen der KI-Wochenschau (Zusammenfassung der News)</td>
+        </tr>
+        <tr>
+          <td>OpenAI</td>
+          <td>gpt-4o-mini-tts</td>
+          <td>Vorlesen der Wochenschau als Podcast</td>
+        </tr>
+      </tbody>
+    </table>
+  </details>
   <p>Diese Website verwendet newsapi.org um News der letzen 3 Tage zur einer bestimmten Kategorie zu finden. Die KI
     fasst diese News dann in einem spannenden Podcast zusammen.</p>
   <button id="buttonScienceNews" data-url="/news/getScienceNews">Suche Science-News (mit Fokus Biologie,
