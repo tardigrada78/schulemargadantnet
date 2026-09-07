@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Fachgespräch</title>
+    <link rel="stylesheet" href="styles_synthwave.css" />
+</head>
+
+<body>
+  <div id="site-header"></div>
+  <script>
+    fetch('/header.html').then(r => r.text()).then(h => document.getElementById('site-header').innerHTML = h);
+  </script>
+    <h1>Virtuelles Fachgespräch</h1>
+    <p>Letzte Aktualisierung: 7.9.2026</p>
+    <details class="info-box">
+        <summary>Info zu den verwendeten KI-Modellen</summary>
+        <table class="model-table">
+            <thead>
+                <tr>
+                    <th>Firma</th>
+                    <th>Modellbezeichnung</th>
+                    <th>Verwendung auf dieser Seite</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Anthropic</td>
+                    <td>Claude Sonnet 4.5</td>
+                    <td>Auswerten des hochgeladenen PDF (Poster/Arbeit)</td>
+                </tr>
+                <tr>
+                    <td>OpenAI</td>
+                    <td>gpt-realtime</td>
+                    <td>Live-Gespräch (Sprache zu Sprache) mit der KI-Prüfungsleitung</td>
+                </tr>
+                <tr>
+                    <td>OpenAI</td>
+                    <td>gpt-4o-mini-transcribe</td>
+                    <td>Transkription der eigenen Stimme im Live-Gespräch</td>
+                </tr>
+            </tbody>
+        </table>
+    </details>
+    <h3>Poster / Arbeit als PDF</h3>
+    <input type="file" id="pdfInput" accept="application/pdf" />
+    <br><br>
+    <label for="voiceSelect">Stimme der KI. Die Stimmen können teilweise <a href="https://www.openai.fm/">hier</a>
+        probegehört werden.</label>
+    <select id="voiceSelect" name="voiceSelect">
+        <option value="alloy">Alloy (f)</option>
+        <option value="ash" selected>Ash (m)</option>
+        <option value="ballad">Ballad</option>
+        <option value="coral">Coral (f)</option>
+        <option value="echo">Echo (m)</option>
+        <option value="sage">Sage (f)</option>
+        <option value="shimmer">Shimmer (f)</option>
+        <option value="verse">Verse (m)</option>
+        <option value="marin">Marin (f)</option>
+        <option value="cedar">Cedar (m)</option>
+    </select>
+    <label for="profileSelect">Charakter der Prüfungsleitung.</label>
+    <select id="profileSelect" name="profileSelect">
+        <option value="nett" selected>Nette, wohlwollende Atmosphäre</option>
+        <option value="unangenehm">Unangenehme Situation</option>
+    </select>
+    <br><br>
+    <button id="prepareBtn">📄 PDF auswerten &amp; vorbereiten</button>
+    <button id="startExam" style="display: none">🧑‍🏫 Fachgespräch starten</button>
+    <button id="stopExam" style="display: none">⏹️ Fachgespräch beenden</button>
+    <p>ℹ️ Laden Sie das PDF Ihres Posters oder Ihrer Arbeit hoch und lassen Sie es auswerten. Geben Sie die
+        Berechtigung für Ihr Mikrofon frei. Nach dem Start begrüsst die KI-Prüfungsleitung Sie und stellt die
+        erste Frage zu Ihrer Arbeit. Sie antworten mündlich in Echtzeit, können die KI unterbrechen und werden
+        auch mit Rückfragen konfrontiert. Transkript und Audioaufnahme erscheinen nach dem Beenden weiter unten.</p>
+    <div id="progressDiv"></div>
+    <br>
+    <div id="transcriptOutput"></div>
+    <br>
+    <div id="speechOutput"></div>
+    <br>
+
+    <script>
+        // ---- Fachgespräch: PDF-Auswertung + Live-Gespräch (OpenAI Realtime API / WebRTC) ----
+
+        let dossier = ""; // von der KI erstellte Auswertung des PDF (wird nicht angezeigt)
+        let voiceProfile = "";
+        let profileText = "";
+        let transcript = []; // [{ role: "pruefling" | "pruefer", text }]
+
+        let pc = null;
+        let dc = null;
+        let micStream = null;
+        let remoteStream = null;
+        let audioEl = null;
+        let audioCtx = null;
+        let mixDest = null;
+        let mediaRecorder = null;
+        let recordedChunks = [];
+
+        const btnPrepare = document.getElementById("prepareBtn");
+        const btnStart = document.getElementById("startExam");
+        const btnStop = document.getElementById("stopExam");
+        const progress = document.getElementById("progressDiv");
+        const output = document.getElementById("transcriptOutput");
+
+        function escapeHtml(str) {
+            const div = document.createElement("div");
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        // Transkript als HTML (nur Gesprächsverlauf; das PDF-Dossier bleibt verborgen)
+        function transcriptHtml() {
+            let html = `<h2>Fachgespräch</h2>`;
+            if (transcript.length) html += `<h3>Transkript</h3>`;
+            for (const { role, text } of transcript) {
+                const speaker = role === "pruefling" ? "Prüfling" : "Prüfer";
+                html += `<p><strong>${speaker}:</strong> ${escapeHtml(text)}</p>`;
+            }
+            return html;
+        }
+
+        function renderTranscript() {
+            output.innerHTML = transcriptHtml();
+        }
+
+        function readProfile() {
+            const profile = document.getElementById("profileSelect").value;
+            if (profile == "nett") {
+                voiceProfile = "Sprich mit einer warmen, beruhigenden Stimme. Strahle Zuversicht und Wohlwollen aus. Du möchtest einen nervösen Prüfungskandidaten beruhigen.";
+                profileText = "Du bist nett, wohlwollend und motivierend. Du möchtest, dass sich der Prüfungskandidat geborgen fühlt.";
+            } else {
+                voiceProfile = "Sprich mit einer kalten, harten Stimme. Du möchtest, dass sich der Prüfungskandidat unwohl und unsicher fühlt.";
+                profileText = "Du bist arrogant, gestresst und uninteressiert. Du möchtest, dass sich der Prüfungskandidat unwohl und unsicher fühlt.";
+            }
+        }
+
+        // Schritt 1: PDF hochladen und auswerten lassen
+        btnPrepare.addEventListener("click", async () => {
+            const file = document.getElementById("pdfInput").files[0];
+            if (!file) {
+                progress.innerHTML = `<p>ℹ️ Bitte zuerst ein PDF auswählen.</p>`;
+                return;
+            }
+            if (file.type !== "application/pdf") {
+                progress.innerHTML = `<p>ℹ️ Bitte eine PDF-Datei auswählen.</p>`;
+                return;
+            }
+
+            btnPrepare.disabled = true;
+            progress.innerHTML = "<p>⚙️ PDF wird von der KI ausgewertet …</p>";
+            try {
+                const fd = new FormData();
+                fd.append("pdf", file);
+                const res = await fetch(`/fachgespraech/analyse`, { method: "POST", body: fd });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || "Fehler bei der Auswertung");
+
+                dossier = data.dossier;
+                progress.innerHTML = `<p>✅ PDF ausgewertet – Sie können das Fachgespräch starten.</p>`;
+                btnStart.style.display = "";
+            } catch (error) {
+                console.error("Fehler bei der PDF-Auswertung:", error);
+                progress.innerHTML = `❌ Fehler beim Auswerten des PDF: ${escapeHtml(error.message || String(error))}`;
+            } finally {
+                btnPrepare.disabled = false;
+            }
+        });
+
+        // Schritt 2: Fachgespräch starten
+        btnStart.addEventListener("click", async () => {
+            btnStart.disabled = true;
+            try {
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                    throw new Error(
+                        "Mikrofon-Zugriff nicht verfügbar. Die Seite muss über HTTPS oder http://localhost geöffnet werden – " +
+                        "eine LAN-IP oder ein Hostname über http:// funktioniert aus Sicherheitsgründen nicht."
+                    );
+                }
+
+                const voice = document.getElementById("voiceSelect").value;
+                readProfile();
+
+                transcript = [];
+                output.innerHTML = "";
+                document.getElementById("speechOutput").innerHTML = "";
+                progress.innerHTML = "<p>⚙️ Verbindung wird aufgebaut...</p>";
+
+                const sessionRes = await fetch(`/fachgespraech/realtimeSession`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ dossier, voice, voiceProfile, profileText }),
+                });
+                const session = await sessionRes.json();
+                if (!sessionRes.ok) throw new Error(session.error || "Session-Fehler");
+                const { value: ephemeralKey, model } = session;
+
+                micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+                pc = new RTCPeerConnection();
+                pc.addTrack(micStream.getAudioTracks()[0], micStream);
+
+                audioEl = document.createElement("audio");
+                audioEl.autoplay = true;
+                document.body.appendChild(audioEl);
+
+                pc.ontrack = (e) => {
+                    remoteStream = e.streams[0];
+                    audioEl.srcObject = remoteStream;
+                    startRecording();
+                };
+
+                dc = pc.createDataChannel("oai-events");
+                dc.onmessage = handleRealtimeEvent;
+                // Prüferin beginnt das Gespräch, sobald der Kanal offen ist
+                dc.onopen = () => dc.send(JSON.stringify({ type: "response.create" }));
+
+                const offer = await pc.createOffer();
+                await pc.setLocalDescription(offer);
+
+                const sdpRes = await fetch(`https://api.openai.com/v1/realtime/calls?model=${encodeURIComponent(model)}`, {
+                    method: "POST",
+                    body: offer.sdp,
+                    headers: {
+                        Authorization: `Bearer ${ephemeralKey}`,
+                        "Content-Type": "application/sdp",
+                    },
+                });
+                if (!sdpRes.ok) throw new Error("WebRTC-Handshake fehlgeschlagen");
+                const answerSdp = await sdpRes.text();
+                await pc.setRemoteDescription({ type: "answer", sdp: answerSdp });
+
+                progress.innerHTML = `<p>🔴 Verbindung aktiv – das Fachgespräch läuft.</p>`;
+                btnStart.style.display = "none";
+                btnStop.style.display = "";
+                btnPrepare.disabled = true;
+            } catch (error) {
+                console.error("Fehler beim Gesprächsstart:", error);
+                progress.innerHTML = `❌ Fehler beim Aufbau des Gesprächs: ${escapeHtml(error.message || String(error))}`;
+                cleanupConnection();
+                btnStart.disabled = false;
+            }
+        });
+
+        // Fachgespräch beenden
+        btnStop.addEventListener("click", () => {
+            btnStop.disabled = true;
+            progress.innerHTML = `<p>⚙️ Fachgespräch wird beendet...</p>`;
+            stopRecording(); // baut den Audio-Download; danach Aufräumen
+            cleanupConnection();
+            renderTranscript();
+            progress.innerHTML = `<p>✅ Fachgespräch beendet.</p>`;
+            btnStop.style.display = "none";
+            btnStop.disabled = false;
+            btnStart.style.display = "";
+            btnStart.disabled = false;
+            btnPrepare.disabled = false;
+        });
+
+        function handleRealtimeEvent(e) {
+            let msg;
+            try {
+                msg = JSON.parse(e.data);
+            } catch {
+                return;
+            }
+            switch (msg.type) {
+                case "conversation.item.input_audio_transcription.completed":
+                    if (msg.transcript && msg.transcript.trim()) {
+                        transcript.push({ role: "pruefling", text: msg.transcript.trim() });
+                        renderTranscript();
+                    }
+                    break;
+                case "response.output_audio_transcript.done":
+                case "response.audio_transcript.done":
+                    if (msg.transcript && msg.transcript.trim()) {
+                        transcript.push({ role: "pruefer", text: msg.transcript.trim() });
+                        renderTranscript();
+                    }
+                    break;
+                case "error":
+                case "response.error":
+                    console.error("Realtime-Fehler:", msg);
+                    progress.innerHTML = `❌ Fehler in der Verbindung: ${escapeHtml((msg.error && msg.error.message) || "unbekannt")}`;
+                    break;
+            }
+        }
+
+        function startRecording() {
+            if (mediaRecorder || !remoteStream) return;
+            try {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                mixDest = audioCtx.createMediaStreamDestination();
+                audioCtx.createMediaStreamSource(micStream).connect(mixDest);
+                audioCtx.createMediaStreamSource(remoteStream).connect(mixDest);
+                recordedChunks = [];
+                mediaRecorder = new MediaRecorder(mixDest.stream);
+                mediaRecorder.ondataavailable = (ev) => {
+                    if (ev.data.size > 0) recordedChunks.push(ev.data);
+                };
+                mediaRecorder.onstop = () => {
+                    const blob = new Blob(recordedChunks, { type: "audio/webm" });
+                    const url = URL.createObjectURL(blob);
+                    document.getElementById("speechOutput").innerHTML = `
+                        <h3>Audioaufnahme des gesamten Fachgesprächs</h3>
+                        <audio controls src="${url}"></audio><br />
+                        <a href="${url}" download="Fachgespraech.webm">⬇️ Audioaufnahme herunterladen</a>
+                    `;
+                    if (audioCtx) {
+                        audioCtx.close();
+                        audioCtx = null;
+                    }
+                    mixDest = null;
+                };
+                mediaRecorder.start();
+            } catch (error) {
+                console.error("Fehler beim Starten der Aufnahme:", error);
+            }
+        }
+
+        function stopRecording() {
+            if (mediaRecorder && mediaRecorder.state !== "inactive") {
+                mediaRecorder.stop(); // onstop baut den Download und schliesst den AudioContext
+            }
+            mediaRecorder = null;
+        }
+
+        function cleanupConnection() {
+            try {
+                if (dc) dc.close();
+            } catch {}
+            try {
+                if (pc) {
+                    pc.getSenders().forEach((s) => s.track && s.track.stop());
+                    pc.close();
+                }
+            } catch {}
+            if (micStream) micStream.getTracks().forEach((t) => t.stop());
+            if (audioEl) {
+                audioEl.srcObject = null;
+                audioEl.remove();
+                audioEl = null;
+            }
+            dc = null;
+            pc = null;
+            micStream = null;
+            remoteStream = null;
+        }
+    </script>
+</body>
+
+</html>
