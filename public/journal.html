@@ -14,7 +14,7 @@
   <!-- LOGIN -->
   <div id="loginSection" class="card center-card">
     <h1>Gruppen-Arbeitsjournal</h1>
-    <p>Letzte Aktualisierung: 26.8.2026</p>
+    <p>Letzte Aktualisierung: 8.10.2026</p>
     <details class="info-box">
         <summary>Info zu den verwendeten KI-Modellen</summary>
         <table class="model-table">
@@ -268,11 +268,14 @@
         const data = await res.json();
         if (!res.ok) { document.getElementById("loginError").textContent = data.error; return; }
         project = data.project;
+        restoreDrafts();
         document.getElementById("loginSection").style.display = "none";
         document.getElementById("mainContent").style.display = "block";
         document.getElementById("projectHeader").open = !project.title;
         renderAll();
         startPolling();
+        // Wiederhergestellte Entwürfe (z.B. nach Absturz/Reload) gleich speichern
+        Object.keys(drafts).filter(hasDrafts).forEach(id => scheduleSave(id, 500));
       } catch (e) {
         document.getElementById("loginError").textContent = "Verbindungsfehler.";
       }
@@ -310,6 +313,7 @@
         body: JSON.stringify({ code: project.code, department: project.department, title, description, members, timeline }),
       });
       const data = await res.json();
+      if (!res.ok || !data.project) { alert("Speichern fehlgeschlagen. Bitte erneut versuchen."); return; }
       project = data.project;
       renderProjectHeader();
       renderTimeline();
@@ -322,6 +326,13 @@
     // ── JOURNAL ────────────────────────────────────────────────────────────
     function renderJournal() {
       const container = document.getElementById("journalBody");
+      // Fokus und Cursorposition merken, damit ein Neu-Rendern das Tippen nicht unterbricht
+      const ae = document.activeElement;
+      let focusInfo = null;
+      if (ae && container.contains(ae) && ae.dataset.key) {
+        focusInfo = { id: ae.closest(".entry-card").dataset.id, key: ae.dataset.key, start: null, end: null };
+        try { focusInfo.start = ae.selectionStart; focusInfo.end = ae.selectionEnd; } catch (e) { }
+      }
       const openIds = new Set(
         [...container.querySelectorAll(".entry-card[open]")].map(el => el.dataset.id)
       );
@@ -340,7 +351,7 @@
       // aufgeklappt.
       const newestId = allSorted[0]?.id;
       const sortedEntries = allSorted.filter(entry =>
-        !isEmptyEntry(entry) || entry.id === newestId || openIds.has(entry.id)
+        !isEmptyEntry(entry) || entry.id === newestId || openIds.has(entry.id) || hasDrafts(entry.id)
       );
       if (sortedEntries.length === 0) {
         container.innerHTML = '<p class="empty-msg">Noch keine Einträge. Klicken Sie auf "+ Neuer Eintrag".</p>';
@@ -357,7 +368,7 @@
         details.className = "entry-card";
         details.dataset.id = entry.id;
         const isNew = !knownIds.has(entry.id);
-        details.open = openIds.has(entry.id) || (isNew && idx === 0);
+        details.open = openIds.has(entry.id) || (isNew && idx === 0) || hasDrafts(entry.id);
         details.innerHTML = `
           <summary>
             <span class="entry-summary-date">${formatDate(entry.date)}</span>
@@ -372,13 +383,13 @@
                 ${members.map(m => `
                   <div class="member-row">
                     <span class="member-label">${escHtml(m)}:</span>
-                    <textarea data-field="contents" data-member="${escHtml(m)}" rows="2" placeholder="Was wurde erarbeitet?" oninput="autoResizeTextarea(this)">${escTextarea(entry.contents[m] || "")}</textarea>
+                    <textarea data-key="${escAttr("contents|" + m)}" rows="2" placeholder="Was wurde erarbeitet?" oninput="autoResizeTextarea(this)">${escTextarea(fieldValue(entry, "contents|" + m))}</textarea>
                   </div>`).join("")}
               </div>
               <div class="entry-col">
                 <div class="entry-col-header">Stolpersteine / Ursachen / Lösungen</div>
                 <div class="entry-col-hint">Schwierigkeiten → Begründung → Erkenntnisse / Massnahmen</div>
-                <textarea data-field="obstacles" rows="6" placeholder="Was hat nicht funktioniert? Wie haben Sie es gelöst?" oninput="autoResizeTextarea(this)">${escTextarea(entry.obstacles)}</textarea>
+                <textarea data-key="obstacles" rows="6" placeholder="Was hat nicht funktioniert? Wie haben Sie es gelöst?" oninput="autoResizeTextarea(this)">${escTextarea(fieldValue(entry, "obstacles"))}</textarea>
               </div>
               <div class="entry-col">
                 <div class="entry-col-header">Planung: was? / wann? / wer?</div>
@@ -387,8 +398,8 @@
                   <div class="member-row">
                     <span class="member-label">${escHtml(m)}:</span>
                     <div class="member-fields">
-                      <textarea data-field="planning_text" data-member="${escHtml(m)}" rows="2" placeholder="Geplante Aufgaben" oninput="autoResizeTextarea(this)">${escTextarea((entry.planning[m] || {}).text || "")}</textarea>
-                      <input type="date" class="member-due" data-field="planning_due" data-member="${escHtml(m)}" value="${(entry.planning[m] || {}).dueDate || ""}" />
+                      <textarea data-key="${escAttr("planning_text|" + m)}" rows="2" placeholder="Geplante Aufgaben" oninput="autoResizeTextarea(this)">${escTextarea(fieldValue(entry, "planning_text|" + m))}</textarea>
+                      <input type="date" class="member-due" required data-key="${escAttr("planning_due|" + m)}" value="${escAttr(fieldValue(entry, "planning_due|" + m))}" />
                     </div>
                   </div>`).join("")}
               </div>
@@ -411,10 +422,12 @@
               </div>
             </div>
             <div class="entry-save-block">
-              <button class="btn-primary" onclick="saveEntryCard('${entry.id}', this)">Speichern</button>
+              <button class="btn-primary" onclick="saveEntry('${entry.id}')">Speichern</button>
+              <span class="save-msg entry-save-status"></span>
             </div>
           </div>`;
         container.appendChild(details);
+        updateSaveStatus(entry.id);
         if (details.open) {
           details.querySelectorAll("textarea").forEach(autoResizeTextarea);
         }
@@ -424,6 +437,14 @@
           }
         });
       });
+      if (focusInfo) {
+        const card = container.querySelector(`.entry-card[data-id="${focusInfo.id}"]`);
+        const el = card && [...card.querySelectorAll("[data-key]")].find(f => f.dataset.key === focusInfo.key);
+        if (el) {
+          el.focus({ preventScroll: true });
+          try { if (focusInfo.start !== null) el.setSelectionRange(focusInfo.start, focusInfo.end); } catch (e) { }
+        }
+      }
     }
 
     function autoResizeTextarea(el) {
@@ -445,11 +466,16 @@
     }
 
     async function addNewEntry() {
-      const res = await fetch("/journal/addEntry", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: project.code, department: project.department, entry: { contents: {}, obstacles: "", planning: {} } }),
-      });
-      const data = await res.json();
+      mutationSeq++;
+      let res, data;
+      try {
+        res = await fetch("/journal/addEntry", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ code: project.code, department: project.department, entry: { contents: {}, obstacles: "", planning: {} } }),
+        });
+        data = await res.json();
+      } catch (e) { } finally { mutationSeq++; }
+      if (!res || !res.ok || !data || !data.entry) { alert("Neuer Eintrag konnte nicht erstellt werden. Bitte erneut versuchen."); return; }
       // Server gibt ggf. den bereits bestehenden Eintrag von heute zurück (ein Eintrag pro Tag) -
       // dann nicht nochmals lokal hinzufügen, sondern die vorhandene Karte öffnen.
       const alreadyExists = project.journalEntries.some(e => e.id === data.entry.id);
@@ -464,47 +490,234 @@
       }
     }
 
-    async function saveEntryCard(entryId, btnEl) {
-      const card = btnEl.closest(".entry-card");
-      const contents = {};
-      const planning = {};
-      card.querySelectorAll('[data-field="contents"]').forEach(el => { contents[el.dataset.member] = el.value.trim(); });
-      card.querySelectorAll('[data-field="planning_text"]').forEach(el => {
-        const m = el.dataset.member;
-        const due = card.querySelector(`[data-field="planning_due"][data-member="${CSS.escape(m)}"]`);
-        planning[m] = { text: el.value.trim(), dueDate: due ? due.value : "" };
-      });
-      const obstacles = card.querySelector('[data-field="obstacles"]').value.trim();
-      const res = await fetch("/journal/updateEntry", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: project.code, department: project.department, entryId, entry: { contents, obstacles, planning } }),
-      });
-      const data = await res.json();
-      const idx = project.journalEntries.findIndex(e => e.id === entryId);
-      if (idx !== -1) project.journalEntries[idx] = data.entry;
-      renderJournal();
+    // ── ENTWÜRFE & AUTOSAVE ───────────────────────────────────────────────
+    // Ungespeicherte Eingaben liegen in drafts[entryId][key] = { value, base } (base = Serverwert,
+    // auf dem die Änderung beruht) und zusätzlich im localStorage. renderJournal() zeigt immer
+    // den Entwurf an, daher geht beim Neu-Rendern (Polling, KI, LP-Kommentar…) nichts verloren.
+    // Gespeichert werden nur geänderte Felder; der Server führt Konflikte zusammen.
+    let drafts = {};
+    const saveState = {}; // saveState[entryId] = { timer, retryTimer, inFlight, status, savedAt, conflict }
+    let mutationSeq = 0;  // erhöht bei jedem schreibenden Request -> veraltete Poll-Antworten verwerfen
+
+    function splitKey(key) {
+      const i = key.indexOf("|");
+      return i === -1 ? [key, null] : [key.slice(0, i), key.slice(i + 1)];
+    }
+
+    function getEntryField(entry, key) {
+      const [field, member] = splitKey(key);
+      if (field === "obstacles") return entry.obstacles || "";
+      if (field === "contents") return (entry.contents || {})[member] || "";
+      const p = (entry.planning || {})[member] || {};
+      return field === "planning_text" ? (p.text || "") : (p.dueDate || "");
+    }
+
+    function fieldValue(entry, key) {
+      const d = drafts[entry.id] && drafts[entry.id][key];
+      return d ? d.value : getEntryField(entry, key);
+    }
+
+    function hasDrafts(entryId) {
+      return !!drafts[entryId] && Object.values(drafts[entryId]).some(d => d.value !== d.base);
+    }
+
+    function draftStorageKey() { return `journalDrafts:${project.department}:${project.code}`; }
+
+    function persistDrafts() {
+      try { localStorage.setItem(draftStorageKey(), JSON.stringify(drafts)); } catch (e) { }
+    }
+
+    function restoreDrafts() {
+      drafts = {};
+      try { drafts = JSON.parse(localStorage.getItem(draftStorageKey()) || "{}") || {}; } catch (e) { drafts = {}; }
+      for (const id of Object.keys(drafts)) {
+        if (!project.journalEntries.some(e => e.id === id) || !hasDrafts(id)) delete drafts[id];
+      }
+      persistDrafts();
+    }
+
+    function getSaveState(entryId) {
+      return saveState[entryId] = saveState[entryId] || { status: null };
+    }
+
+    function setSaveStatus(entryId, status) {
+      const st = getSaveState(entryId);
+      st.status = status;
+      if (status === "saved") st.savedAt = new Date();
+      updateSaveStatus(entryId);
+    }
+
+    function updateSaveStatus(entryId) {
+      const el = document.querySelector(`.entry-card[data-id="${entryId}"] .entry-save-status`);
+      if (!el) return;
+      const st = getSaveState(entryId);
+      const texts = {
+        dirty: "Ungespeicherte Änderungen…",
+        saving: "Speichere…",
+        saved: st.savedAt ? `Gespeichert ✓ ${st.savedAt.toLocaleTimeString("de-CH", { hour: "2-digit", minute: "2-digit" })}` : "Gespeichert ✓",
+        error: "⚠️ Nicht gespeichert – neuer Versuch in 10 s. Bitte Seite nicht schliessen.",
+      };
+      let text = texts[st.status] || "";
+      if (st.conflict) text += " – Ein anderes Mitglied hat gleichzeitig dasselbe Feld bearbeitet, die Texte wurden zusammengeführt. Bitte prüfen.";
+      el.textContent = text;
+      el.classList.toggle("save-error", st.status === "error" || !!st.conflict);
+    }
+
+    function scheduleSave(entryId, delay) {
+      const st = getSaveState(entryId);
+      clearTimeout(st.timer);
+      st.timer = setTimeout(() => saveEntry(entryId), delay);
+    }
+
+    // Eingaben im Journal als Entwurf erfassen und Autosave planen
+    document.getElementById("journalBody").addEventListener("input", (ev) => {
+      const el = ev.target;
+      const key = el.dataset && el.dataset.key;
+      if (!key) return;
+      const entryId = el.closest(".entry-card").dataset.id;
+      const entry = project.journalEntries.find(e => e.id === entryId);
+      if (!entry) return;
+      drafts[entryId] = drafts[entryId] || {};
+      if (drafts[entryId][key]) drafts[entryId][key].value = el.value;
+      else drafts[entryId][key] = { value: el.value, base: getEntryField(entry, key) };
+      persistDrafts();
+      setSaveStatus(entryId, "dirty");
+      scheduleSave(entryId, 2000);
+    });
+
+    document.getElementById("journalBody").addEventListener("focusout", (ev) => {
+      if (!ev.target.dataset || !ev.target.dataset.key) return;
+      const entryId = ev.target.closest(".entry-card").dataset.id;
+      if (hasDrafts(entryId)) scheduleSave(entryId, 0);
+    });
+
+    // Speichert alle geänderten Felder eines Eintrags. Gibt true zurück, wenn danach nichts
+    // Ungespeichertes mehr übrig ist (bzw. nichts zu speichern war).
+    async function saveEntry(entryId, keepalive = false) {
+      const st = getSaveState(entryId);
+      clearTimeout(st.timer);
+      clearTimeout(st.retryTimer);
+      while (st.inFlight) await st.inFlight; // pro Eintrag nur ein Request gleichzeitig
+      const entryDrafts = drafts[entryId] || {};
+      for (const [key, d] of Object.entries(entryDrafts)) if (d.value === d.base) delete entryDrafts[key];
+      const changes = Object.entries(entryDrafts).map(([key, d]) => ({ key, value: d.value, base: d.base }));
+      if (changes.length === 0) {
+        delete drafts[entryId];
+        persistDrafts();
+        if (st.status !== "error") setSaveStatus(entryId, "saved");
+        return true;
+      }
+      st.inFlight = (async () => {
+        mutationSeq++;
+        setSaveStatus(entryId, "saving");
+        try {
+          const res = await fetch("/journal/updateEntry", {
+            method: "POST", headers: { "Content-Type": "application/json" }, keepalive,
+            body: JSON.stringify({ code: project.code, department: project.department, entryId, changes }),
+          });
+          const data = await res.json();
+          if (!res.ok || !data.entry) throw new Error(data.error || "Speichern fehlgeschlagen");
+          const idx = project.journalEntries.findIndex(e => e.id === entryId);
+          if (idx !== -1) project.journalEntries[idx] = data.entry;
+          const conflicts = data.conflicts || [];
+          if (conflicts.length) st.conflict = true;
+          let needsRender = conflicts.length > 0;
+          for (const c of changes) {
+            const d = drafts[entryId] && drafts[entryId][c.key];
+            if (!d) continue;
+            const serverValue = getEntryField(data.entry, c.key);
+            if (d.value === c.value) {
+              // nichts weiter getippt -> Entwurf erledigt
+              delete drafts[entryId][c.key];
+              if (serverValue !== c.value) needsRender = true;
+            } else if (serverValue === c.value) {
+              // während des Speicherns weitergetippt -> Entwurf bleibt, neue Basis
+              d.base = serverValue;
+            } else {
+              // weitergetippt UND Server hat zusammengeführt -> eigenen neuen Text in den
+              // zusammengeführten Text einsetzen, damit kein Text verloren geht
+              const pos = serverValue.lastIndexOf(c.value);
+              d.value = pos === -1 ? serverValue + "\n\n" + d.value
+                : serverValue.slice(0, pos) + d.value + serverValue.slice(pos + c.value.length);
+              d.base = serverValue;
+              needsRender = true;
+            }
+          }
+          if (drafts[entryId] && Object.keys(drafts[entryId]).length === 0) delete drafts[entryId];
+          persistDrafts();
+          if (hasDrafts(entryId)) {
+            setSaveStatus(entryId, "dirty");
+            scheduleSave(entryId, 2000);
+          } else {
+            setSaveStatus(entryId, "saved");
+          }
+          if (needsRender || !isEditingWithin("#journalSection")) renderJournal();
+          return !hasDrafts(entryId);
+        } catch (e) {
+          setSaveStatus(entryId, "error");
+          st.retryTimer = setTimeout(() => saveEntry(entryId), 10000);
+          return false;
+        } finally {
+          st.inFlight = null;
+          mutationSeq++;
+        }
+      })();
+      return st.inFlight;
+    }
+
+    // Beim Schliessen/Wechseln des Tabs noch speichern und ggf. warnen
+    window.addEventListener("beforeunload", (ev) => {
+      if (!project) return;
+      const pending = Object.keys(drafts).filter(hasDrafts);
+      const saving = Object.values(saveState).some(s => s.inFlight);
+      if (pending.length || saving) {
+        pending.forEach(id => saveEntry(id, true));
+        ev.preventDefault();
+        ev.returnValue = "";
+      }
+    });
+
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "hidden" && project) {
+        Object.keys(drafts).filter(hasDrafts).forEach(id => saveEntry(id, true));
+      }
+    });
+
+    async function postJournal(url, body) {
+      mutationSeq++;
+      try {
+        const res = await fetch(url, {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ code: project.code, department: project.department, ...body }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Fehler");
+        return data;
+      } finally {
+        mutationSeq++;
+      }
     }
 
     async function setLpStatus(entryId, status) {
-      const res = await fetch("/journal/setTeacherComment", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: project.code, department: project.department, entryId, status }),
-      });
-      const data = await res.json();
-      const entry = project.journalEntries.find(e => e.id === entryId);
-      if (entry) entry.teacherComment = data.teacherComment;
-      renderJournal();
+      try {
+        const data = await postJournal("/journal/setTeacherComment", { entryId, status });
+        const entry = project.journalEntries.find(e => e.id === entryId);
+        if (entry) entry.teacherComment = data.teacherComment;
+        renderJournal();
+      } catch (e) {
+        alert("LP-Status konnte nicht gespeichert werden. Bitte erneut versuchen.");
+      }
     }
 
     async function setLpText(entryId, text) {
-      const res = await fetch("/journal/setTeacherComment", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: project.code, department: project.department, entryId, text }),
-      });
-      const data = await res.json();
-      const entry = project.journalEntries.find(e => e.id === entryId);
-      if (entry) entry.teacherComment = data.teacherComment;
-      renderJournal();
+      try {
+        const data = await postJournal("/journal/setTeacherComment", { entryId, text });
+        const entry = project.journalEntries.find(e => e.id === entryId);
+        if (entry) entry.teacherComment = data.teacherComment;
+        renderJournal();
+      } catch (e) {
+        alert("LP-Kommentar konnte nicht gespeichert werden. Bitte erneut versuchen.");
+      }
     }
 
     function escHtml(str) {
@@ -515,17 +728,30 @@
       return String(str || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
     }
 
+    function escAttr(str) {
+      return escTextarea(str).replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+    }
+
     async function getEntryFeedback(entryId, btn) {
       btn.textContent = "…";
       btn.disabled = true;
-      const res = await fetch("/journal/aiFeedback", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: project.code, department: project.department, entryId }),
-      });
-      const data = await res.json();
-      const entry = project.journalEntries.find(e => e.id === entryId);
-      if (entry) entry.aiFeedback = data.feedback;
-      renderJournal();
+      // Zuerst speichern, damit die KI den aktuellen Text sieht
+      if (!(await saveEntry(entryId))) {
+        alert("Der Eintrag konnte nicht gespeichert werden. Bitte später erneut versuchen.");
+        btn.textContent = "Rückmeldung KI";
+        btn.disabled = false;
+        return;
+      }
+      try {
+        const data = await postJournal("/journal/aiFeedback", { entryId });
+        const entry = project.journalEntries.find(e => e.id === entryId);
+        if (entry) entry.aiFeedback = data.feedback;
+        renderJournal();
+      } catch (e) {
+        alert("Fehler beim Abrufen der KI-Rückmeldung. Bitte erneut versuchen.");
+        btn.textContent = "Rückmeldung KI";
+        btn.disabled = false;
+      }
     }
 
     async function getAIJournal() {
@@ -533,13 +759,18 @@
       const result = document.getElementById("aiJournalResult");
       btn.textContent = "Analysiere…";
       btn.disabled = true;
-      const res = await fetch("/journal/aiJournal", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: project.code, department: project.department }),
-      });
-      const data = await res.json();
-      result.style.display = "block";
-      result.innerHTML = `<p>${escHtml(data.feedback)}</p>`;
+      try {
+        const res = await fetch("/journal/aiJournal", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ code: project.code, department: project.department }),
+        });
+        const data = await res.json();
+        result.style.display = "block";
+        result.innerHTML = `<p>${escHtml(res.ok ? data.feedback : "⚠️ Fehler beim Abrufen der Rückmeldung.")}</p>`;
+      } catch (e) {
+        result.style.display = "block";
+        result.innerHTML = "<p>⚠️ Verbindungsfehler. Bitte erneut versuchen.</p>";
+      }
       btn.textContent = "Rückmeldung KI zu Journal";
       btn.disabled = false;
     }
@@ -573,6 +804,7 @@
         body: JSON.stringify({ code: project.code, department: project.department, timeline }),
       });
       const data = await res.json();
+      if (!res.ok || !data.project) { alert("Zeitplan konnte nicht gespeichert werden."); return; }
       project = data.project;
       updateDaysLeft();
       renderCalendar();
@@ -732,13 +964,18 @@
       const result = document.getElementById("aiTimelineResult");
       btn.textContent = "Analysiere…";
       btn.disabled = true;
-      const res = await fetch("/journal/aiTimeline", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: project.code, department: project.department }),
-      });
-      const data = await res.json();
-      result.style.display = "block";
-      result.innerHTML = `<p>${escHtml(data.feedback)}</p>`;
+      try {
+        const res = await fetch("/journal/aiTimeline", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ code: project.code, department: project.department }),
+        });
+        const data = await res.json();
+        result.style.display = "block";
+        result.innerHTML = `<p>${escHtml(res.ok ? data.feedback : "⚠️ Fehler beim Abrufen der Rückmeldung.")}</p>`;
+      } catch (e) {
+        result.style.display = "block";
+        result.innerHTML = "<p>⚠️ Verbindungsfehler. Bitte erneut versuchen.</p>";
+      }
       btn.textContent = "Rückmeldung KI zu Projekt-Zeitplan";
       btn.disabled = false;
     }
@@ -872,8 +1109,16 @@
       return !!(ae && ae.closest && ae.closest(sel) && (ae.tagName === "INPUT" || ae.tagName === "TEXTAREA"));
     }
 
+    // Header-Felder gelten als geändert, wenn sie vom zuletzt geladenen Stand abweichen
+    function isHeaderDirty() {
+      return document.getElementById("projectTitle").value !== (project.title || "")
+        || document.getElementById("projectDescription").value !== (project.description || "")
+        || document.getElementById("projectMembers").value !== project.members.join(", ");
+    }
+
     async function pollTick() {
       if (!project) return;
+      const seqAtStart = mutationSeq;
       try {
         const res = await fetch("/journal/load", {
           method: "POST", headers: { "Content-Type": "application/json" },
@@ -882,7 +1127,9 @@
         if (!res.ok) return;
         const { project: incoming } = await res.json();
 
-        if (!isEditingWithin("#journalSection")) {
+        // Antwort verwerfen, wenn inzwischen lokal gespeichert wurde (sonst veralteter Stand)
+        const journalBusy = mutationSeq !== seqAtStart || Object.values(saveState).some(st => st.inFlight);
+        if (!journalBusy && !isEditingWithin("#journalSection")) {
           project.journalEntries = incoming.journalEntries;
           renderJournal();
         }
@@ -895,7 +1142,7 @@
           project.chatHistory = incoming.chatHistory;
           renderChat();
         }
-        if (!isEditingWithin("#projectHeader")) {
+        if (!isEditingWithin("#projectHeader") && !isHeaderDirty()) {
           project.title = incoming.title;
           project.description = incoming.description;
           project.members = incoming.members;

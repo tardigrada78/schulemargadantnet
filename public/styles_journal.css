@@ -50,6 +50,7 @@ h4 { font-size: .95rem; color: #4a5568; margin-bottom: .5rem; }
 .hint { font-size: .85rem; color: #718096; }
 .error-msg { color: #e53e3e; font-size: .9rem; margin-top: .5rem; min-height: 1.2em; }
 .save-msg  { color: #2f855a; font-size: .9rem; margin-left: .5rem; }
+.save-msg.save-error { color: #e53e3e; }
 .empty-msg { color: #a0aec0; font-style: italic; padding: 1rem; text-align: center; }
 
 /* ── INFO-BOX ────────────────────────────────────────────────────────────── */
@@ -205,6 +206,9 @@ label > input, label > textarea { margin-top: .25rem; }
 .member-fields { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: .25rem; }
 .member-row textarea { width: 100%; }
 input.member-due { align-self: flex-end; width: 8.5rem; }
+/* Noch nicht ausgefüllte Felder dezent gelb hinterlegen */
+.entry-col textarea:placeholder-shown,
+.entry-col input.member-due:invalid { background: #fffbea; border-color: #f6e05e; }
 
 .entry-extra {
   display: grid;
