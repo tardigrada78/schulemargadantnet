@@ -1,5 +1,5 @@
 # Node.js Version (empfohlen: LTS)
-FROM node:25-alpine
+FROM node:24-alpine
 
 # Arbeitsverzeichnis im Container erstellen
 WORKDIR /app
