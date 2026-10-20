@@ -14,6 +14,11 @@ function supportsTemperature(model) {
   return !/^o[1-9]/.test(model);
 }
 
+// Neuere Claude-Modelle (Opus 4.7+, 5.x, Sonnet 5.x, Haiku 5.x, Fable) lehnen temperature ab
+function anthropicSupportsTemperature(model) {
+  return !/claude-(fable|mythos|opus-5|sonnet-5|haiku-5|opus-4-[78])/.test(model);
+}
+
 /**
  * Universelle KI-Funktion
  * @param {string} prompt      - Der Prompt
@@ -44,10 +49,13 @@ export async function callAI(prompt, providerModel, temperature = 0.6, maxTokens
       model,
       max_tokens: maxTokens,
       messages: [{ role: "user", content }],
-      temperature,
+      ...(anthropicSupportsTemperature(model) && { temperature }),
     };
     const response = await anthropicClient.messages.create(params);
-    return response.content[0].text;
+    // Bei Modellen mit Thinking ist der erste Block evtl. kein Text
+    const textBlock = response.content.find((b) => b.type === "text");
+    if (!textBlock) throw new Error(`Keine Textantwort (stop_reason: ${response.stop_reason})`);
+    return textBlock.text;
   }
 
   // OpenAI und Ollama verwenden denselben Client-Typ

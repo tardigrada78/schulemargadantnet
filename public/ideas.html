@@ -7,6 +7,8 @@
   <title>Ideen-Brainstorming</title>
   <link rel="stylesheet" href="styles_synthwave.css" />
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10.4.0/dist/mermaid.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/docx@7.1.0"></script>
+  <script src="https://cdn.jsdelivr.net/npm/file-saver"></script>
   <style>
     .personas-grid {
       display: flex;
@@ -160,7 +162,7 @@
   </script>
 
   <h1>💡 Ideen-Brainstorming</h1>
-  <p>Letzte Aktualisierung: 23.3.2026</p>
+  <p>Letzte Aktualisierung: 20.10.2026</p>
   <details class="info-box">
     <summary>Info zu den verwendeten KI-Modellen</summary>
     <table class="model-table">
@@ -173,8 +175,8 @@
       </thead>
       <tbody>
         <tr>
-          <td>OpenAI</td>
-          <td>GPT-4.1</td>
+          <td>Anthropic</td>
+          <td>Claude Sonnet 5.5</td>
           <td>Brainstorming aus 7 Perspektiven, Synthese der Ideen und Erstellen der Mindmap</td>
         </tr>
       </tbody>
@@ -186,7 +188,7 @@
   </p>
 
   <label for="topicInput"><strong>Thema:</strong></label><br />
-  <input type="text" id="topicInput" value="Ein veganes Kinder-Kochbuch" style="width: 100%; max-width: 600px;" /><br /><br />
+  <textarea id="topicInput" rows="6" style="width: 100%; max-width: 800px; resize: vertical;">Ein veganes Kinder-Kochbuch</textarea><br /><br />
 
   <strong>Perspektiven:</strong>
   <div class="select-all-row">
@@ -197,6 +199,7 @@
 
   <br />
   <button id="startBtn">💡 Brainstormen</button>
+  <button id="wordBtn" style="display:none;">📄 Word-Report herunterladen</button>
   <span id="globalStatus" style="margin-left: 1rem; color: #888; font-size: 0.9rem;"></span>
 
   <div id="resultsGrid" class="results-grid" style="display:none;"></div>

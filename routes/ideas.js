@@ -3,7 +3,8 @@ import { callAI } from "../aiCall.js";
 
 const router = Router();
 
-const MODEL = "openai/gpt-4.1";
+// Claude Sonnet 5.5: Temperatur wird vom Modell ignoriert (callAI lässt sie weg), Kreativität kommt über den Prompt
+const MODEL = "anthropic/claude-sonnet-5-5";
 const TEMPERATURE_BRAINSTORM = 0.85;
 const TEMPERATURE_SYNTHESIZE = 0.6;
 const TEMPERATURE_MINDMAP = 0.3;
@@ -81,9 +82,11 @@ Formuliere genau 5 originelle Ideen zu diesem Thema – vollständig aus deiner 
 **[Kurzer Titel der Idee]**
 Erläuterung in 2–3 Sätzen.
 
+Sei mutig und überraschend: Vermeide naheliegende Standardideen und wage auch ungewöhnliche, verspielte oder radikale Ansätze.
 Schreibe lebhaft und authentisch in deiner Stimme. Keine Einleitungsphrasen wie "Als Kind würde ich sagen..." – sei direkt die Rolle.`;
 
-    const ideas = await callAI(prompt, MODEL, TEMPERATURE_BRAINSTORM, 1500);
+    // Höheres Token-Limit, da Claude Sonnet 5.5 vor der Antwort immer nachdenkt
+    const ideas = await callAI(prompt, MODEL, TEMPERATURE_BRAINSTORM, 6000);
     res.json({ ideas });
   } catch (error) {
     console.error("❌ Brainstorm-Fehler:", error);
@@ -110,7 +113,7 @@ ${ideasText}
 
 Erstelle eine knappe Synthese dieser Ideen in ca. 150 Wörtern. Arbeite die 3–4 stärksten thematischen Impulse und überraschendsten Querverbindungen heraus. Strukturiere mit **fetten Zwischenüberschriften** pro Impuls, darunter je 1–2 Sätze. Formuliere auf Deutsch.`;
 
-    const synthesis = await callAI(prompt, MODEL, TEMPERATURE_SYNTHESIZE, 2000);
+    const synthesis = await callAI(prompt, MODEL, TEMPERATURE_SYNTHESIZE, 6000);
     res.json({ synthesis });
   } catch (error) {
     console.error("❌ Synthese-Fehler:", error);
@@ -137,7 +140,7 @@ Regeln:
 - Kurze, prägnante Labels (max. 5 Wörter pro Knoten)
 - Gib NUR den Mermaid-Code zurück, ohne Backticks, ohne Erklärungen`;
 
-    let mermaidCode = await callAI(prompt, MODEL, TEMPERATURE_MINDMAP, 800);
+    let mermaidCode = await callAI(prompt, MODEL, TEMPERATURE_MINDMAP, 4000);
 
     // Backticks und Markdown-Fences entfernen falls vorhanden
     mermaidCode = mermaidCode
