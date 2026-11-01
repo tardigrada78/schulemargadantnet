@@ -10,7 +10,7 @@ async function LLMtext(assistant_id, prompt) {
   // Variante ohne Kontext
   if (assistant_id == "kein") {
     const response = await anthropic.messages.create({
-      model: "claude-sonnet-4-6",
+      model: "claude-sonnet-5-5",
       max_tokens: 4096,
       messages: [{ role: "user", content: prompt }],
     });
@@ -183,7 +183,7 @@ async function doDiagram(scriptText, language) {
   `;
 
   const response = await anthropic.messages.create({
-    model: "claude-sonnet-4-6",
+    model: "claude-sonnet-5-5",
     max_tokens: 2048,
     messages: [{ role: "user", content: prompt }],
   });
@@ -305,7 +305,7 @@ WICHTIG:
 - Formuliere in der Sprache: ${language}
 - Gib nur den reinen Mermaid-Code zurück, keine Backticks, keine Erklärungen`;
     const response = await anthropic.messages.create({
-      model: "claude-sonnet-4-6",
+      model: "claude-sonnet-5-5",
       max_tokens: 2048,
       messages: [{ role: "user", content: prompt }],
     });

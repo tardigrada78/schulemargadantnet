@@ -26,4 +26,4 @@ Eine Webplattform mit einzelnen aber logisch verbundenen Tools für KI im Schulu
 
 # Administratives
 - API Keys für Google Gemini, OpenAI und Anthropic sind vorhanden und liegen in ENV Systemvariablen
-- Der lokale Server (für Tests) läuft auf localhost:3001, nicht 3000
+- Der lokale Server (für Tests) läuft auf localhost:3001, nicht 3000; falls er nicht läuft mit "docker compose start" starten

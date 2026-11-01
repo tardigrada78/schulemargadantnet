@@ -68,7 +68,7 @@ router.post("/analyse", async (req, res) => {
       : [];
 
     const messageParams = {
-      model: "claude-sonnet-4-20250514",
+      model: "claude-sonnet-5-5",
       max_tokens: 2000,
       system: SYSTEM_PROMPT,
       messages: [{ role: "user", content: buildUserPrompt(produktName, anzahl) }],

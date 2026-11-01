@@ -22,7 +22,7 @@ function anthropicSupportsTemperature(model) {
 /**
  * Universelle KI-Funktion
  * @param {string} prompt      - Der Prompt
- * @param {string} providerModel - z.B. "openai/gpt-4.1", "anthropic/claude-sonnet-4-5", "ollama/qwen2.5:9b"
+ * @param {string} providerModel - z.B. "openai/gpt-4.1", "anthropic/claude-sonnet-5-5", "ollama/qwen2.5:9b"
  * @param {number} temperature - Temperatur (0.0 - 1.0)
  * @param {number} maxTokens   - Maximale Tokens (default: 1000)
  * @param {string} ollamaBaseUrl - Optionale Ollama-Basis-URL

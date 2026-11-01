@@ -50,7 +50,7 @@ async function generatePerson(participants_women, participants_men, participants
     `;
 
     const response = await anthropic.messages.create({
-        model: "claude-sonnet-4-6",
+        model: "claude-sonnet-5-5",
         max_tokens: 1200,
         temperature: 1.0, // Höhere Temperatur für mehr Vielfalt
         messages: [{ role: 'user', content: prompt }],

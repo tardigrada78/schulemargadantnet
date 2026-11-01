@@ -9,7 +9,7 @@ const upload = multer({ dest: "uploads/", limits: { fileSize: 25 * 1024 * 1024 }
 // Realtime-Modell für das Live-Gespräch (Alias; bei Ablehnung "gpt-realtime-2.1" verwenden)
 const REALTIME_MODEL = "gpt-realtime";
 // Modell zum Auswerten des hochgeladenen PDF (aiConfig-Stufe "stark")
-const PDF_MODEL = "anthropic/claude-sonnet-4-5";
+const PDF_MODEL = "anthropic/claude-sonnet-5-5";
 
 // Route: PDF (Poster/Arbeit) hochladen und von einer KI zu einem Dossier auswerten
 router.post("/analyse", upload.single("pdf"), async (req, res) => {
