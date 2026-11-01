@@ -21,6 +21,7 @@ import languagestory from "./routes/languagestory.js";
 import journal from "./routes/journal.js";
 import simpl from "./routes/simpl.js";
 import fachgespraech from "./routes/fachgespraech.js";
+import abfrage from "./routes/abfrage.js";
 // add new routes here
 
 
@@ -50,6 +51,7 @@ app.use("/languagestory", languagestory);
 app.use("/journal", journal);
 app.use("/simpl", simpl);
 app.use("/fachgespraech", fachgespraech);
+app.use("/abfrage", abfrage);
 // add new routes here
 
 

@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Abfrage-Maschine</title>
+  <link rel="stylesheet" href="styles_synthwave.css" />
+  <style>
+    textarea {
+      width: 100%;
+      min-height: 120px;
+      box-sizing: border-box;
+    }
+
+    .lang-row {
+      display: flex;
+      gap: 1.5rem;
+      margin: 1rem 0;
+    }
+
+    .lang-row label {
+      cursor: pointer;
+    }
+
+    .lang-row input[type="radio"] {
+      width: auto;
+      margin: 0 0.4rem 0 0;
+      padding: 0;
+      background: none;
+      border: none;
+      border-radius: 0;
+      box-shadow: none;
+      backdrop-filter: none;
+      vertical-align: middle;
+    }
+
+    .level-row {
+      margin: 1rem 0;
+    }
+
+    .level-ends {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8em;
+      color: #9aa0a6;
+    }
+
+    #status {
+      margin-top: 1rem;
+      color: #00c8ff;
+      font-style: italic;
+    }
+
+    #questions {
+      margin-top: 1.5rem;
+      padding-left: 1.5rem;
+      font-size: 1.15rem;
+      line-height: 1.6;
+    }
+
+    #questions li {
+      margin-bottom: 0.75rem;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="site-header"></div>
+  <script>
+    fetch('/header.html').then(r => r.text()).then(h => document.getElementById('site-header').innerHTML = h);
+  </script>
+
+  <h1>Abfrage-Maschine</h1>
+  <p>Letzte Aktualisierung: 1.11.2026</p>
+  <details class="info-box">
+    <summary>Info zu den verwendeten KI-Modellen</summary>
+    <table class="model-table">
+      <thead>
+        <tr>
+          <th>Firma</th>
+          <th>Modellbezeichnung</th>
+          <th>Verwendung auf dieser Seite</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Anthropic</td>
+          <td>Claude Haiku 5.5</td>
+          <td>Erstellen der Fragen</td>
+        </tr>
+      </tbody>
+    </table>
+  </details>
+
+  <p>«Frage stellen» startet neu mit einer ersten Frage. «Weitere Frage stellen» ergänzt eine neue Frage, die sich von allen bisherigen unterscheidet.</p>
+
+  <label for="topic">Lernziele oder Lernstoff:</label>
+  <textarea id="topic">Outline how an action potential is created and how it changes the membrane potential. Describe what myelinated axons are and how they affect the speed of action potentials. 
+  </textarea>
+
+  <div class="lang-row">
+    <label><input type="radio" name="lang" value="de"> Deutsch</label>
+    <label><input type="radio" name="lang" value="en" checked> Englisch</label>
+  </div>
+
+  <div class="level-row">
+    <label for="level">Schwierigkeit: <strong id="levelLabel"></strong></label><br>
+    <input type="range" id="level" min="1" max="7" step="1" value="4">
+  </div>
+
+  <button id="askBtn">Frage stellen</button>
+  <ol id="questions"></ol>
+  <button id="moreBtn" style="display:none;">Weitere Frage stellen</button>
+  <p id="status"></p>
+  <p id="error" style="color:#ff6b6b;"></p>
+
+  <script>
+    const askBtn = document.getElementById('askBtn');
+    const moreBtn = document.getElementById('moreBtn');
+    const list = document.getElementById('questions');
+    const errorEl = document.getElementById('error');
+    const statusEl = document.getElementById('status');
+    let askedQuestions = [];
+
+    const levelNames = ['Einstieg ins Thema', 'Einfach', 'Ein bisschen weniger einfach', 'Normal', 'Anspruchsvoll', 'Sehr anspruchsvoll', 'Anspruchsvolles Detailwissen'];
+    const levelInput = document.getElementById('level');
+    const levelLabel = document.getElementById('levelLabel');
+    const showLevel = () => levelLabel.textContent = levelNames[levelInput.value - 1];
+    levelInput.addEventListener('input', showLevel);
+    showLevel();
+
+    async function ask(reset) {
+      const topic = document.getElementById('topic').value.trim();
+      if (!topic) {
+        alert('Bitte geben Sie zuerst Lernziele oder Lernstoff ein.');
+        return;
+      }
+      if (reset) {
+        askedQuestions = [];
+        list.innerHTML = '';
+      }
+      errorEl.textContent = '';
+      askBtn.disabled = moreBtn.disabled = true;
+      statusEl.textContent = '⚙️ Frage wird erstellt…';
+      try {
+        const response = await fetch('/abfrage/question', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            topic,
+            language: document.querySelector('input[name="lang"]:checked').value,
+            level: Number(levelInput.value),
+            previousQuestions: askedQuestions
+          })
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Etwas ist schief gelaufen.');
+        askedQuestions.push(data.question);
+        const li = document.createElement('li');
+        li.textContent = data.question;
+        list.appendChild(li);
+        moreBtn.style.display = '';
+      } catch (error) {
+        console.error('Error:', error);
+        errorEl.textContent = 'Fehler: ' + error.message;
+      } finally {
+        statusEl.textContent = '';
+        askBtn.disabled = moreBtn.disabled = false;
+      }
+    }
+
+    askBtn.addEventListener('click', () => ask(true));
+    moreBtn.addEventListener('click', () => ask(false));
+  </script>
+</body>
+
+</html>
