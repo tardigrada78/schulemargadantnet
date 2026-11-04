@@ -22,6 +22,7 @@ import journal from "./routes/journal.js";
 import simpl from "./routes/simpl.js";
 import fachgespraech from "./routes/fachgespraech.js";
 import abfrage from "./routes/abfrage.js";
+import quellencheck from "./routes/quellencheck.js";
 // add new routes here
 
 
@@ -52,6 +53,7 @@ app.use("/journal", journal);
 app.use("/simpl", simpl);
 app.use("/fachgespraech", fachgespraech);
 app.use("/abfrage", abfrage);
+app.use("/quellencheck", quellencheck);
 // add new routes here
 
 

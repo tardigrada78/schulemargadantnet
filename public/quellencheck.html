@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quellencheck</title>
+  <link rel="stylesheet" href="styles_synthwave.css">
+</head>
+<body>
+  <div id="site-header"></div>
+  <script>
+    fetch('/header.html').then(r => r.text()).then(x => document.getElementById('site-header').innerHTML = x);
+  </script>
+
+
+<h1>Quellencheck</h1>
+<p>Letzte Aktualisierung: 4.11.2026</p>
+<details class="info-box">
+  <summary>Info zu den verwendeten KI-Modellen</summary>
+  <table class="model-table">
+    <thead>
+      <tr>
+        <th>Firma</th>
+        <th>Modellbezeichnung</th>
+        <th>Verwendung auf dieser Seite</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Anthropic</td>
+        <td>Claude Haiku 5.5</td>
+        <td>Prüfen, ob eine Textstelle durch den Inhalt der Webquelle gestützt wird</td>
+      </tr>
+    </tbody>
+  </table>
+</details>
+
+<p class="small">
+  Das PDF wird nur im Browser ausgewertet. Nur die Textstellen mit Webquelle und der Inhalt der Webseite gehen an die KI.
+  Anthropic verwendet diese Daten
+  <a href="https://privacy.claude.com/en/articles/7996885" target="_blank" rel="noopener">nicht für Trainingszwecke</a>.
+  Bei wissenschaftlichen Quellen (DOI, PubMed, PMC) werden Titel, Abstract und, falls frei verfügbar, der Volltext über
+  die offenen Schnittstellen von Europe PMC, Crossref und PubMed geholt.
+  Geschätzte Kosten pro Arbeit: ca. 2 Rappen.
+</p>
+
+<p>
+  <input type="file" id="pdfInput" accept=".pdf">
+  <button id="btnAnalyze" onclick="startAnalysis()">Analysieren</button>
+</p>
+
+<div id="status"></div>
+
+<div id="results" style="display:none">
+
+  <h2>Textstellen und Webinhalte</h2>
+  <p id="webContentCount"></p>
+  <table id="tblWebContent" border="1" cellpadding="4">
+    <thead>
+      <tr>
+        <th>Referenz</th>
+        <th>Textstelle</th>
+        <th>Übereinstimmung mit der Quelle</th>
+        <th>Quelle</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <div class="small">
+
+    <details>
+      <summary>Erkannter Zitierstil</summary>
+      <p id="styleInfo"></p>
+    </details>
+
+    <details>
+      <summary>1. Erkannte Zitate</summary>
+      <p id="citationCount"></p>
+      <table id="tblZitate" border="1" cellpadding="4">
+        <thead>
+          <tr>
+            <th>Nr.</th>
+            <th>Referenz</th>
+            <th>Textstelle</th>
+            <th>Seite</th>
+            <th>Format</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </details>
+
+    <details>
+      <summary>2. Literaturverzeichnis</summary>
+      <p id="bibCount"></p>
+      <table id="tblLiteratur" border="1" cellpadding="4">
+        <thead>
+          <tr>
+            <th>Autor</th>
+            <th>Jahr</th>
+            <th>Typ</th>
+            <th>URL</th>
+            <th>Volltext (Auszug)</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </details>
+
+    <details>
+      <summary>3. Zuordnung Zitat → Literaturverzeichnis</summary>
+      <p id="matchCount"></p>
+      <table id="tblZuordnung" border="1" cellpadding="4">
+        <thead>
+          <tr>
+            <th>Referenz</th>
+            <th>Textstelle</th>
+            <th>Literaturverzeichnis-Eintrag</th>
+            <th>Format</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </details>
+
+    <details>
+      <summary>4. URLs (Webquellen)</summary>
+      <p id="urlCount"></p>
+      <table id="tblURLs" border="1" cellpadding="4">
+        <thead>
+          <tr>
+            <th>Referenz</th>
+            <th>Textstelle</th>
+            <th>URL</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </details>
+
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
+<script>
+  pdfjsLib.GlobalWorkerOptions.workerSrc =
+    'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+</script>
+<script type="module" src="quellencheck/main.js"></script>
+
+<script>
+  // Expose startAnalysis for the button onclick (module scope is isolated)
+  window.startAnalysis = function() {
+    window._triggerAnalysis && window._triggerAnalysis();
+  };
+</script>
+
+</body>
+</html>
