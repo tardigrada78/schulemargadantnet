@@ -9,7 +9,7 @@
  *   English: "Ofcom. (2024). Title. https://... [accessed DATE]"
  */
 
-import { pageToText } from './pdfParser.js';
+import { pageToText, groupByLines } from './pdfParser.js';
 
 // ─── Patterns ────────────────────────────────────────────────────────────────
 
@@ -80,7 +80,13 @@ export function extractBibliography(pages, bibStartIdx) {
     .map(p => pageToText(p))
     .join('\n\n');
 
-  return parseBibText(bibText);
+  const entries = parseBibText(bibText);
+  // Weniger als 3 Treffer: kein APA-Verzeichnis «Autor (Jahr)» → Chicago-Stil versuchen
+  if (entries.length < 3) {
+    const chicago = parseChicagoBib(pages, bibStartIdx);
+    if (chicago.length > entries.length) return chicago;
+  }
+  return entries;
 }
 
 // ─── Internal parsing ─────────────────────────────────────────────────────────
@@ -194,6 +200,115 @@ function parseEntry(raw) {
     url,
     typ,
     volltext: text.slice(0, 200).replace(/\n/g, ' ')
+  };
+}
+
+// ─── Chicago-Stil (Notes & Bibliography) ──────────────────────────────────────
+// Einträge: «Nachname, Vorname. Titel. Verlag, Jahr.» oder «„Titel“. Zugegriffen 25. Oktober 2026. https://…»
+// Einträge sind durch einen grösseren Zeilenabstand getrennt (kein «(Jahr)» in Klammern).
+
+function lineText(line) {
+  let t = '';
+  line.forEach((item, i) => {
+    if (i > 0) {
+      const prev = line[i - 1];
+      if (item.x - (prev.x + (prev.width || 0)) > 1) t += ' ';
+    }
+    t += item.str;
+  });
+  return t.trim();
+}
+
+/** Normalisierter Titel für den Vergleich mit Fussnoten (Kleinbuchstaben, nur Buchstaben/Ziffern). */
+export function normalizeTitle(raw) {
+  return (raw || '').toLowerCase().replace(/[^a-zäöüéèàß0-9]+/g, ' ').trim();
+}
+
+function parseChicagoBib(pages, bibStartIdx) {
+  const rawEntries = [];
+  let current = null;
+  let stop = false;
+
+  for (const page of pages.slice(bibStartIdx)) {
+    const lines = groupByLines(page.items, 2)
+      .map(l => ({ y: l[0].y, text: lineText(l) }))
+      .filter(l => l.text && !/^\d{1,3}$/.test(l.text)); // Seitenzahlen weg
+    const gaps = lines.slice(1).map((l, i) => lines[i].y - l.y).sort((a, b) => a - b);
+    const normalGap = gaps.length ? gaps[Math.floor(gaps.length / 2)] : 0;
+
+    lines.forEach((l, i) => {
+      if (stop) return;
+      if (/^Abbildungsverzeichnis\b/i.test(l.text)) { stop = true; return; }
+      if (i === 0 && BIB_HEADING.test(l.text) && l.text.length < 40) return; // Überschrift
+      // Neuer Eintrag: erster Eintrag, grösserer Abstand, oder Seitenanfang nach abgeschlossenem Eintrag
+      const bigGap = i > 0 && lines[i - 1].y - l.y > normalGap * 1.25;
+      const newPage = i === 0 && current && /[.)]$/.test(current);
+      if (!current || bigGap || newPage) {
+        if (current) rawEntries.push(current);
+        current = l.text;
+      } else {
+        current += ' ' + l.text;
+      }
+    });
+  }
+  if (current) rawEntries.push(current);
+
+  return rawEntries.map(parseChicagoEntry).filter(Boolean);
+}
+
+function parseChicagoEntry(text) {
+  // URL: ab «http» bis Eintragsende, Zeilenumbrüche entfernen
+  let url = null;
+  const urlStart = text.search(/https?:\/\//i);
+  if (urlStart >= 0) {
+    url = text.slice(urlStart).replace(/\s+/g, '').replace(/[.,;)\]]+$/, '');
+    if (!url.includes('.')) url = null;
+  }
+  const rest = urlStart >= 0 ? text.slice(0, urlStart) : text;
+
+  // Titel: in «„…“» oder erster Satz nach dem Autor
+  const quoted = rest.match(/„([^“]+)“/);
+  let autor = '';
+  let titel = '';
+  if (quoted) {
+    titel = quoted[1];
+    const before = rest.slice(0, quoted.index).replace(/[.,\s]+$/, '');
+    // Ohne Autor vor dem Titel: Herausgeber/Organisation steht oft danach («„Titel“. Schweizerische Vogelwarte, o. J.»)
+    const org = rest.slice(quoted.index + quoted[0].length).match(/^[.\s]*([A-ZÄÖÜ][^,.]*?)\s*(?:,|\.)/)?.[1] || '';
+    autor = before || (/^Zugegriffen/.test(org) ? '' : org);
+  } else {
+    // Autor endet beim ersten Punkt, der nicht zu einer Initiale oder Abkürzung gehört
+    const re = /\.\s+/g;
+    let m, authorEnd = -1;
+    while ((m = re.exec(rest)) !== null) {
+      const before = rest.slice(0, m.index);
+      const afterText = rest.slice(m.index + m[0].length);
+      // weitere Initiale folgt («J. K. Rowling») oder Abkürzung wie «u. a.» → Autor geht weiter
+      if ((/(?:^|[\s-])[A-ZÄÖÜ]$/.test(before) && /^[A-ZÄÖÜ]\.\s/.test(afterText)) || /(?:^|\s)(?:u|a)$/.test(before)) continue;
+      authorEnd = m.index;
+      break;
+    }
+    autor = authorEnd >= 0 ? rest.slice(0, authorEnd) : '';
+    const afterAuthor = authorEnd >= 0 ? rest.slice(authorEnd + 1).trim() : rest;
+    titel = afterAuthor.split(/\.\s/)[0].replace(/\.$/, '');
+  }
+  if (!titel) return null;
+
+  // Jahr: letzte Jahreszahl ausserhalb von «Zugegriffen …»
+  const withoutAccess = rest.replace(/„[^“]+“/g, '').replace(/Zugegriffen\s+\d{1,2}\.\s+\p{L}+\s+\d{4}/gu, '');
+  const years = withoutAccess.match(/\b(?:1[5-9]|20)\d{2}\b/g);
+  const jahrRaw = years ? years[years.length - 1] : 'o. J.';
+
+  return {
+    autor,
+    autorNorm: normalizeAuthor(autor),
+    jahr: normalizeYear(jahrRaw),
+    jahrRaw,
+    url,
+    typ: url ? 'internet' : 'buch',
+    volltext: text.slice(0, 200),
+    titel,
+    titelNorm: normalizeTitle(titel)
   };
 }
 

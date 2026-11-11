@@ -10,7 +10,7 @@
  *   - "o.J." vs. "o. J." vs. "n.d."
  */
 
-import { normalizeAuthor } from './bibExtractor.js';
+import { normalizeAuthor, normalizeTitle } from './bibExtractor.js';
 
 /**
  * @typedef {Object} Assignment
@@ -31,7 +31,8 @@ import { normalizeAuthor } from './bibExtractor.js';
  * @returns {Assignment[]}
  */
 export function matchFootnotes(refs, bibliography) {
-  return refs.map(ref => {
+  const chicago = bibliography.some(e => e.titelNorm);
+  return refs.flatMap(ref => {
     const def = ref.def;
     if (!def) {
       return {
@@ -45,9 +46,7 @@ export function matchFootnotes(refs, bibliography) {
       };
     }
 
-    const bibEntry = findBestMatch(def.autorNorm, def.jahr, bibliography);
-
-    return {
+    const make = bibEntry => ({
       refLabel: String(ref.num),
       refAutor: def.autor,
       refJahr: def.jahrRaw,
@@ -55,8 +54,53 @@ export function matchFootnotes(refs, bibliography) {
       pageNum: ref.pageNum,
       bibEntry,
       matched: bibEntry !== null
-    };
+    });
+
+    if (chicago) {
+      // Chicago-Kurzbelege: eine Fussnote kann mehrere Quellen enthalten → je Quelle eine Zuordnung
+      const found = matchChicago(def.fullText, bibliography);
+      return found.length ? found.map(make) : [make(null)];
+    }
+
+    return [make(findBestMatch(def.autorNorm, def.jahr, bibliography))];
   });
+}
+
+/**
+ * Chicago-Kurzbelege («„Titel“.», «Autor, Titel, S. 12», mehrere Belege mit «;») den
+ * Literatureinträgen über den Kurztitel zuordnen. Der Kurztitel ist der Anfang des vollen Titels.
+ *
+ * @param {string} fullText  Text der Fussnote
+ * @param {import('./bibExtractor').BibEntry[]} bibliography
+ * @returns {import('./bibExtractor').BibEntry[]}  Gefundene Einträge (ohne Duplikate)
+ */
+function matchChicago(fullText, bibliography) {
+  const found = [];
+  for (const part of fullText.split(';')) {
+    const quoted = part.match(/„([^“]+)“/);
+    let autor = '';
+    let title = '';
+    if (quoted) {
+      title = quoted[1];
+      autor = part.slice(0, quoted.index).replace(/[,\s]+$/, '');
+    } else {
+      const comma = part.indexOf(',');
+      if (comma < 0) continue;
+      autor = part.slice(0, comma);
+      title = part.slice(comma + 1).trim().split(/[,.(]/)[0];
+    }
+    const t = normalizeTitle(title);
+    if (t.length < 4) continue;
+
+    let candidates = bibliography.filter(e => e.titelNorm && (e.titelNorm.startsWith(t) || t.startsWith(e.titelNorm)));
+    if (candidates.length > 1 && autor) {
+      const a = normalizeAuthor(autor);
+      const byAuthor = candidates.filter(e => e.autorNorm === a || (e.autor || '').toLowerCase().includes(autor.toLowerCase()));
+      if (byAuthor.length) candidates = byAuthor;
+    }
+    if (candidates.length && !found.includes(candidates[0])) found.push(candidates[0]);
+  }
+  return found;
 }
 
 /**
