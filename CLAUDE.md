@@ -19,6 +19,7 @@ Eine Webplattform mit einzelnen aber logisch verbundenen Tools für KI im Schulu
 - **Konsistenz vor Perfektion**: Bestehendem Stil folgen, auch wenn es nicht ideal ist.
 - Vor einer Änderung prüfen, ob eine ähnliche Funktion bereits existiert.
 - Allgemein verwenbare Funktionen in eigene Dateien schreiben und diese auch verwenden
+- Update bei Veränderungen in der html-Datei das Aktualisierungsdatum sowie die Infobox der verwendeten Modelle
 
 # Repositories
 

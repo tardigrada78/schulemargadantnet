@@ -3,6 +3,25 @@ const router = Router();
 import OpenAI from "openai";
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
+// Gemini REST-Aufruf (Bild und Sprache)
+async function geminiRequest(model, body) {
+  const response = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-goog-api-key": process.env.GEMINI_API_KEY,
+      },
+      body: JSON.stringify(body),
+    }
+  );
+  if (!response.ok) {
+    throw new Error(`Gemini ${model}: ${response.status} ${await response.text()}`);
+  }
+  return response.json();
+}
+
 // create story
 async function getStory() {
   const systemMessage = `Du bist ein kreativer Geschichtenerzähler, der unterhaltsame Geschichten auf Chinesisch verfasst.
@@ -48,7 +67,7 @@ async function getTitle(story) {
     
     "${story}"`;
   const response = await openai.chat.completions.create({
-    model: "gpt-5-nano",
+    model: "gpt-6-luna",
     messages: [
       { role: "system", content: systemMessage },
       { role: "user", content: userMessage },
@@ -73,13 +92,19 @@ async function getPicture(story) {
     - Setze die in der Geschichte erwähnte Umgebung in eine modernes chinesische Variante.`;
 
   try {
-    const response = await openai.images.generate({
-      model: "gpt-image-1",
-      prompt: gptprompt,
-      n: 1,
-      size: "1024x1024",
+    const data = await geminiRequest("gemini-nano-banana-2.1", {
+      contents: [{ parts: [{ text: gptprompt }] }],
+      generationConfig: {
+        responseModalities: ["IMAGE"],
+        imageConfig: { aspectRatio: "1:1" },
+      },
     });
-    return response.data[0].b64_json;
+    const part = data.candidates?.[0]?.content?.parts?.find(
+      (p) => p.inlineData || p.inline_data
+    );
+    const inline = part?.inlineData || part?.inline_data;
+    if (!inline?.data) throw new Error("Keine Bilddaten in der Antwort.");
+    return inline.data;
   } catch (error) {
     console.error("Fehler beim Generieren des Bildes:", error);
     throw new Error("Fehler beim Generieren des Bildes.");
@@ -89,16 +114,34 @@ async function getPicture(story) {
 // generate speech audio output
 async function getSpeech(story) {
   try {
-    const mp3 = await openai.audio.speech.create({
-      model: "gpt-4o-mini-tts",
-      voice: "nova",
-      instructions:
-        "Speak in a very clear standard Chinese language for students learning Chinese. Use a voice for telling fairytales. Speak slowly and clearly with appropriate pauses.",
-      input: story,
+    // Getrennte Abschnitte, damit die Anweisung nicht mitgesprochen wird
+    const instructions =
+      "Style: very clear standard Mandarin Chinese for students learning Chinese, the voice of a calm fairytale narrator. Speak slowly and clearly with appropriate pauses.";
+    const data = await geminiRequest("gemini-3.8-flash-tts", {
+      contents: [
+        {
+          parts: [
+            {
+              text: `#### DIRECTOR NOTES\n${instructions}\n\n#### TRANSCRIPT\n${story}`,
+            },
+          ],
+        },
+      ],
+      generationConfig: {
+        responseModalities: ["AUDIO"],
+        speechConfig: {
+          voiceConfig: { prebuiltVoiceConfig: { voiceName: "Sulafat" } },
+        },
+      },
     });
-    const buffer = Buffer.from(await mp3.arrayBuffer());
-    const base64Audio = buffer.toString("base64");
-    return `data:audio/mpeg;base64,${base64Audio}`;
+    const part = data.candidates?.[0]?.content?.parts?.find(
+      (p) => p.inlineData || p.inline_data
+    );
+    const inline = part?.inlineData || part?.inline_data;
+    if (!inline?.data) throw new Error("Keine Audiodaten in der Antwort.");
+    // Das Modell liefert bereits ein fertiges WAV
+    const base64Audio = inline.data;
+    return `data:audio/wav;base64,${base64Audio}`;
   } catch (error) {
     console.error("Fehler bei der Sprachsynthese:", error);
     throw new Error("Fehler beim Generieren der Sprachdatei.");

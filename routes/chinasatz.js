@@ -53,7 +53,7 @@ async function doTranslation(sentence) {
     - Übersetze Wort für Wort, auch wenn dabei Verständlichkeit und Grammatik leiden`;
 
   const response = await openai.chat.completions.create({
-    model: "gpt-5-nano",
+    model: "gpt-6-luna",
     messages: [{ role: "user", content: prompt }],
     // temperature: 0.8,
   });
