@@ -1,26 +1,7 @@
 import { Router } from "express";
 const router = Router();
-import OpenAI from "openai";
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
-// Gemini REST-Aufruf (Bild und Sprache)
-async function geminiRequest(model, body) {
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-goog-api-key": process.env.GEMINI_API_KEY,
-      },
-      body: JSON.stringify(body),
-    }
-  );
-  if (!response.ok) {
-    throw new Error(`Gemini ${model}: ${response.status} ${await response.text()}`);
-  }
-  return response.json();
-}
+import { callAI } from "../aiCall.js";
+import { geminiImage, geminiSpeech } from "../geminiCall.js";
 
 // create story
 async function getStory() {
@@ -39,16 +20,7 @@ async function getStory() {
     Nach jedem Wort soll die deutsche Übersetzung in Klammern stehen.
     Jeder Satz endet mit einem Punkt.`;
 
-  const response = await openai.chat.completions.create({
-    model: "gpt-4.1",
-    messages: [
-      { role: "system", content: systemMessage },
-      { role: "user", content: userMessage },
-    ],
-    temperature: 0.8,
-  });
-
-  return response.choices[0].message.content;
+  return await callAI(`${systemMessage}\n\n${userMessage}`, "anthropic/claude-sonnet-5-5", 0.8, 6000);
 }
 
 // generate title
@@ -66,15 +38,7 @@ async function getTitle(story) {
   const userMessage = `Erstelle einen einzigartigen, prägnanten Titel für diese Geschichte:
     
     "${story}"`;
-  const response = await openai.chat.completions.create({
-    model: "gpt-6-luna",
-    messages: [
-      { role: "system", content: systemMessage },
-      { role: "user", content: userMessage },
-    ],
-    // temperature: 0.7,
-  });
-  return response.choices[0].message.content.trim();
+  return (await callAI(`${systemMessage}\n\n${userMessage}`, "anthropic/claude-haiku-5-5", 0.7, 2000)).trim();
 }
 
 // generate picture
@@ -92,19 +56,7 @@ async function getPicture(story) {
     - Setze die in der Geschichte erwähnte Umgebung in eine modernes chinesische Variante.`;
 
   try {
-    const data = await geminiRequest("gemini-nano-banana-2.1", {
-      contents: [{ parts: [{ text: gptprompt }] }],
-      generationConfig: {
-        responseModalities: ["IMAGE"],
-        imageConfig: { aspectRatio: "1:1" },
-      },
-    });
-    const part = data.candidates?.[0]?.content?.parts?.find(
-      (p) => p.inlineData || p.inline_data
-    );
-    const inline = part?.inlineData || part?.inline_data;
-    if (!inline?.data) throw new Error("Keine Bilddaten in der Antwort.");
-    return inline.data;
+    return await geminiImage(gptprompt);
   } catch (error) {
     console.error("Fehler beim Generieren des Bildes:", error);
     throw new Error("Fehler beim Generieren des Bildes.");
@@ -114,34 +66,9 @@ async function getPicture(story) {
 // generate speech audio output
 async function getSpeech(story) {
   try {
-    // Getrennte Abschnitte, damit die Anweisung nicht mitgesprochen wird
     const instructions =
       "Style: very clear standard Mandarin Chinese for students learning Chinese, the voice of a calm fairytale narrator. Speak slowly and clearly with appropriate pauses.";
-    const data = await geminiRequest("gemini-3.8-flash-tts", {
-      contents: [
-        {
-          parts: [
-            {
-              text: `#### DIRECTOR NOTES\n${instructions}\n\n#### TRANSCRIPT\n${story}`,
-            },
-          ],
-        },
-      ],
-      generationConfig: {
-        responseModalities: ["AUDIO"],
-        speechConfig: {
-          voiceConfig: { prebuiltVoiceConfig: { voiceName: "Sulafat" } },
-        },
-      },
-    });
-    const part = data.candidates?.[0]?.content?.parts?.find(
-      (p) => p.inlineData || p.inline_data
-    );
-    const inline = part?.inlineData || part?.inline_data;
-    if (!inline?.data) throw new Error("Keine Audiodaten in der Antwort.");
-    // Das Modell liefert bereits ein fertiges WAV
-    const base64Audio = inline.data;
-    return `data:audio/wav;base64,${base64Audio}`;
+    return await geminiSpeech(story, instructions, "Sulafat");
   } catch (error) {
     console.error("Fehler bei der Sprachsynthese:", error);
     throw new Error("Fehler beim Generieren der Sprachdatei.");

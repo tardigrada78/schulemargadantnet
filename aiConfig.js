@@ -5,7 +5,6 @@ export const AI_TIERS = {
   stark: {
     label: "Stark",
     models: [
-      { value: "openai/gpt-4.1",                        label: "OpenAI GPT-4.1" },
       { value: "anthropic/claude-sonnet-5-5",           label: "Anthropic Sonnet" },
       { value: "ollama/qwen3.5:9b",                     label: "Ollama qwen3.5:9b (lokal)" },
     ],
@@ -13,7 +12,6 @@ export const AI_TIERS = {
   schnell: {
     label: "Schnell",
     models: [
-      { value: "openai/gpt-4.1-nano",                    label: "OpenAI GPT-4.1-nano" },
       { value: "anthropic/claude-haiku-4-5-20251001",    label: "Anthropic Haiku" },
       { value: "ollama/qwen3.5:9b",                      label: "Ollama qwen3.5:9b (lokal)" },
     ],

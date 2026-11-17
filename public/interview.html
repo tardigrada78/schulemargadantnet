@@ -17,7 +17,7 @@
     fetch('/header.html').then(r => r.text()).then(h => document.getElementById('site-header').innerHTML = h);
   </script>
   <h1>virtuelles Interview</h1>
-  <p>Letzte Aktualisierung: 1.9.2026</p>
+  <p>Letzte Aktualisierung: 17.11.2026</p>
   <details class="info-box">
     <summary>Info zu den verwendeten KI-Modellen</summary>
     <table class="model-table">
@@ -30,24 +30,19 @@
       </thead>
       <tbody>
         <tr>
-          <td>OpenAI</td>
-          <td>GPT-4.1 mini</td>
-          <td>Erstellen der Interview-Person und Beantworten der Fragen im Textmodus</td>
+          <td>Anthropic</td>
+          <td>Claude Haiku 5.5</td>
+          <td>Erstellen der Interview-Person, Beantworten der Fragen im Textmodus und Erstellen des Stimmenprofils</td>
         </tr>
         <tr>
-          <td>OpenAI</td>
-          <td>gpt-image-1</td>
+          <td>Google</td>
+          <td>gemini-nano-banana-2.1</td>
           <td>Erstellen des Portraitfotos der Interview-Person</td>
         </tr>
         <tr>
-          <td>OpenAI</td>
-          <td>gpt-4o-mini-tts</td>
+          <td>Google</td>
+          <td>gemini-3.8-flash-tts</td>
           <td>Sprachausgabe der Antworten im Textmodus</td>
-        </tr>
-        <tr>
-          <td>OpenAI</td>
-          <td>gpt-4o-mini</td>
-          <td>Erstellen des Stimmenprofils der Interview-Person</td>
         </tr>
         <tr>
           <td>OpenAI</td>
@@ -122,7 +117,7 @@
         if (!response.ok) {
           throw new Error(data.error || "Fehler beim Generieren des Bildes");
         }
-        const dataUrl = `data:image/png;base64,${data.image}`;
+        const dataUrl = `data:image/jpeg;base64,${data.image}`;
         const imgElem = document.getElementById("generatedImage");
         imgElem.src = dataUrl;
         imageUrl = dataUrl;

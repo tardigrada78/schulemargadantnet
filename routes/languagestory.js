@@ -1,7 +1,7 @@
 import { Router } from "express";
 const router = Router();
-import OpenAI from "openai";
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+import { callAI } from "../aiCall.js";
+import { geminiImage, geminiSpeech } from "../geminiCall.js";
 
 const LANG_CONFIG = {
   de: {
@@ -99,16 +99,7 @@ Gib NUR den neuen Abschnitt aus (1–3 Sätze), nicht die bisherige Geschichte.`
     userMessage = `Bisherige Geschichte:\n"${contextStory}"\n\nHinweis für Fortsetzung: ${hint || "(kein Hinweis, einfach kohärent weiterführen)"}\n\nSchreibe die nächsten 1–3 Sätze kohärent im gleichen Stil.\n${lang.annotationReminder}`;
   }
 
-  const response = await openai.chat.completions.create({
-    model: "gpt-4.1",
-    messages: [
-      { role: "system", content: systemMessage },
-      { role: "user", content: userMessage },
-    ],
-    temperature: 0.8,
-  });
-
-  return response.choices[0].message.content.trim();
+  return (await callAI(`${systemMessage}\n\n${userMessage}`, "anthropic/claude-sonnet-5-5", 0.8, 4000)).trim();
 }
 
 // generate title
@@ -121,15 +112,7 @@ Gib nur den Titel aus, ohne Anführungszeichen oder Erklärungen.`;
 
   const userMessage = `Erstelle einen Titel für diese Geschichte:\n\n"${storyPlain}"`;
 
-  const response = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
-    messages: [
-      { role: "system", content: systemMessage },
-      { role: "user", content: userMessage },
-    ],
-  });
-
-  return response.choices[0].message.content.trim();
+  return (await callAI(`${systemMessage}\n\n${userMessage}`, "anthropic/claude-haiku-5-5", 0.7, 2000)).trim();
 }
 
 // generate speech audio
@@ -137,16 +120,7 @@ async function getSpeech(storyPlain, language, level) {
   const lang = LANG_CONFIG[language];
   const instructions = lang.ttsInstructions[Math.min(level, 3) - 1];
 
-  const mp3 = await openai.audio.speech.create({
-    model: "gpt-4o-mini-tts",
-    voice: "nova",
-    instructions,
-    input: storyPlain,
-  });
-
-  const buffer = Buffer.from(await mp3.arrayBuffer());
-  const base64Audio = buffer.toString("base64");
-  return `data:audio/mpeg;base64,${base64Audio}`;
+  return await geminiSpeech(storyPlain, instructions, "Sulafat");
 }
 
 // route: start story
@@ -222,15 +196,8 @@ async function getImage(storyPlain, style) {
   const stylePrompt = IMAGE_STYLE_PROMPTS[style] || IMAGE_STYLE_PROMPTS.illustration;
   const prompt = `${stylePrompt} The illustration depicts the following story: ${storyPlain}`;
 
-  const response = await openai.images.generate({
-    model: "gpt-image-1",
-    prompt,
-    n: 1,
-    size: "1024x1024",
-  });
-
-  const b64 = response.data[0].b64_json;
-  return `data:image/png;base64,${b64}`;
+  const b64 = await geminiImage(prompt);
+  return `data:image/jpeg;base64,${b64}`;
 }
 
 // route: image

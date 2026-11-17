@@ -1,17 +1,11 @@
 import { Router } from "express";
 const router = Router();
-import OpenAI from "openai";
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+import { callAI } from "../aiCall.js";
 
 // Funktion um Satz zu schreiben
 async function doEval(question, temperature) {
   const prompt = question + `   Antworte kurz und prägnant. Antworte nur als Text, nicht als HTML oder Makrdown.`
-  const response = await openai.chat.completions.create({
-    model: "gpt-4.1-nano",
-    messages: [{ role: "user", content: prompt }],
-    temperature: temperature, 
-  });
-  return response.choices[0].message.content;
+  return await callAI(prompt, "anthropic/claude-haiku-4-5-20251001", temperature, 1000);
 }
 
 // Route für Satz-Generierung

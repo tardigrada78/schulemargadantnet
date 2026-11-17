@@ -1,7 +1,6 @@
 import { Router } from "express";
 const router = Router();
-import OpenAI from "openai";
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+import { geminiSpeech } from "../geminiCall.js";
 import Anthropic from "@anthropic-ai/sdk";
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 import NewsAPI from "newsapi"; // https://newsapi.org/
@@ -36,16 +35,9 @@ ${data}`;
 // Erstellt Podcast
 async function doPodcast(data) {
   try {
-    const mp3 = await openai.audio.speech.create({
-      model: "gpt-4o-mini-tts",
-      voice: "nova",
-      instructions:
-        "Sprich mit einer klaren, selbstbewussten Stimme, in zügigem, aber gleichmäßigem Tempo, mit einem sachlichen und dennoch enthusiastischen Ton, der Spannung und Relevanz vermittelt, während du präzise und auf den Punkt berichtest.",
-      input: data,
-    });
-    const buffer = Buffer.from(await mp3.arrayBuffer());
-    const base64Audio = buffer.toString("base64");
-    return `data:audio/mpeg;base64,${base64Audio}`;
+    const instructions =
+      "Sprich mit einer klaren, selbstbewussten Stimme, in zügigem, aber gleichmäßigem Tempo, mit einem sachlichen und dennoch enthusiastischen Ton, der Spannung und Relevanz vermittelt, während du präzise und auf den Punkt berichtest.";
+    return await geminiSpeech(data, instructions, "Sulafat");
   } catch (error) {
     console.error("Fehler bei der Sprachsynthese:", error);
     throw new Error("Fehler beim Generieren der Sprachdatei.");

@@ -1,21 +1,33 @@
 import express from "express";
 const router = express.Router();
-import OpenAI from "openai";
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+import { callAI } from "../aiCall.js";
+import { geminiImage, geminiSpeech } from "../geminiCall.js";
 
 // Realtime-Modell für das Live-Gespräch (Alias; bei Ablehnung "gpt-realtime-2.1" verwenden)
 const REALTIME_MODEL = "gpt-realtime";
+
+// Textmodell für Person, Antworten und Stimmenprofil
+const TEXT_MODEL = "anthropic/claude-haiku-5-5";
+
+// Zuordnung der OpenAI-Stimmen (Dropdown, Realtime) zu Gemini-Stimmen (Sprachausgabe im Textmodus)
+const GEMINI_VOICES = {
+  alloy: "Zephyr",
+  ash: "Charon",
+  ballad: "Sulafat",
+  coral: "Aoede",
+  echo: "Puck",
+  sage: "Kore",
+  shimmer: "Leda",
+  verse: "Fenrir",
+  marin: "Achernar",
+  cedar: "Orus",
+};
 
 // Erstellt Interview-Person
 async function generatePerson(properties) {
   const prompt = `Gib eine präzise Personenbeschreibung mit Fokus auf Charaktereigenschaften an.\n
     Überschreite dabei aber nicht 150 Wörter. Berücksichtige stark die folgenden Eigenschaften:\n${properties}`;
-  const response = await openai.chat.completions.create({
-    model: "gpt-4.1-mini",
-    messages: [{ role: "user", content: prompt }],
-    temperature: 0.8,
-  });
-  return response.choices[0].message.content;
+  return await callAI(prompt, TEXT_MODEL, 0.8, 3000);
 }
 
 // Befragt Interview-Person
@@ -23,12 +35,7 @@ async function askPerson(properties, question) {
   const prompt = `Die folgende Person beantwortet diese Interviewfrage mit höchstens 150 Wörtern.\n
     Frage:\n"${question}"\n\n
     Person:\n${properties}\n`;
-  const response = await openai.chat.completions.create({
-    model: "gpt-4.1-mini",
-    messages: [{ role: "user", content: prompt }],
-    temperature: 0.8,
-  });
-  return response.choices[0].message.content;
+  return await callAI(prompt, TEXT_MODEL, 0.8, 3000);
 }
 
 // Erstellt Portrait-Foto
@@ -49,13 +56,7 @@ async function getPicture(description) {
     `;
 
   try {
-    const response = await openai.images.generate({
-      model: "gpt-image-1",
-      prompt: gptprompt,
-      n: 1,
-      size: "1024x1024",
-    });
-    return response.data[0].b64_json;
+    return await geminiImage(gptprompt);
   } catch (error) {
     console.error("Fehler beim Generieren des Bildes:", error);
     throw new Error("Fehler beim Generieren des Bildes.");
@@ -65,15 +66,7 @@ async function getPicture(description) {
 // Audio-Ausgabe
 async function generateSpeech(story, voice, voiceProfile) {
   try {
-    const mp3 = await openai.audio.speech.create({
-      model: "gpt-4o-mini-tts",
-      voice: voice,
-      instructions: voiceProfile,
-      input: story,
-    });
-    const buffer = Buffer.from(await mp3.arrayBuffer());
-    const base64Audio = buffer.toString("base64");
-    return `data:audio/mpeg;base64,${base64Audio}`;
+    return await geminiSpeech(story, voiceProfile, GEMINI_VOICES[voice] || "Charon");
   } catch (error) {
     console.error("Fehler bei der Sprachsynthese:", error);
     throw new Error("Fehler beim Generieren der Sprachdatei.");
@@ -88,12 +81,7 @@ async function doVoiceProfile(interviewPerson) {
 
     Person: 
     "${interviewPerson.person}"`;
-  const response = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
-    messages: [{ role: "user", content: prompt }],
-    temperature: 0.6,
-  });
-  return response.choices[0].message.content;
+  return await callAI(prompt, TEXT_MODEL, 0.6, 2000);
 }
 
 // Routen

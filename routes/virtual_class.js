@@ -1,7 +1,7 @@
 import express from "express";
 const router = express.Router();
-import OpenAI from "openai";
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+import Anthropic from "@anthropic-ai/sdk";
+const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 // Vision API Feedback einer Person
 async function doVisionFeedback(imageBase64, characterProfile) {
@@ -31,29 +31,25 @@ Format: Dein Feedback-Text... **Note: X/6**
 
 Schaue dir das Material jetzt genau an und gib dein Feedback mit Note:`;
 
-  const response = await openai.chat.completions.create({
-    model: "gpt-4o",
+  // data-URL in Medientyp und Base64 zerlegen
+  const match = imageBase64.match(/^data:(image\/[a-z+.-]+);base64,(.+)$/i);
+  if (!match) throw new Error("Ungültiges Bildformat");
+
+  const response = await anthropic.messages.create({
+    model: "claude-sonnet-5-5",
+    max_tokens: 4000,
     messages: [
       {
         role: "user",
         content: [
-          {
-            type: "text",
-            text: prompt
-          },
-          {
-            type: "image_url",
-            image_url: {
-              url: imageBase64
-            }
-          }
-        ]
-      }
+          { type: "image", source: { type: "base64", media_type: match[1], data: match[2] } },
+          { type: "text", text: prompt },
+        ],
+      },
     ],
-    max_tokens: 350
   });
 
-  const fullResponse = response.choices[0].message.content;
+  const fullResponse = response.content.find((b) => b.type === "text").text;
 
   // Note aus dem Text extrahieren
   const noteMatch = fullResponse.match(/\*\*Note:\s*(\d+\.?\d*)\/6\*\*/);

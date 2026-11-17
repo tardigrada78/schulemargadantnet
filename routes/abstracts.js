@@ -5,8 +5,8 @@ import { callAI } from "../aiCall.js";
 
 const router = Router();
 
-// Diese Site verwendet die Stufe "stark" (gpt-4.1 / Sonnet / qwen2.5:14b)
-const DEFAULT_MODEL = "openai/gpt-4.1";
+// Diese Site verwendet die Stufe "stark" (Sonnet / qwen2.5:14b)
+const DEFAULT_MODEL = "anthropic/claude-sonnet-5-5";
 const TEMPERATURE = 0.6;
 
 // Funktion um Zusammenfassung zu erstellen
